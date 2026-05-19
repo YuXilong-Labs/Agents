@@ -1,5 +1,5 @@
 ---
-name: code-review
+name: wk-im-code-review
 description: Code review for BTIMService/BTIMModule changes. Invokes code-reviewer prompt.
 argument-hint: "[git ref or leave empty for current diff]"
 ---

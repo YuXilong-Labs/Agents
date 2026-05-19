@@ -1,5 +1,5 @@
 ---
-name: setup
+name: wk-im-setup
 description: First-time workspace initialization for wk-im-developer (Codex track).
 argument-hint: "[parent directory to scan]"
 ---

@@ -1,5 +1,5 @@
 ---
-name: build-fix
+name: wk-im-build-fix
 description: Fix build errors in BTIMService/BTIMModule. Runs build, parses errors, applies minimal fixes, re-verifies.
 argument-hint: "[error description or leave empty to run build first]"
 ---

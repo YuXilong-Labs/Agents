@@ -25,10 +25,10 @@ $deep-interview → $ralplan → [user confirm] → $ralph → verify
 - `$deep-interview "..."` — clarify vague requirements
 - `$ralplan "..."` — consensus planning (Planner → Architect → Critic loop)
 - `$ralph "..."` — persistent execution + verification loop
-- `$setup` — first-time initialization
-- `$doctor` — health check
-- `$recall "..."` — search memory
-- `$skillify` — extract reusable pattern
+- `$wk-im-setup` — first-time initialization
+- `$wk-im-doctor` — health check
+- `$wk-im-recall "..."` — search memory
+- `$wk-im-skillify` — extract reusable pattern
 
 ## Model Routing
 

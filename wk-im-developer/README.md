@@ -162,12 +162,12 @@ claude  # 自动进入 wk-im-developer 模式
 | 命令 | 说明 |
 |------|------|
 | 直接描述任务 | 自动路由到对应 pipeline |
-| `/setup` | 初始化工作区 |
-| `/doctor` | 环境健康检查 |
-| `/plan <任务>` | 规划并确认后执行 |
-| `/review` | 审查当前 diff |
-| `/recall <关键词>` | 搜索历史记忆 |
-| `/skillify` | 提取可复用 pattern |
+| `/wk-im-setup` | 初始化工作区 |
+| `/wk-im-doctor` | 环境健康检查 |
+| `/wk-im-plan <任务>` | 规划并确认后执行 |
+| `/wk-im-review` | 审查当前 diff |
+| `/wk-im-recall <关键词>` | 搜索历史记忆 |
+| `/wk-im-skillify` | 提取可复用 pattern |
 
 ### Codex 轨道（`$keyword` 触发）
 
@@ -180,10 +180,10 @@ codex  # 进入 wk-im-developer 模式
 | `$deep-interview "..."` | 需求澄清（苏格拉底式） |
 | `$ralplan "..."` | 共识规划（Planner→Architect→Critic） |
 | `$ralph "..."` | 持久执行+验证循环 |
-| `$setup` | 初始化工作区 |
-| `$doctor` | 环境健康检查 |
-| `$recall <关键词>` | 搜索历史记忆 |
-| `$skillify` | 提取可复用 pattern |
+| `$wk-im-setup` | 初始化工作区 |
+| `$wk-im-doctor` | 环境健康检查 |
+| `$wk-im-recall <关键词>` | 搜索历史记忆 |
+| `$wk-im-skillify` | 提取可复用 pattern |
 
 ### 典型工作流
 

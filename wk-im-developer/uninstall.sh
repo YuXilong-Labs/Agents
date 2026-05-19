@@ -14,15 +14,15 @@ if [ -d "$CLAUDE_AGENTS" ]; then
 fi
 
 if [ -d "$CLAUDE_SKILLS" ]; then
-  rm -rf "$CLAUDE_SKILLS"/setup \
-         "$CLAUDE_SKILLS"/doctor \
-         "$CLAUDE_SKILLS"/plan \
-         "$CLAUDE_SKILLS"/feature \
-         "$CLAUDE_SKILLS"/bugfix \
-         "$CLAUDE_SKILLS"/review \
-         "$CLAUDE_SKILLS"/recall \
-         "$CLAUDE_SKILLS"/skillify \
-         "$CLAUDE_SKILLS"/knowledge
+  rm -rf "$CLAUDE_SKILLS"/wk-im-setup \
+         "$CLAUDE_SKILLS"/wk-im-doctor \
+         "$CLAUDE_SKILLS"/wk-im-plan \
+         "$CLAUDE_SKILLS"/wk-im-feature \
+         "$CLAUDE_SKILLS"/wk-im-bugfix \
+         "$CLAUDE_SKILLS"/wk-im-review \
+         "$CLAUDE_SKILLS"/wk-im-recall \
+         "$CLAUDE_SKILLS"/wk-im-skillify \
+         "$CLAUDE_SKILLS"/wk-im-knowledge
   echo "✅ Removed Claude skills"
 fi
 
@@ -39,12 +39,12 @@ if [ -d "$CODEX_SKILLS" ]; then
   rm -rf "$CODEX_SKILLS"/deep-interview \
          "$CODEX_SKILLS"/ralplan \
          "$CODEX_SKILLS"/ralph \
-         "$CODEX_SKILLS"/setup \
-         "$CODEX_SKILLS"/doctor \
-         "$CODEX_SKILLS"/build-fix \
-         "$CODEX_SKILLS"/code-review \
-         "$CODEX_SKILLS"/recall \
-         "$CODEX_SKILLS"/skillify
+         "$CODEX_SKILLS"/wk-im-setup \
+         "$CODEX_SKILLS"/wk-im-doctor \
+         "$CODEX_SKILLS"/wk-im-build-fix \
+         "$CODEX_SKILLS"/wk-im-code-review \
+         "$CODEX_SKILLS"/wk-im-recall \
+         "$CODEX_SKILLS"/wk-im-skillify
   echo "✅ Removed Codex skills"
 fi
 

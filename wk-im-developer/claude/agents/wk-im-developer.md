@@ -43,6 +43,8 @@ grep -q '\.wkim/' .gitignore 2>/dev/null || echo -e '\n# wk-im memory\n.wkim/' >
 | recall / 记忆 / 历史 | `/wk-im-recall` |
 | skillify / 提取经验 | `/wk-im-skillify` |
 
+所有 skill 均以 `wk-im-` 为前缀，避免与其他 agent 的 skill 命名冲突。
+
 ## 模型路由
 
 调用 subagent 时按以下规则选择模型：

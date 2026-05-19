@@ -1,5 +1,5 @@
 ---
-name: recall
+name: wk-im-recall
 description: Search project memory (.wkim/) for historical plans, logs, and learned patterns.
 argument-hint: "<keyword>"
 ---

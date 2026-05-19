@@ -1,5 +1,5 @@
 ---
-name: doctor
+name: wk-im-doctor
 description: Health check for wk-im-developer Codex environment.
 argument-hint: ""
 ---

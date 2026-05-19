@@ -1,5 +1,5 @@
 ---
-name: skillify
+name: wk-im-skillify
 description: Extract reusable patterns from the current session into .wkim/skills/. Proposes candidate, user confirms.
 argument-hint: "[pattern name or leave empty to auto-extract]"
 ---
