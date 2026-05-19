@@ -118,6 +118,20 @@ curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev
 
 脚本自动检测已安装的 CLI，安装对应轨道（或双轨）。
 
+### 卸载
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-developer/uninstall.sh | bash
+```
+
+或在已 clone 的目录中：
+
+```bash
+bash uninstall.sh
+```
+
+卸载会移除所有安装到 `~/.claude/` 和 `~/.codex/` 的文件，并询问是否同时删除项目记忆（`.wkim/`）。
+
 ### 首次初始化
 
 安装后，在 session 中运行：
