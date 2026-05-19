@@ -52,8 +52,8 @@ graph LR
     B -->|codex 存在| D["安装 Codex 轨道<br/>→ ~/.codex/prompts/<br/>→ ~/.codex/skills/"]
     B -->|两者都有| E[安装双轨]
 
-    C --> F["首次启动<br/>/setup"]
-    D --> G["首次启动<br/>$setup"]
+    C --> F["首次启动<br/>/wk-im-setup"]
+    D --> G["首次启动<br/>$wk-im-setup"]
 
     F --> H{config 存在?}
     G --> H
@@ -96,8 +96,8 @@ graph LR
     end
 
     subgraph 用户操作
-    M["/recall 关键词"] --> N["grep .wkim/ 全目录"]
-    O["/skillify"] --> P["候选 → 用户确认 → .wkim/skills/"]
+    M["/wk-im-recall 关键词"] --> N["grep .wkim/ 全目录"]
+    O["/wk-im-skillify"] --> P["候选 → 用户确认 → .wkim/skills/"]
     end
 ```
 
@@ -138,10 +138,10 @@ bash uninstall.sh
 
 ```bash
 # Claude 轨道
-/setup
+/wk-im-setup
 
 # Codex 轨道
-$setup
+$wk-im-setup
 ```
 
 Agent 会引导你：
@@ -153,49 +153,68 @@ Agent 会引导你：
 
 ## 使用方式
 
-### Claude 轨道（`/skill` 触发）
+### 进入工作模式
+
+**Claude 轨道：**
 
 ```bash
-claude  # 自动进入 wk-im-developer 模式
+# 方式一：在项目目录启动，指定 agent
+claude --agent wk-im-developer
+
+# 方式二：启动后手动切换
+claude
+> /agent wk-im-developer
 ```
+
+**Codex 轨道：**
+
+```bash
+# 在项目目录启动，AGENTS.md 自动加载 wk-im-developer 配置
+codex
+```
+
+> Codex 会自动读取项目根目录的 `codex/AGENTS.md`，无需额外指定。
+
+---
+
+### Claude 轨道命令（`/skill` 触发）
 
 | 命令 | 说明 |
 |------|------|
 | 直接描述任务 | 自动路由到对应 pipeline |
-| `/wk-im-setup` | 初始化工作区 |
+| `/wk-im-setup` | 初始化工作区（首次必须运行） |
 | `/wk-im-doctor` | 环境健康检查 |
-| `/wk-im-plan <任务>` | 规划并确认后执行 |
+| `/wk-im-plan <任务>` | 规划并多轮确认后执行 |
 | `/wk-im-review` | 审查当前 diff |
 | `/wk-im-recall <关键词>` | 搜索历史记忆 |
 | `/wk-im-skillify` | 提取可复用 pattern |
 
-### Codex 轨道（`$keyword` 触发）
-
-```bash
-codex  # 进入 wk-im-developer 模式
-```
+### Codex 轨道命令（`$keyword` 触发）
 
 | 命令 | 说明 |
 |------|------|
+| 直接描述任务 | 自动路由到对应 pipeline |
+| `$wk-im-setup` | 初始化工作区（首次必须运行） |
+| `$wk-im-doctor` | 环境健康检查 |
 | `$deep-interview "..."` | 需求澄清（苏格拉底式） |
 | `$ralplan "..."` | 共识规划（Planner→Architect→Critic） |
 | `$ralph "..."` | 持久执行+验证循环 |
-| `$wk-im-setup` | 初始化工作区 |
-| `$wk-im-doctor` | 环境健康检查 |
 | `$wk-im-recall <关键词>` | 搜索历史记忆 |
 | `$wk-im-skillify` | 提取可复用 pattern |
 
 ### 典型工作流
 
 ```
-# 需求清晰时
+# Claude — 需求清晰时
+claude --agent wk-im-developer
 你: 支持消息撤回，2分钟内可撤回
 → Planner 探索代码，输出计划
 → 你确认计划
 → Executor 实现
 → Verifier 验证通过
 
-# 需求模糊时（Codex）
+# Codex — 需求模糊时
+codex
 $deep-interview "我想改进消息状态"
 → 澄清后
 $ralplan "实现消息已读回执"
@@ -239,13 +258,16 @@ wk-im-developer/
 ├── claude/                    # Claude 轨道（OMC 风格）
 │   ├── install.sh
 │   ├── agents/                # Orchestrator + Planner + Executor + Verifier + Explorer
-│   ├── skills/                # setup / doctor / plan / feature / bugfix / review / recall / skillify / knowledge
+│   ├── skills/                # wk-im-setup / wk-im-doctor / wk-im-plan / wk-im-feature
+│   │                          # wk-im-bugfix / wk-im-review / wk-im-recall / wk-im-skillify / wk-im-knowledge
 │   ├── hooks/scope-check.py
 │   └── settings.json
 ├── codex/                     # Codex 轨道（OMX 风格）
 │   ├── install.sh
 │   ├── prompts/               # planner / executor / verifier / explorer / code-reviewer / debugger / architect
-│   ├── skills/                # deep-interview / ralplan / ralph / setup / doctor / build-fix / code-review / recall / skillify
+│   ├── skills/                # deep-interview / ralplan / ralph
+│   │                          # wk-im-setup / wk-im-doctor / wk-im-build-fix / wk-im-code-review
+│   │                          # wk-im-recall / wk-im-skillify
 │   ├── AGENTS.md
 │   └── config.toml
 ├── shared/                    # 共享脚本
@@ -258,5 +280,6 @@ wk-im-developer/
 │   ├── skills/                # Learned patterns（自动注入）
 │   │   └── .candidates/       # 待确认候选
 │   └── sessions/              # Session 摘要
-└── install.sh                 # 一行安装入口
+├── install.sh                 # 一行安装入口
+└── uninstall.sh               # 一行卸载入口
 ```
