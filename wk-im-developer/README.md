@@ -113,7 +113,7 @@ graph LR
 ### 一行安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<org>/wk-im-developer/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-developer/install.sh | bash
 ```
 
 脚本自动检测已安装的 CLI，安装对应轨道（或双轨）。
