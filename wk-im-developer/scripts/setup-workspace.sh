@@ -61,30 +61,10 @@ WK_IM_WORKSPACE=$WORKSPACE_LINK
 EOF
 echo "✅ 配置已保存到 $CONFIG_FILE"
 
-# 写入 .claude/settings.json，设置 wk-im-developer 为默认 Agent
-# 这样在此目录直接 `claude` 就自动进入 agent 模式
-CLAUDE_SETTINGS="$AGENT_HOME/.claude/settings.json"
-if [ -f "$CLAUDE_SETTINGS" ]; then
-    # 用 python3 合并 json，避免覆盖已有的 hooks/permissions 配置
-    python3 - <<PYEOF
-import json
-with open("$CLAUDE_SETTINGS") as f:
-    settings = json.load(f)
-settings["agent"] = "wk-im-developer"
-with open("$CLAUDE_SETTINGS", "w") as f:
-    json.dump(settings, f, indent=2, ensure_ascii=False)
-    f.write("\n")
-PYEOF
-else
-    echo '{"agent": "wk-im-developer"}' > "$CLAUDE_SETTINGS"
-fi
-echo "✅ 已设置 wk-im-developer 为默认 Agent（.claude/settings.json）"
-
 echo ""
 echo "✅ Setup 完成！"
 echo ""
 echo "使用方式："
-echo "  cd $AGENT_HOME"
-echo "  claude                        # 自动进入 wk-im-developer 多轮对话模式"
-echo "  claude --agent wk-im-developer  # 显式指定（效果相同）"
-echo "  codex                         # Codex 用户"
+echo "  claude --agent wk-im-developer  # 显式指定 agent 启动"
+echo "  claude 后输入 /agent wk-im-developer  # 启动后切换"
+echo "  codex                           # Codex 用户（自动读取 AGENTS.md）"
