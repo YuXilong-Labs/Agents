@@ -158,12 +158,11 @@ Agent 会引导你：
 **Claude 轨道：**
 
 ```bash
-# 方式一：在项目目录启动，指定 agent
+# 方式一：整个 session 以 wk-im-developer 身份运行
 claude --agent wk-im-developer
 
-# 方式二：启动后手动切换
-claude
-> /agent wk-im-developer
+# 方式二：在已有 session 中，@-mention 触发一次任务
+@wk-im-developer 帮我实现消息撤回功能
 ```
 
 **Codex 轨道：**
@@ -185,7 +184,6 @@ codex
 | `/wk-im-setup` | 初始化工作区（首次必须运行） |
 | `/wk-im-doctor` | 环境健康检查 |
 | `/wk-im-plan <任务>` | 规划并多轮确认后执行 |
-| `/wk-im-review` | 审查当前 diff |
 | `/wk-im-recall <关键词>` | 搜索历史记忆 |
 | `/wk-im-skillify` | 提取可复用 pattern |
 
@@ -259,7 +257,7 @@ wk-im-developer/
 │   ├── install.sh
 │   ├── agents/                # Orchestrator + Planner + Executor + Verifier + Explorer
 │   ├── skills/                # wk-im-setup / wk-im-doctor / wk-im-plan / wk-im-feature
-│   │                          # wk-im-bugfix / wk-im-review / wk-im-recall / wk-im-skillify / wk-im-knowledge
+│   │                          # wk-im-bugfix / wk-im-recall / wk-im-skillify / wk-im-knowledge
 │   ├── hooks/scope-check.py
 │   └── settings.json
 ├── codex/                     # Codex 轨道（OMX 风格）
