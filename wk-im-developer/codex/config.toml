@@ -1,0 +1,14 @@
+# wk-im-developer Codex configuration
+
+# Default model for general tasks (executor medium tier)
+model = "gpt-5.5-high"
+
+# Context window
+model_context_window = 200000
+model_auto_compact_token_limit = 160000
+
+# Reasoning effort for planning tasks (override per-prompt via prompts/planner.md)
+# reasoning_effort = "high"
+
+# Disable auto-approval for destructive operations
+# approval_policy = "unless-allow-listed"
