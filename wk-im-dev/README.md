@@ -62,10 +62,10 @@ PLUGIN_DIR=/path/to/wk-im-dev PROJECT_DIR=~/Code/BTIMService python examples/fei
 → 自动触发 bugfix skill → debugger 定位根因 → 修复 → verify
 
 review 一下我的改动
-→ 自动触发 wk-review skill
+→ 自动触发 im-review skill
 
 消息发送流程是怎么设计的？
-→ 自动触发 wk-im-knowledge skill
+→ 自动触发 im-knowledge skill
 ```
 
 ### Slash Commands
@@ -81,7 +81,7 @@ review 一下我的改动
 
 ## 架构约束
 
-所有约束定义在 `skills/wk-im-knowledge/constraints.md`（唯一事实源）：
+所有约束定义在 `skills/im-knowledge/constraints.md`（唯一事实源）：
 
 | 规则 | 说明 |
 |------|------|
@@ -109,13 +109,13 @@ wk-im-dev/
 │   ├── bugfix/SKILL.md           # /wk-im-dev:bugfix
 │   ├── setup/SKILL.md            # /wk-im-dev:setup
 │   ├── guard/SKILL.md            # /wk-im-dev:guard
-│   ├── wk-im-knowledge/
+│   ├── im-knowledge/
 │   │   ├── SKILL.md              # 架构知识（自动触发）
 │   │   ├── constraints.md        # ★ 唯一约束定义点
 │   │   ├── architecture.md       # 组件架构
 │   │   ├── contracts.md          # 跨 Pod API 契约
 │   │   └── message-flow.md       # 消息生命周期
-│   └── wk-review/SKILL.md        # 代码审查（自动触发）
+│   └── im-review/SKILL.md        # 代码审查（自动触发）
 ├── hooks/
 │   ├── hooks.json                # PostToolUse + Stop hooks
 │   └── scope-check.sh            # 越界写入拦截

@@ -20,7 +20,7 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_RO
 4. **实现**：跨组件改动先改 BTIMService，再改 BTIMModule。
 5. **验证**：静默运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-verify.sh`。有失败则修复后再回复。
 6. **Guard**：静默运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh --quiet`。有违规则修复后再回复。
-7. **更新契约**：如有 public API 变更，更新 `wk-im-knowledge/contracts.md`。
+7. **更新契约**：如有 public API 变更，更新 `im-knowledge/contracts.md`。
 
 ## 回复用户
 - 简要说明实现了什么

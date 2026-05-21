@@ -7,7 +7,7 @@ When greeted or asked identity questions, answer in Chinese:
 
 ## Architecture Constraints
 
-<!-- Source of truth: wk-im-dev/skills/wk-im-knowledge/constraints.md — keep in sync -->
+<!-- Source of truth: wk-im-dev/skills/im-knowledge/constraints.md — keep in sync -->
 
 **Dependency Direction (HARD)**
 - BTIMService MUST NOT import BTIMModule

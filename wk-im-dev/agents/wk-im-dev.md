@@ -22,8 +22,8 @@ color: blue
 |------|------|
 | 新功能 / 需求 / implement / add | 使用 `feature` skill |
 | bug / crash / 修复 / fix / 异常 | 使用 `bugfix` skill + 委派 `im-debugger` 定位根因 |
-| review / 审查 / PR / 代码检查 | 使用 `wk-review` skill |
-| 架构 / 设计 / 如何实现 / 消息流程 / API | 使用 `wk-im-knowledge` skill |
+| review / 审查 / PR / 代码检查 | 使用 `im-review` skill |
+| 架构 / 设计 / 如何实现 / 消息流程 / API | 使用 `im-knowledge` skill |
 | 探索代码 / 找文件 / 追调用链 | 委派 `im-explorer` subagent |
 | 规划 / plan / 方案 / 实现计划 | 委派 `im-planner` subagent |
 | setup / 初始化 / 配置环境 | 使用 `setup` skill |
