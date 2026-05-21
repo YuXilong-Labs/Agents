@@ -1,58 +1,58 @@
 ---
-description: Use when reviewing code changes, PRs, or checking code quality for BTIMService or BTIMModule. Trigger phrases: review, 审查, 代码检查, PR, code review, 看一下这个改动.
+description: 用于审查 BTIMService 或 BTIMModule 的代码变更、PR 或代码质量检查。触发词：review, 审查, 代码检查, PR, code review, 看一下这个改动.
 allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(wk-im-guard.sh*)
 ---
 
-# Code Review: $ARGUMENTS
+# 代码审查：$ARGUMENTS
 
-## Architecture Constraints
+## 架构约束
 @constraints.md
 
-## Review Process (do NOT narrate steps to user)
+## 审查流程（不向用户描述步骤）
 
-1. Get the diff: `git diff HEAD` or read specified files
-2. Check each category below
-3. Run `wk-im-guard.sh --quiet` for automated checks
+1. 获取 diff：`git diff HEAD` 或读取指定文件
+2. 逐项检查以下维度
+3. 运行 `wk-im-guard.sh --quiet` 执行自动化检查
 
-## Review Categories
+## 审查维度
 
-### Architecture Compliance
-- BTIMService does not import BTIMModule
-- BTIMModule does not import ThirdPartyIMSDK
-- Changes are within BTIMService/ or BTIMModule/ scope only
-- Public API changes are reflected in contracts.md
+### 架构合规
+- BTIMService 未 import BTIMModule
+- BTIMModule 未 import ThirdPartyIMSDK
+- 变更仅在 BTIMService/ 或 BTIMModule/ 范围内
+- Public API 变更已同步更新 contracts.md
 
-### Privacy
-- No sensitive data in log statements (messageBody, token, cookie, attachmentURL, PII)
+### 隐私
+- 日志中无敏感数据（messageBody、token、cookie、attachmentURL、PII）
 
-### Code Quality
-- Logic is correct and handles edge cases
-- No leftover debug code (print statements, TODO comments that should be resolved)
-- Naming is clear and consistent with existing codebase
+### 代码质量
+- 逻辑正确，边界情况已处理
+- 无遗留调试代码（print 语句、应解决的 TODO）
+- 命名清晰，与现有代码风格一致
 
-### Test Coverage
-- New behavior has test coverage
-- Existing tests still pass (no regressions introduced)
+### 测试覆盖
+- 新行为有测试覆盖
+- 现有测试无回归
 
-## Output Format
+## 输出格式
 
 ```
-## Code Review Result
+## 代码审查结果
 
-### Architecture  ✅/❌
-- [finding or "No issues"]
+### 架构合规  ✅/❌
+- [发现的问题或"无问题"]
 
-### Privacy  ✅/❌
-- [finding or "No issues"]
+### 隐私  ✅/❌
+- [发现的问题或"无问题"]
 
-### Code Quality  ✅/❌
-- [finding or "No issues"]
+### 代码质量  ✅/❌
+- [发现的问题或"无问题"]
 
-### Test Coverage  ✅/❌
-- [finding or "No issues"]
+### 测试覆盖  ✅/❌
+- [发现的问题或"无问题"]
 
-**Verdict**: PASS / FAIL / NEEDS CHANGES
+**结论**：通过 / 不通过 / 需要修改
 
-### Action Items
-- [specific item with file:line reference]
+### 待处理事项
+- [具体问题，含文件:行号]
 ```

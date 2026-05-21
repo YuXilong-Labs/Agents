@@ -1,26 +1,26 @@
 ---
-description: Use when fixing bugs, crashes, or unexpected behavior in BTIMService or BTIMModule. Guides through locate→reproduce→fix→verify workflow. Trigger phrases: bug, crash, 崩溃, 修复, fix, 问题, 异常, 未读数, 消息丢失, 不显示, 卡顿.
+description: 用于修复 BTIMService 或 BTIMModule 的 bug、crash 或异常行为。引导完成定位→复现→修复→验证工作流。触发词：bug, crash, 崩溃, 修复, fix, 问题, 异常, 未读数, 消息丢失, 不显示, 卡顿.
 allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(wk-im-detect-env.sh*), Bash(wk-im-verify.sh*), Bash(wk-im-guard.sh*), Bash(xcodebuild*), Bash(git log*), Bash(git blame*)
 ---
 
-# Bug Fix: $ARGUMENTS
+# Bug 修复：$ARGUMENTS
 
-## Environment
+## 当前环境
 !`wk-im-detect-env.sh`
 
-## Architecture Constraints
+## 架构约束
 @constraints.md
 
-## Workflow (do NOT narrate steps to user)
+## 工作流程（不向用户描述步骤）
 
-1. **Locate**: Delegate to `im-debugger` subagent to trace the relevant flow and find the root cause.
-2. **Write failing test FIRST**: The test must fail with current code. Do NOT modify the test afterward.
-3. **Fix**: Apply minimal fix to root cause, not symptoms.
-4. **Verify**: Run `wk-im-verify.sh` silently. The failing test must now pass with no regressions.
-5. **Guard**: Run `wk-im-guard.sh --quiet` silently. Fix any violations.
+1. **定位**：委派 `im-debugger` subagent 追踪相关流程，找到根因。
+2. **先写失败测试**：测试必须在当前代码下失败。之后不得修改测试。
+3. **修复**：针对根因做最小改动，不修复症状。
+4. **验证**：静默运行 `wk-im-verify.sh`。失败的测试必须通过，且无回归。
+5. **Guard**：静默运行 `wk-im-guard.sh --quiet`。有违规则修复。
 
-## Output to User
-- Root cause in plain language (1-2 sentences)
-- What was changed and why
-- Test added to prevent regression
-- Any edge cases or follow-up items
+## 回复用户
+- 用通俗语言说明根因（1-2 句）
+- 改了什么、为什么改
+- 新增的防回归测试
+- 边界情况或后续事项

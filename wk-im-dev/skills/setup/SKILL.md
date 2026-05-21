@@ -1,36 +1,36 @@
 ---
-description: Initialize wk-im-dev workspace. Detects component paths and validates environment. Use when setting up for the first time or diagnosing environment issues.
+description: 初始化 wk-im-dev 工作区，检测组件路径并验证环境。首次使用或排查环境问题时使用。
 disable-model-invocation: true
-argument-hint: "[--service <path>] [--module <path>] [--host-app <path>]"
+argument-hint: "[--service <路径>] [--module <路径>] [--host-app <路径>]"
 allowed-tools: Bash(wk-im-detect-env.sh*), Bash(find*), Bash(ls*), Bash(pod*), Bash(xcodebuild*)
 ---
 
-# wk-im-dev Setup
+# wk-im-dev 环境初始化
 
-## Arguments
+## 参数
 $ARGUMENTS
 
-## Steps
+## 步骤
 
-1. Run `wk-im-detect-env.sh` to check current environment
-2. If env is `unknown`, ask user for component paths:
-   - BTIMService directory (must contain a `.podspec`)
-   - BTIMModule directory (must contain a `.podspec`)
-   - HostApp directory (optional, for cross-component build verification)
-3. Validate each path exists and contains expected files
-4. Save config to `.wk-im-workspace.json` in current directory:
+1. 运行 `wk-im-detect-env.sh` 检查当前环境
+2. 如果环境为 `unknown`，询问用户组件路径：
+   - BTIMService 目录（必须包含 `.podspec`）
+   - BTIMModule 目录（必须包含 `.podspec`）
+   - HostApp 目录（可选，用于跨组件编译验证）
+3. 验证每个路径存在且包含预期文件
+4. 将配置保存到当前目录的 `.wk-im-workspace.json`：
    ```json
    {
-     "service": "<absolute_path>",
-     "module": "<absolute_path>",
-     "hostApp": "<absolute_path_or_empty>"
+     "service": "<绝对路径>",
+     "module": "<绝对路径>",
+     "hostApp": "<绝对路径或空>"
    }
    ```
-5. If HostApp provided, check Podfile uses `:path =>` for both components
-6. Run `wk-im-verify.sh` to confirm build works
+5. 如果提供了 HostApp，检查 Podfile 是否用 `:path =>` 引用两个组件
+6. 运行 `wk-im-verify.sh` 确认编译通过
 
-## Output
-- Environment summary
-- Paths configured
-- Build status
-- Next steps
+## 输出
+- 环境摘要
+- 已配置的路径
+- 编译状态
+- 下一步操作

@@ -1,12 +1,12 @@
 ---
-description: Run full guard check on BTIMService and BTIMModule git diffs. Checks scope, contract, and privacy violations. Use when you want to manually verify code changes before committing.
+description: 对 BTIMService 和 BTIMModule 的 git diff 执行完整 guard 检查，验证 scope、契约和隐私违规。提交前手动验证代码变更时使用。
 disable-model-invocation: true
 allowed-tools: Bash(wk-im-guard.sh*), Bash(wk-im-detect-env.sh*)
 ---
 
-# Guard Check
+# Guard 检查
 
-Run `wk-im-guard.sh` and report results.
+运行 `wk-im-guard.sh` 并报告结果。
 
-If violations are found, explain each one clearly and suggest how to fix it.
-If all checks pass, confirm with a brief summary of what was checked.
+如果发现违规，清晰说明每个问题并给出修复建议。
+如果全部通过，简要说明检查了哪些内容。
