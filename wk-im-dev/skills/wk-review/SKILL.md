@@ -1,6 +1,6 @@
 ---
 description: 用于审查 BTIMService 或 BTIMModule 的代码变更、PR 或代码质量检查。触发词：review, 审查, 代码检查, PR, code review, 看一下这个改动.
-allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(wk-im-guard.sh*)
+allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh*)
 ---
 
 # 代码审查：$ARGUMENTS
@@ -12,7 +12,7 @@ allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(wk-im-gua
 
 1. 获取 diff：`git diff HEAD` 或读取指定文件
 2. 逐项检查以下维度
-3. 运行 `wk-im-guard.sh --quiet` 执行自动化检查
+3. 运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh --quiet` 执行自动化检查
 
 ## 审查维度
 

@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "wk-im-guard.sh --quiet 2>/dev/null || true"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh\" --quiet 2>/dev/null || true"
           }
         ]
       }

@@ -20,7 +20,7 @@ color: yellow
 
 - `git log`、`git blame`、`git diff`
 - `grep`、`find`、`head`、`tail`
-- `wk-im-detect-env.sh` 确认组件路径
+- `wk-im-detect-env.sh` 确认组件路径（通过 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-detect-env.sh`）
 - 读取任意源文件
 
 ## 输出格式

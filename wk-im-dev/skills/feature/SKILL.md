@@ -1,12 +1,13 @@
 ---
 description: 用于开发 BTIMService 或 BTIMModule 的新功能。处理探索→规划→确认→实现→验证工作流。触发词：新需求, 新功能, 开发, implement, add feature, 实现, 支持.
-allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(wk-im-detect-env.sh*), Bash(wk-im-verify.sh*), Bash(wk-im-guard.sh*), Bash(xcodebuild*), Bash(pod*)
+allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-im-detect-env.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-im-verify.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh*), Bash(xcodebuild*), Bash(pod*)
 ---
 
 # 新功能：$ARGUMENTS
 
 ## 当前环境
-!`wk-im-detect-env.sh`
+
+通过 Bash tool 运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-detect-env.sh` 获取环境信息。
 
 ## 架构约束
 @constraints.md
@@ -17,8 +18,8 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(wk-im-detect-env.s
 2. **评估范围**：service-only / module-only / 跨组件
 3. **规划**：委派 `im-planner` subagent 制定结构化实现计划。等待用户确认后再开始编码。
 4. **实现**：跨组件改动先改 BTIMService，再改 BTIMModule。
-5. **验证**：静默运行 `wk-im-verify.sh`。有失败则修复后再回复。
-6. **Guard**：静默运行 `wk-im-guard.sh --quiet`。有违规则修复后再回复。
+5. **验证**：静默运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-verify.sh`。有失败则修复后再回复。
+6. **Guard**：静默运行 `${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh --quiet`。有违规则修复后再回复。
 7. **更新契约**：如有 public API 变更，更新 `wk-im-knowledge/contracts.md`。
 
 ## 回复用户
