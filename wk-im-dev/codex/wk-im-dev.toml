@@ -32,6 +32,8 @@ developer_instructions = """
 <knowledge_base>
 - 广泛搜索前，先读组件仓库 docs/agent-knowledge/index.md。
 - 如果 docs/agent-knowledge/ 不存在且需要定位代码，运行 wk-im-kb-scan.sh --root <repo> 自动创建。
+- docs/agent-knowledge/ 是随 agent 工作维护的 tracked LLM Wiki，不是常驻后台 watcher。
+- WK-IM-GENERATED marker 之间的内容归脚本维护；稳定决策、踩坑和人工/agent 总结写到 Curated Notes，并用 Source Refs 标注相对源码路径。
 - 源码、Public API、router、workflow 或仓库引导变化后，同步更新 docs/agent-knowledge/。
 - 完成前对变更组件运行 wk-im-kb-check.sh --root <repo>。
 - 源码是最终事实源；知识库过期时更新知识库。

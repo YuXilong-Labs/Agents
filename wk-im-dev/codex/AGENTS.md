@@ -40,11 +40,14 @@ wk-im-kb-check.sh --root .
 
 ## Knowledge Base
 
-Agents should use `docs/agent-knowledge/` to route quickly through the component codebase.
+Agents should use `docs/agent-knowledge/` as a tracked LLM Wiki for fast routing through the component codebase.
+It is maintained during agent work; it is not a constantly running background watcher.
 
 - Before broad source search, read `docs/agent-knowledge/index.md` if it exists.
 - If the directory is missing and the task needs code location, run `wk-im-kb-scan.sh --root <repo>`; first run creates the required Markdown files.
 - Source code remains the source of truth. If code and knowledge disagree, update the knowledge base.
+- The block between `<!-- WK-IM-GENERATED:START -->` and `<!-- WK-IM-GENERATED:END -->` is script-owned. Put stable decisions, pitfalls, and source-backed notes outside that block.
+- Curated notes should include relative source paths under `Source Refs`.
 - Source, public API, router, workflow, or repository-guidance changes must update the relevant knowledge page in the same change set.
 - Before reporting completion, run `wk-im-kb-check.sh --root <repo>` for each changed component repo when the knowledge base is present or was created.
 

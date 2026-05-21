@@ -17,7 +17,7 @@ color: yellow
 - Diff Scope：检查 `git diff HEAD` 是否只包含任务相关改动。
 - Architecture：检查依赖方向、第三方 SDK 访问边界和跨 Pod API 契约。
 - Privacy：检查日志是否暴露敏感消息、token、cookie、附件 URL 或用户 PII。
-- Knowledge：如果组件存在 `docs/agent-knowledge/` 或本次创建了知识库，运行 `wk-im-kb-check.sh --root <repo>`。
+- Knowledge：如果组件存在 `docs/agent-knowledge/` 或本次创建了知识库，运行 `wk-im-kb-check.sh --root <repo>`，确认 generated marker、index topic links、Source Refs 和源码/wiki 同步状态。
 - Tests：确认新行为或修复有测试覆盖；没有测试时说明残余风险。
 
 ## 输出格式

@@ -34,13 +34,16 @@ Hard rules:
 
 ## Knowledge Base
 
-Each component repo may contain a tracked Markdown knowledge base at `docs/agent-knowledge/`.
-It exists so agents can route quickly to files, APIs, workflows, and high-signal entrypoints.
+Each component repo may contain a tracked Markdown LLM Wiki at `docs/agent-knowledge/`.
+It exists so agents can route quickly to files, APIs, workflows, high-signal entrypoints, stable decisions, and pitfalls.
+It is not a background watcher and it is not more authoritative than source code.
 
 Rules:
 
 - Before broad code search, read `docs/agent-knowledge/index.md` if it exists.
 - If `docs/agent-knowledge/` is missing and the task needs code location or repo understanding, create it with `wk-im-kb-scan.sh --root <repo>`.
+- Treat content between `<!-- WK-IM-GENERATED:START -->` and `<!-- WK-IM-GENERATED:END -->` as script-owned. Do not put curated notes there.
+- Put stable human/agent knowledge under `Curated Notes`, and support it with relative paths under `Source Refs`.
 - After source, public API, router, workflow, or repository guidance changes, update the matching knowledge page in the same change set.
 - Before reporting completion, run `wk-im-kb-check.sh --root <repo>` for changed component repos when the knowledge base is present or was created.
 - Source code remains the source of truth. If source and knowledge disagree, fix the knowledge base.
@@ -52,7 +55,7 @@ Rules:
 - `im-debugger`: read-only root-cause analysis for bug, crash, state, or regression issues.
 - `im-executor`: implementation owner for confirmed plans and scoped fixes.
 - `im-verifier`: independent verification owner for build, tests, guard, diff scope, and knowledge-base sync.
-- `im-knowledge-maintainer`: background updater for `docs/agent-knowledge/`.
+- `im-knowledge-maintainer`: scoped updater for `docs/agent-knowledge/`.
 
 Use subagents for bounded independent work when it improves throughput or confidence. Keep trivial work local.
 

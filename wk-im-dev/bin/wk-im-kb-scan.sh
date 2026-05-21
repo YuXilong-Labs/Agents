@@ -1,11 +1,13 @@
 #!/bin/bash
 # wk-im-kb-scan.sh
-# Refresh the tracked Markdown knowledge base from repository structure.
+# Refresh generated sections in the tracked Markdown LLM Wiki.
 
 set -euo pipefail
 
 ROOT=""
 QUIET=0
+GEN_START="<!-- WK-IM-GENERATED:START -->"
+GEN_END="<!-- WK-IM-GENERATED:END -->"
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -48,6 +50,10 @@ detect_component() {
   fi
 }
 
+current_commit() {
+  git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo "unknown"
+}
+
 relpath() {
   local path="$1"
   printf '%s\n' "${path#$ROOT/}"
@@ -70,19 +76,136 @@ count_sources() {
   find "$dir" -type f \( -name '*.h' -o -name '*.m' -o -name '*.mm' -o -name '*.swift' \) | wc -l | tr -d ' '
 }
 
+write_generated_page() {
+  local path="$1"
+  local title="$2"
+  local kind="$3"
+  local generated_file="$4"
+  local tmp
+  tmp="$(mktemp)"
+
+  if [ -f "$path" ] \
+    && [ "$(sed -n '1p' "$path")" = "---" ] \
+    && grep -Fq "$GEN_START" "$path" \
+    && grep -Fq "$GEN_END" "$path"; then
+    awk -v start="$GEN_START" -v end="$GEN_END" -v gen="$generated_file" '
+      $0 == start {
+        print
+        while ((getline line < gen) > 0) {
+          print line
+        }
+        close(gen)
+        in_block = 1
+        next
+      }
+      $0 == end {
+        in_block = 0
+        print
+        next
+      }
+      !in_block { print }
+    ' "$path" > "$tmp"
+  else
+    {
+      echo "---"
+      echo "component: $component"
+      echo "kind: $kind"
+      echo "generated_by: wk-im-kb-scan.sh"
+      echo "last_verified_commit: $commit"
+      echo "---"
+      echo ""
+      echo "# $title"
+      echo ""
+      echo "$GEN_START"
+      cat "$generated_file"
+      echo "$GEN_END"
+      echo ""
+      echo "## Curated Notes"
+      echo ""
+      if [ -f "$path" ]; then
+        echo "<!-- Existing content preserved during LLM Wiki marker migration. -->"
+        echo ""
+        cat "$path"
+      else
+        echo "- Add stable, source-backed notes here. Do not paste chat transcripts."
+      fi
+      echo ""
+      echo "## Source Refs"
+      echo ""
+      echo "- Add relative source paths that support curated notes, for example \`BTIMService/Classes/Base/BTIMServiceTool.h\`."
+    } > "$tmp"
+  fi
+
+  mv "$tmp" "$path"
+}
+
 component="$(detect_component)"
 source_root="$(source_root_for_component "$component")"
 now="$(date '+%Y-%m-%d %H:%M:%S %z')"
+commit="$(current_commit)"
 source_count="$(count_sources "$source_root")"
 podspec="$(find "$ROOT" -maxdepth 1 -name '*.podspec' -print -quit)"
 
 mkdir -p "$TOPICS_DIR"
 
+index_gen="$(mktemp)"
+source_map_gen="$(mktemp)"
+workflows_gen="$(mktemp)"
+contracts_gen="$(mktemp)"
+entrypoints_gen="$(mktemp)"
+trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$entrypoints_gen"' EXIT
+
 {
-  echo "# Source Map"
-  echo ""
   echo "Generated: $now"
   echo "Component: $component"
+  echo "Last verified commit: $commit"
+  echo "Source files: $source_count"
+  echo ""
+  echo "This directory is a tracked, agent-maintained LLM Wiki derived from source code."
+  echo "Source code remains the source of truth. If this wiki disagrees with code, update the wiki."
+  echo ""
+  echo "## Entry Points"
+  echo ""
+  echo "- [Source Map](source-map.md)"
+  echo "- [Workflows](workflows.md)"
+  echo "- [Contracts](contracts.md)"
+  echo "- [Entrypoints](topics/entrypoints.md)"
+  echo ""
+  echo "## Topics"
+  echo ""
+  find "$TOPICS_DIR" -type f -name '*.md' | sort | while IFS= read -r topic; do
+    rel="${topic#$KB_DIR/}"
+    label="$(basename "$topic" .md)"
+    echo "- [$label]($rel)"
+  done
+  echo ""
+  echo "## Fast Routing"
+  echo ""
+  if [ "$component" = "BTIMService" ]; then
+    echo "- Message and session backend behavior: start at \`BTIMServiceTool\`, then \`BTIMServiceProtocol\` and the LibService/RYService adapters."
+    echo "- Message models and constants: start under \`BTIMService/Classes/Common/\`."
+    echo "- Message ID mapping: start under \`BTIMService/Classes/MsgIdMapDB/\`."
+  elif [ "$component" = "BTIMModule" ]; then
+    echo "- Navigation and external calls: start under \`BTIMModule/Classes/Router/\`."
+    echo "- Chat page behavior: start under \`IMConversationDetail/\`."
+    echo "- Shared module utilities and draft logic: start at \`BTIMModuleTool\`."
+  else
+    echo "- Component type is unknown. Use source-map.md and podspecs to identify entry points."
+  fi
+  echo ""
+  echo "## Agent Rules"
+  echo ""
+  echo "- Read this index before broad code searches."
+  echo "- Use generated sections for routing, and curated notes for stable decisions and pitfalls."
+  echo "- Do not treat this wiki as more authoritative than source code."
+  echo "- Update this knowledge base in the same commit as source changes that alter behavior, APIs, routing, or workflows."
+  echo "- Append every maintenance pass to [log.md](log.md)."
+} > "$index_gen"
+
+{
+  echo "Generated: $now"
+  echo "Component: $component"
+  echo "Last verified commit: $commit"
   echo "Source files: $source_count"
   echo ""
   echo "## Repository Guidance"
@@ -107,12 +230,74 @@ mkdir -p "$TOPICS_DIR"
       echo "- \`$(relpath "$dir")\`"
     done
   fi
-} > "$KB_DIR/source-map.md"
+} > "$source_map_gen"
 
 {
-  echo "# Entrypoints"
-  echo ""
   echo "Generated: $now"
+  echo "Component: $component"
+  echo "Last verified commit: $commit"
+  echo ""
+  echo "## Maintenance"
+  echo ""
+  echo "- Run \`wk-im-kb-scan.sh --root \"$ROOT\"\` after meaningful source changes."
+  echo "- Run \`wk-im-kb-check.sh --root \"$ROOT\"\` before reporting completion."
+  echo "- Commit source changes and knowledge updates together."
+  echo "- Scan refreshes only generated blocks; curated notes and source refs are preserved."
+  echo ""
+  echo "## Debugging"
+  echo ""
+  echo "- Start with [index.md](index.md), then [source-map.md](source-map.md)."
+  echo "- Confirm any wiki claim against source before editing behavior."
+} > "$workflows_gen"
+
+{
+  echo "Generated: $now"
+  echo "Component: $component"
+  echo "Last verified commit: $commit"
+  echo ""
+  echo "## Public Surface Inputs"
+  echo ""
+  [ -n "$podspec" ] && echo "- Podspec: \`$(relpath "$podspec")\`"
+  if [ "$component" = "BTIMService" ]; then
+    echo "- Service facade: \`BTIMService/Classes/Base/BTIMServiceTool.h\`"
+    echo "- Core protocol: \`BTIMService/Classes/Common/BTIMServiceProtocol.h\`"
+    echo "- Message ID map protocol: \`BTIMService/Classes/Common/BTIMMsgIdMapProtocol.h\`"
+    echo ""
+    echo "## Public Header Method Seeds"
+    echo ""
+    for f in \
+      "$ROOT/BTIMService/Classes/Base/BTIMServiceTool.h" \
+      "$ROOT/BTIMService/Classes/Common/BTIMServiceProtocol.h" \
+      "$ROOT/BTIMService/Classes/Common/BTIMMsgIdMapProtocol.h"; do
+      if [ -f "$f" ]; then
+        echo "### \`$(relpath "$f")\`"
+        echo ""
+        rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
+        echo ""
+      fi
+    done
+  elif [ "$component" = "BTIMModule" ]; then
+    echo "- Router targets under \`BTIMModule/Classes/Router/\`"
+    echo "- Module utility facade: \`BTIMModule/Classes/Tool/BTIMModuleTool.h\`"
+    echo "- Chat input surface: \`BTIMModule/Classes/IMConversationDetail/Common/ChatInput/\`"
+    echo ""
+    echo "## Router Method Seeds"
+    echo ""
+    find "$ROOT/BTIMModule/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
+      echo "### \`$(relpath "$f")\`"
+      echo ""
+      rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
+      echo ""
+    done
+  else
+    echo "- Component type is unknown. Fill curated notes after inspecting public APIs."
+  fi
+} > "$contracts_gen"
+
+{
+  echo "Generated: $now"
+  echo "Component: $component"
+  echo "Last verified commit: $commit"
   echo ""
   echo "## High-Signal Files"
   echo ""
@@ -151,93 +336,21 @@ mkdir -p "$TOPICS_DIR"
       | sed 's/^/- `/' \
       | sed 's/$/`/' || true
   fi
-} > "$TOPICS_DIR/entrypoints.md"
+} > "$entrypoints_gen"
 
-{
-  echo "# Contracts"
-  echo ""
-  echo "Generated: $now"
-  echo ""
-  echo "## Public Surface Inputs"
-  echo ""
-  [ -n "$podspec" ] && echo "- Podspec: \`$(relpath "$podspec")\`"
-  if [ "$component" = "BTIMService" ]; then
-    echo "- Service facade: \`BTIMService/Classes/Base/BTIMServiceTool.h\`"
-    echo "- Core protocol: \`BTIMService/Classes/Common/BTIMServiceProtocol.h\`"
-    echo "- Message ID map protocol: \`BTIMService/Classes/Common/BTIMMsgIdMapProtocol.h\`"
-    echo ""
-    echo "## Public Header Method Seeds"
-    echo ""
-    for f in \
-      "$ROOT/BTIMService/Classes/Base/BTIMServiceTool.h" \
-      "$ROOT/BTIMService/Classes/Common/BTIMServiceProtocol.h" \
-      "$ROOT/BTIMService/Classes/Common/BTIMMsgIdMapProtocol.h"; do
-      if [ -f "$f" ]; then
-        echo "### \`$(relpath "$f")\`"
-        echo ""
-        rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
-        echo ""
-      fi
-    done
-  elif [ "$component" = "BTIMModule" ]; then
-    echo "- Router targets under \`BTIMModule/Classes/Router/\`"
-    echo "- Module utility facade: \`BTIMModule/Classes/Tool/BTIMModuleTool.h\`"
-    echo "- Chat input surface: \`BTIMModule/Classes/IMConversationDetail/Common/ChatInput/\`"
-    echo ""
-    echo "## Router Method Seeds"
-    echo ""
-    find "$ROOT/BTIMModule/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
-      echo "### \`$(relpath "$f")\`"
-      echo ""
-      rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
-      echo ""
-    done
-  else
-    echo "- Component type is unknown. Fill this file manually after inspecting public APIs."
-  fi
-} > "$KB_DIR/contracts.md"
-
-{
-  echo "# $component Agent Knowledge"
-  echo ""
-  echo "This directory is a tracked, agent-maintained knowledge base derived from the source code."
-  echo "Source code remains the source of truth. If this wiki disagrees with code, update the wiki."
-  echo ""
-  echo "## Entry Points"
-  echo ""
-  echo "- [Source Map](source-map.md)"
-  echo "- [Workflows](workflows.md)"
-  echo "- [Contracts](contracts.md)"
-  echo "- [Entrypoints](topics/entrypoints.md)"
-  echo ""
-  echo "## Fast Routing"
-  echo ""
-  if [ "$component" = "BTIMService" ]; then
-    echo "- Message and session backend behavior: start at \`BTIMServiceTool\`, then \`BTIMServiceProtocol\` and the LibService/RYService adapters."
-    echo "- Message models and constants: start under \`BTIMService/Classes/Common/\`."
-    echo "- Message ID mapping: start under \`BTIMService/Classes/MsgIdMapDB/\`."
-  elif [ "$component" = "BTIMModule" ]; then
-    echo "- Navigation and external calls: start under \`BTIMModule/Classes/Router/\`."
-    echo "- Chat page behavior: start under \`IMConversationDetail/\`."
-    echo "- Shared module utilities and draft logic: start at \`BTIMModuleTool\`."
-  fi
-  echo ""
-  echo "## Agent Rules"
-  echo ""
-  echo "- Read this index before broad code searches."
-  echo "- Use the source map to choose files before opening large implementation files."
-  echo "- Update this knowledge base in the same commit as source changes that alter behavior, APIs, routing, or workflows."
-  echo "- Append every maintenance pass to [log.md](log.md)."
-  echo ""
-  echo "Last generated: $now"
-} > "$KB_DIR/index.md"
+write_generated_page "$KB_DIR/index.md" "$component Agent Knowledge" "index" "$index_gen"
+write_generated_page "$KB_DIR/source-map.md" "Source Map" "source-map" "$source_map_gen"
+write_generated_page "$KB_DIR/workflows.md" "Workflows" "workflows" "$workflows_gen"
+write_generated_page "$KB_DIR/contracts.md" "Contracts" "contracts" "$contracts_gen"
+write_generated_page "$TOPICS_DIR/entrypoints.md" "Entrypoints" "topic" "$entrypoints_gen"
 
 {
   echo ""
-  echo "## $now | scan | refreshed source map and contracts"
+  echo "## $now | scan | refreshed generated blocks"
   echo ""
   echo "- Component: $component"
+  echo "- Commit: $commit"
   echo "- Source files: $source_count"
 } >> "$KB_DIR/log.md"
 
-[ "$QUIET" -eq 1 ] || echo "Refreshed knowledge base: $KB_DIR"
+[ "$QUIET" -eq 1 ] || echo "Refreshed generated knowledge blocks: $KB_DIR"

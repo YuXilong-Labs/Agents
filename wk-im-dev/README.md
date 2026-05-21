@@ -2,7 +2,7 @@
 
 iOS IM 组件开发 Agent，用于 `BTIMService` 和 `BTIMModule` 的功能开发、Bug 修复、代码审查、架构查询和组件知识库维护。
 
-它的核心定位是：让 Codex / Claude Code 在修改 IM 代码前先快速定位相关入口、遵守跨 Pod 边界，并在源码变化后同步维护 `docs/agent-knowledge/`。
+它的核心定位是：让 Codex / Claude Code 在修改 IM 代码前先快速定位相关入口、遵守跨 Pod 边界，并在源码变化后按工作流同步维护 `docs/agent-knowledge/`。这不是常驻后台 watcher，而是 agent 执行任务时维护的 tracked LLM Wiki。
 
 ## 30 秒开始
 
@@ -110,7 +110,7 @@ PLUGIN_DIR=/path/to/Agents/wk-im-dev PROJECT_DIR=/path/to/BTIMService python exa
 
 ## 组件知识库
 
-知识库位于组件仓库：
+知识库位于组件仓库，是 Markdown 形式的 LLM Wiki：
 
 ```text
 docs/agent-knowledge/
@@ -130,7 +130,9 @@ wk-im-kb-scan.sh --root /path/to/BTIMService
 wk-im-kb-check.sh --root /path/to/BTIMService
 ```
 
-源码、public API、路由、状态机或工作流变化后，应把知识库更新和代码改动放在同一个提交里。
+每个非 log 页面包含 YAML frontmatter、脚本维护的 generated block、`Curated Notes` 和 `Source Refs`。`wk-im-kb-scan.sh` 只刷新 `<!-- WK-IM-GENERATED:START -->` 与 `<!-- WK-IM-GENERATED:END -->` 之间的内容，人工/agent 总结应写在 generated block 之外。
+
+源码、public API、路由、状态机或工作流变化后，应把知识库更新和代码改动放在同一个提交里。详细使用规则见 [docs/agent-knowledge.md](docs/agent-knowledge.md)。
 
 ## 架构约束
 
@@ -171,6 +173,7 @@ wk-im-dev/
 ├── core/
 │   └── wk-im-dev-core.md
 ├── docs/
+│   ├── agent-knowledge.md
 │   └── rename-from-wk-im-developer.md
 ├── hooks/
 ├── skills/
@@ -181,7 +184,7 @@ wk-im-dev/
 
 **首次不存在 `docs/agent-knowledge/` 会自动创建吗？**
 
-会。`wk-im-kb-scan.sh --root <repo>` 会先调用 bootstrap，创建 `index.md`、`log.md`、`source-map.md`、`workflows.md`、`contracts.md` 和 `topics/entrypoints.md`，再刷新 source map 和 contracts。
+会。`wk-im-kb-scan.sh --root <repo>` 会先调用 bootstrap，创建 `index.md`、`log.md`、`source-map.md`、`workflows.md`、`contracts.md` 和 `topics/entrypoints.md`，再刷新 generated block。
 
 **installer 会直接覆盖我项目里的 `AGENTS.md` 吗？**
 
@@ -189,7 +192,7 @@ wk-im-dev/
 
 **为什么还需要知识库，直接 grep 不行吗？**
 
-grep 适合精确搜索；知识库负责保存组件入口、public API、路由、工作流和最近维护记录，能减少每次从零开始扫描大仓库的成本。
+grep 适合精确搜索；知识库负责保存组件入口、public API、路由、工作流、稳定决策和最近维护记录，能减少每次从零开始扫描大仓库的成本。
 
 **是否必须和旧实现完全对齐 subagent？**
 
