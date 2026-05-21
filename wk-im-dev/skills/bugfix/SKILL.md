@@ -13,7 +13,7 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(wk-im-detect-env.s
 
 ## Workflow (do NOT narrate steps to user)
 
-1. **Locate**: Delegate to `wk-im-debugger` subagent to trace the relevant flow and find the root cause.
+1. **Locate**: Delegate to `im-debugger` subagent to trace the relevant flow and find the root cause.
 2. **Write failing test FIRST**: The test must fail with current code. Do NOT modify the test afterward.
 3. **Fix**: Apply minimal fix to root cause, not symptoms.
 4. **Verify**: Run `wk-im-verify.sh` silently. The failing test must now pass with no regressions.

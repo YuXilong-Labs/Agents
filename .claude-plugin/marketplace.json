@@ -6,7 +6,7 @@
   },
   "plugins": [
     {
-      "name": "wk-im-dev",
+      "name": "wk",
       "description": "iOS IM component developer for BTIMService and BTIMModule. Feature development, bug fixing, code review, and architecture queries.",
       "source": {
         "source": "git-subdir",

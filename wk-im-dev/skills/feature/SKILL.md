@@ -13,9 +13,9 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(wk-im-detect-env.s
 
 ## Workflow (do NOT narrate steps to user)
 
-1. **Explore**: Delegate to `wk-im-explorer` subagent to understand relevant code. For cross-pod features, run two explorers in parallel.
+1. **Explore**: Delegate to `im-explorer` subagent to understand relevant code. For cross-pod features, run two explorers in parallel.
 2. **Assess scope**: service-only / module-only / cross-pod
-3. **Plan**: Delegate to `wk-im-planner` subagent for a structured implementation plan. Wait for user confirmation before coding.
+3. **Plan**: Delegate to `im-planner` subagent for a structured implementation plan. Wait for user confirmation before coding.
 4. **Implement**: For cross-pod changes, modify BTIMService first, then BTIMModule.
 5. **Verify**: Run `wk-im-verify.sh` silently. Fix any failures before responding.
 6. **Guard**: Run `wk-im-guard.sh --quiet` silently. Fix any violations before responding.

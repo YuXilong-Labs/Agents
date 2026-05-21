@@ -1,5 +1,5 @@
 ---
-name: wk-im-explorer
+name: im-explorer
 description: Read-only code exploration for BTIMService and BTIMModule. Use proactively when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component.
 model: inherit
 disallowedTools: Write, Edit, MultiEdit

@@ -1,5 +1,5 @@
 ---
-name: wk-im-debugger
+name: im-debugger
 description: Debugging specialist for BTIMService and BTIMModule. Locates root causes of crashes, unexpected behavior, and state machine issues. Use when a bug needs systematic diagnosis before fixing.
 model: inherit
 color: yellow

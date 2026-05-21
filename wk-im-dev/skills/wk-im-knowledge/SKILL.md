@@ -14,7 +14,7 @@ description: Use when answering questions about BTIMService or BTIMModule archit
 ## Process (do NOT narrate to user)
 
 1. Check reference docs above for relevant information
-2. Delegate to `wk-im-explorer` subagent for deep call chain tracing if needed
+2. Delegate to `im-explorer` subagent for deep call chain tracing if needed
 3. Cite specific file paths and class names from the actual codebase
 
 ## Output to User

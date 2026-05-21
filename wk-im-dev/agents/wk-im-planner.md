@@ -1,5 +1,5 @@
 ---
-name: wk-im-planner
+name: im-planner
 description: Read-only planning agent for BTIMService and BTIMModule. Explores code and produces structured implementation plans. Use when a task needs careful scoping before coding begins.
 model: opus
 disallowedTools: Write, Edit, MultiEdit
