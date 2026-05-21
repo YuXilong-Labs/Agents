@@ -2,8 +2,8 @@
 feishu-bot.py — wk-im-dev 飞书 bot 示例
 
 使用 Agent SDK 的 ClaudeSDKClient 接入飞书消息。
-Plugin 通过 settings.json 自动激活 wk-im-dev 主 agent，
-无需在 bot 代码中重复定义架构约束。
+wk-im-dev plugin 提供主 agent 身份、skills、hooks 和约束，
+无需在 bot 代码中重复定义。
 
 依赖:
   pip install claude-agent-sdk lark-oapi
@@ -26,7 +26,6 @@ PROJECT_DIR = os.environ.get("PROJECT_DIR", os.getcwd())
 def make_options(project_dir: str) -> ClaudeAgentOptions:
     return ClaudeAgentOptions(
         # wk-im-dev plugin provides the main agent identity, skills, and hooks.
-        # settings.json in the plugin activates wk-im-dev as the main agent automatically.
         plugins=[{"type": "local", "path": PLUGIN_DIR}],
         skills="all",
         cwd=project_dir,

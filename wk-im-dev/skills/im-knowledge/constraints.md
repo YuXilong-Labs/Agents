@@ -35,7 +35,7 @@ Never log or expose in any log statement:
 
 ## Public API Contract (HARD)
 
-- All cross-pod APIs are defined in `BTIMService/Public/` as Swift protocols
+- Cross-pod APIs are exposed through Objective-C public headers exported by BTIMService
 - Any new or changed public API MUST update `contracts.md`
 - API parameters MUST use internal model types, never ThirdPartyIMSDK types
 - Callbacks MUST be dispatched on main thread

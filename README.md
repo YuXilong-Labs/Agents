@@ -7,7 +7,8 @@
 | 目录 | 说明 | 主要入口 |
 | --- | --- | --- |
 | `wk-code-refactor/` | 面向单组件、子模块、单功能点的重构 Agent，强调旧实现先读、功能点矩阵、TDD 和分阶段确认。 | `wk-code-refactor/README.md` |
-| `wk-im-developer/` | 面向 `BTIMService` / `BTIMModule` 的 IM 组件开发 Agent，提供 Claude 与 Codex 双轨工作流。 | `wk-im-developer/README.md` |
+| `wk-im-dev/` | 当前面向 `BTIMService` / `BTIMModule` 的 IM 组件开发 Agent，提供 Codex、Claude Code 和知识库维护工作流。 | `wk-im-dev/README.md` |
+| `wk-im-developer/` | 旧版 IM Agent，保留作迁移和行为参考，不作为新安装入口。 | `wk-im-developer/README.md` |
 
 ## 使用原则
 
@@ -22,7 +23,7 @@
 
 ```bash
 open wk-code-refactor/README.md
-open wk-im-developer/README.md
+open wk-im-dev/README.md
 ```
 
 校验并安装 `wk-code-refactor`：
@@ -33,17 +34,17 @@ scripts/verify.sh
 scripts/install.sh
 ```
 
-安装 `wk-im-developer`：
+安装当前 IM Agent：
 
 ```bash
-cd wk-im-developer
-bash install.sh
+bash wk-im-dev/codex/install.sh --target /path/to/BTIMService
 ```
 
-或使用远程一行安装：
+启动 Codex：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-developer/install.sh | bash
+cd /path/to/BTIMService
+codex
 ```
 
 ## 目录约定

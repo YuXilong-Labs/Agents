@@ -1,6 +1,6 @@
 # Cross-Pod API Contracts
 
-All public APIs are defined in `BTIMService/Public/` as Swift protocols.
+Public APIs are exposed through Objective-C headers exported by the BTIMService pod, especially `BTIMServiceTool.h`, `BTIMServiceProtocol.h`, and router-facing model headers.
 
 ## Message APIs
 
@@ -32,5 +32,5 @@ All public APIs are defined in `BTIMService/Public/` as Swift protocols.
 
 1. Parameters MUST use internal model types (never ThirdPartyIMSDK types)
 2. Callbacks MUST be dispatched on main thread
-3. Async APIs use Swift async/await or completion handlers (not delegates)
+3. Async APIs use completion blocks, notifications, or existing Objective-C delegate-style surfaces
 4. Breaking changes require version bump and migration guide

@@ -16,7 +16,7 @@ HostApp
 | **Adapter** | ThirdPartyIMSDK wrapper, translates SDK events to internal models |
 | **Domain** | Message, Session, User models and business logic |
 | **Repository** | Local persistence (CoreData/SQLite) |
-| **Service** | Public API exposed to BTIMModule via `BTIMService/Public/` |
+| **Service** | Public API exposed to BTIMModule through Objective-C headers such as `BTIMServiceTool.h` and `BTIMServiceProtocol.h` |
 
 ## BTIMModule Layers
 
@@ -29,5 +29,5 @@ HostApp
 
 ## Cross-Pod API
 
-BTIMModule calls BTIMService only through protocols in `BTIMService/Public/`.
-New cross-pod APIs must be added there and documented in `contracts.md`.
+BTIMModule calls BTIMService through the Objective-C public headers exported by the BTIMService pod.
+New cross-pod APIs must update the relevant public header and be documented in `contracts.md`.
