@@ -1,0 +1,23 @@
+{
+  "name": "yuxilong-labs",
+  "description": "YuXilong-Labs 可复用 Agent 与工作流资产",
+  "owner": {
+    "name": "YuXilong-Labs"
+  },
+  "plugins": [
+    {
+      "name": "wk-im-developer",
+      "description": "iOS IM 组件开发 Plugin，支持 BTIMService 和 BTIMModule 的功能开发、Bug 修复和架构查询。",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/YuXilong-Labs/Agents.git",
+        "path": "wk-im-developer/v3"
+      },
+      "author": {
+        "name": "YuXilong-Labs"
+      },
+      "category": "development",
+      "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"]
+    }
+  ]
+}
