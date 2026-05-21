@@ -6,12 +6,12 @@
   },
   "plugins": [
     {
-      "name": "wk-im-developer",
-      "description": "iOS IM 组件开发 Plugin，支持 BTIMService 和 BTIMModule 的功能开发、Bug 修复和架构查询。",
+      "name": "wk-im-dev",
+      "description": "iOS IM component developer for BTIMService and BTIMModule. Feature development, bug fixing, code review, and architecture queries.",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/YuXilong-Labs/Agents.git",
-        "path": "wk-im-developer/v3"
+        "path": "wk-im-dev"
       },
       "author": {
         "name": "YuXilong-Labs"
