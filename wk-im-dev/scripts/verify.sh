@@ -152,7 +152,7 @@ require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMService"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMModule"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" 'name = "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "Core spec version: 1"
-require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "docs/agent-knowledge/"
+require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "core/wk-im-dev-core.md"
 require_contains "$PLUGIN_ROOT/codex/profile.toml" "[profiles.wk-im-dev]"
 require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:START"
 require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:END"
@@ -165,6 +165,7 @@ require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev-core.md"
 require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev"
 
 while IFS= read -r agent; do
+  [ -L "$agent" ] && continue
   check_frontmatter "$agent"
 done < <(find "$PLUGIN_ROOT/agents" -maxdepth 1 -type f -name '*.md' | sort)
 

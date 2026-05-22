@@ -1,3 +1,8 @@
+---
+version: 1
+last_updated: 2026-05-22
+---
+
 # wk-im-dev Core
 
 Version: 1

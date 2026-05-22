@@ -59,7 +59,7 @@ check_diff() {
 
   # NOTE: This regex only catches sensitive vars on the same line as the log call.
   # Multi-line ObjC log statements are not detected.
-  if echo "$DIFF" | grep -E "^\+" | grep -qE "(NSLog|print|DDLog|os_log|logger)\b.*\b(messageBody|msgContent|token|accessToken|cookie|attachmentURL)\b"; then
+  if echo "$DIFF" | grep -E "^\+" | grep -E '(NSLog|print|DDLog|os_log|logger)\b' | grep -qE '\b(messageBody|msgContent|[^a-zA-Z]token[^a-zA-Z_]|accessToken|[^a-zA-Z]cookie[^a-zA-Z_]|attachmentURL)'; then
     VIOLATIONS+=("⚠️  PRIVACY [$label]: Possible sensitive data in log statement (single-line check only)")
   fi
 }

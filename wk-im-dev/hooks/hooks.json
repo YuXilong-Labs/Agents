@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh\" --quiet 2>/dev/null || true"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/bin/wk-im-guard.sh\" --quiet 2>>/tmp/wk-im-guard.log || true"
           }
         ]
       }
