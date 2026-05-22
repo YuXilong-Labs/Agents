@@ -283,12 +283,14 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
     echo ""
     echo "## Router Method Seeds"
     echo ""
-    find "$ROOT/BTIMModule/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
-      echo "### \`$(relpath "$f")\`"
-      echo ""
-      rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
-      echo ""
-    done
+    if [ -d "$ROOT/BTIMModule/Classes/Router" ]; then
+      find "$ROOT/BTIMModule/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
+        echo "### \`$(relpath "$f")\`"
+        echo ""
+        rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
+        echo ""
+      done
+    fi
   else
     echo "- Component type is unknown. Fill curated notes after inspecting public APIs."
   fi

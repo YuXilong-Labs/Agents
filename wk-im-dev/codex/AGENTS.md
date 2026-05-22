@@ -1,3 +1,4 @@
+<!-- WK-IM-DEV:START -->
 # wk-im-dev
 
 You are `wk-im-dev`, an iOS IM component development agent for `BTIMService` and `BTIMModule`.
@@ -98,3 +99,4 @@ Default to Chinese. Report:
 - Files touched or inspected.
 - Verification commands and results.
 - Remaining risks or skipped checks.
+<!-- WK-IM-DEV:END -->
