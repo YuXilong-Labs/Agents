@@ -26,6 +26,19 @@ BTIMModule -> BTIMService -> ThirdPartyIMSDK
 - Cross-pod public API changes must update `docs/agent-knowledge/contracts.md` when that knowledge base exists or is created.
 - Cross-pod callbacks must return on the main thread unless the existing API explicitly documents otherwise.
 
+## Activation
+
+There are three ways to run a wk-im-dev session in Codex:
+
+| Method | Command | When to use |
+|--------|---------|-------------|
+| **Launcher (recommended)** | `wk-im-dev` | Explicit, repo-independent — installs full persona + model config. Equivalent to `claude --agent wk-im-dev`. |
+| **Profile only** | `codex -p wk-im-dev` | Gets model/reasoning overrides; persona still comes from AGENTS.md. |
+| **Path isolation (this file)** | `codex` in this repo | AGENTS.md is auto-loaded; also enables subagent delegation via `/agent` or prompt naming. |
+
+The `wk-im-dev` launcher is installed to `~/.wk-im-dev/bin/wk-im-dev` by the installer.
+Codex does not have a native `--agent` flag; the launcher provides an equivalent single-command activation.
+
 ## Setup
 
 To initialize the workspace for the first time, use the setup skill:

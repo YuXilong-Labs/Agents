@@ -91,7 +91,7 @@ curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev
 
 ### 第 2 步：开始工作
 
-**Codex**：`codex`（激活 wk-im-dev agent）
+**Codex**：`wk-im-dev`（推荐，repo 无关，完整人格激活）或 `codex`（在已安装 AGENTS.md 的仓库中）
 **Claude Code**：`claude --agent wk-im-dev`（已全局安装）或 `claude --plugin-dir /path/to/Agents/wk-im-dev`（本地加载）
 
 直接用自然语言提需求：
@@ -120,7 +120,10 @@ review 一下我的改动
 | Claude Code 本地加载 | `claude --plugin-dir /path/to/Agents/wk-im-dev`（无需安装） |
 | Claude Code setup | `/wk-im-dev:setup`（首次初始化或重新扫描知识库） |
 | Codex 一键安装 | `curl … bootstrap.sh \| bash -s -- --target <repo>` |
+| **Codex 显式激活（推荐）** | `wk-im-dev`（等价于 `claude --agent wk-im-dev`） |
+| Codex profile 激活 | `codex -p wk-im-dev`（profile 模型/推理，无独立人格注入） |
 | Codex setup | `$wk-im-dev:setup` |
+| 不写 config.toml | `install.sh --skip-codex-profile` |
 | HostApp 同时改两个组件 | `wk-im-init.sh --root <HostApp>` 或 `--host-app <p1> --host-app <p2>` |
 | 路径自动识别失败 | `wk-im-init.sh --service <p> --module <p> --host-app <p1> --host-app <p2>` |
 | 已有 `AGENTS.md` | installer 保留原内容，合并/更新 `<!-- WK-IM-DEV:START/END -->` 区块 |
@@ -166,7 +169,10 @@ curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev
 
 安装内容：
 
-- `~/.codex/agents/wk-im-dev.toml`：Codex 原生 agent wrapper。
+- `~/.wk-im-dev/bin/wk-im-dev`：**launcher 命令**，等价于 `claude --agent wk-im-dev`。
+- `~/.wk-im-dev/wk-im-dev-core.md`：core spec，launcher 每次启动时注入为人格。
+- `~/.codex/agents/wk-im-dev.toml`：Codex 子 agent wrapper（供 omx/原生会话委派用）。
+- `~/.codex/config.toml`：追加 `[profiles.wk-im-dev]`（model + 推理强度，marker 包裹幂等写入）。
 - `~/.wk-im-dev/bin/*.sh`：环境检测、验证、guard、知识库脚本。
 - `<target>/AGENTS.md`：Codex 项目入口，自动合并 wk-im-dev marker 区块，不覆盖已有内容。
 - `~/.zshrc`（或 `~/.bashrc`）：追加 `~/.wk-im-dev/bin` 到 PATH。
@@ -174,8 +180,16 @@ curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev
 安装后验证：
 
 ```bash
+test -f ~/.wk-im-dev/bin/wk-im-dev && echo "launcher OK"
+test -f ~/.wk-im-dev/wk-im-dev-core.md && echo "core spec OK"
 test -f ~/.codex/agents/wk-im-dev.toml && echo "Codex agent OK"
 ~/.wk-im-dev/bin/wk-im-init.sh --root /path/to/BTIMService
+```
+
+不想修改 `~/.codex/config.toml` 时加 `--skip-codex-profile`：
+
+```bash
+bash scripts/install.sh --runtime codex --target <repo> --skip-codex-profile
 ```
 
 已有 Agents 仓库时也可直接用本地 install.sh：
@@ -220,7 +234,7 @@ bash /path/to/Agents/wk-im-dev/scripts/install.sh --runtime codex --target /path
 | `claude --plugin-dir <path>` | ✅ 完全隔离 | 需指定完整路径 | 调试 plugin 本身，或无网络时 |
 | `/plugin install`（不加 `--agent`） | ❌ 全局常驻 | 最方便 | 专职 IM 开发，无其他项目干扰 |
 
-> **Codex 没有 `--agent` 参数**，使用 bootstrap 脚本安装后全局生效，不同 IM 仓库通过 `AGENTS.md` 路径隔离。
+> **Codex 没有 `--agent` 参数**，但 `wk-im-dev` launcher 提供等价的单命令显式激活（profile 管模型，`-c developer_instructions` 注入人格，repo 无关，不依赖 AGENTS.md）。
 
 #### 安全使用全局安装的前提
 
@@ -245,9 +259,10 @@ PLUGIN_DIR=/path/to/Agents/wk-im-dev PROJECT_DIR=/path/to/BTIMService python exa
 
 | 能力 | Codex | Claude Code |
 | --- | --- | --- |
-| 安装 | `curl bootstrap.sh \| bash` 全局安装 | `/plugin install wk-im-dev@YuXilong-Labs` |
-| 激活 | `codex`（全局，无 `--agent` 参数） | `claude --agent wk-im-dev`（按需，推荐） |
-| 主入口 | 组件仓库的 `AGENTS.md` 与 `~/.codex/agents/wk-im-dev.toml` | plugin manifest 与 `agents/*.md` |
+| 安装 | `curl bootstrap.sh \| bash` | `/plugin install wk-im-dev@YuXilong-Labs` |
+| 激活（推荐） | `wk-im-dev`（launcher，等价 `--agent`，repo 无关） | `claude --agent wk-im-dev` |
+| 激活（备选） | `codex -p wk-im-dev`（仅 profile）或 `codex`（AGENTS.md 路径隔离） | `claude --plugin-dir <path>` |
+| 主入口 | launcher + `~/.wk-im-dev/wk-im-dev-core.md` + `AGENTS.md` | plugin manifest 与 `agents/*.md` |
 | 命令脚本 | `~/.wk-im-dev/bin` | plugin 内 `${CLAUDE_PLUGIN_ROOT}/bin` |
 | 子 agent | 优先使用 Codex 原生子 agent；不可用时按同职责直接执行 | 使用 plugin agent 文件 |
 | 项目引导 | installer 合并 `codex/AGENTS.md` 的 `WK-IM-DEV` 区块到目标仓库 | Claude plugin 自动提供入口，不默认写 `CLAUDE.md` |
