@@ -1,4 +1,5 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "yuxilong-labs",
   "description": "YuXilong-Labs 可复用 Agent 与工作流资产",
   "owner": {
@@ -6,18 +7,21 @@
   },
   "plugins": [
     {
-      "name": "wk",
+      "name": "wk-im-dev",
       "description": "iOS IM component developer for BTIMService and BTIMModule. Feature development, bug fixing, code review, and architecture queries.",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/YuXilong-Labs/Agents.git",
-        "path": "wk-im-dev"
-      },
       "author": {
         "name": "YuXilong-Labs"
       },
       "category": "development",
-      "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"]
+      "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"],
+      "homepage": "https://github.com/YuXilong-Labs/Agents",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/YuXilong-Labs/Agents.git",
+        "path": "wk-im-dev",
+        "ref": "main",
+        "sha": "fada592764e6284c2418834dba19487a5f852ac2"
+      }
     }
   ]
 }
