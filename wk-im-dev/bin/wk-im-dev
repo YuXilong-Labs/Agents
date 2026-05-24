@@ -1,0 +1,44 @@
+#!/bin/bash
+# wk-im-dev - Launch a Codex session as the wk-im-dev IM component agent.
+#
+# Usage:
+#   wk-im-dev [codex options] [prompt]
+#
+# Equivalent to: claude --agent wk-im-dev  (Claude Code counterpart)
+#
+# How it works:
+#   - Injects the wk-im-dev core spec as developer_instructions (-c, additive,
+#     does not degrade Codex built-in behavior).
+#   - Activates [profiles.wk-im-dev] for model/reasoning/sandbox overrides when
+#     that profile block exists in ~/.codex/config.toml.
+#   - Falls back to explicit -c model/effort if the profile is absent.
+#
+# Install: ~/.wk-im-dev/bin/wk-im-dev (placed by scripts/install.sh)
+
+set -euo pipefail
+
+CORE_SPEC="${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-core.md}"
+
+if [ ! -f "$CORE_SPEC" ]; then
+  cat >&2 <<ERR
+wk-im-dev: core spec not found at $CORE_SPEC
+Re-run the installer to fix this:
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh \\
+    | bash -s -- --target .
+ERR
+  exit 1
+fi
+
+# Build base args: inject full persona via -c (profile cannot carry developer_instructions).
+ARGS=(-c "developer_instructions=$(cat "$CORE_SPEC")")
+
+# Activate profile if it exists in config.toml (gives model/reasoning_effort/personality).
+CODEX_CFG="${CODEX_HOME:-$HOME/.codex}/config.toml"
+if grep -q '^\[profiles\.wk-im-dev\]' "$CODEX_CFG" 2>/dev/null; then
+  ARGS+=(--profile wk-im-dev)
+else
+  # Graceful fallback: set model/effort directly so session still behaves correctly.
+  ARGS+=(-c model='"gpt-5.4"' -c model_reasoning_effort='"high"')
+fi
+
+exec codex "${ARGS[@]}" "$@"

@@ -1,0 +1,8 @@
+# WK-IM-DEV-PROFILE:START
+# wk-im-dev Codex profile — injected into ~/.codex/config.toml by scripts/install.sh.
+# DO NOT edit between the markers; re-run the installer to update.
+[profiles.wk-im-dev]
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+personality = "pragmatic"
+# WK-IM-DEV-PROFILE:END
