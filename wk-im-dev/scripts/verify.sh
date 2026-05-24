@@ -117,6 +117,7 @@ required_files=(
   "$PLUGIN_ROOT/.claude-plugin/plugin.json"
   "$PLUGIN_ROOT/README.md"
   "$PLUGIN_ROOT/agents/wk-im-dev.md"
+  "$PLUGIN_ROOT/bin/wk-im-dev"
   "$PLUGIN_ROOT/bin/wk-im-detect-env.sh"
   "$PLUGIN_ROOT/bin/wk-im-guard.sh"
   "$PLUGIN_ROOT/bin/wk-im-init.sh"
@@ -126,6 +127,7 @@ required_files=(
   "$PLUGIN_ROOT/bin/wk-im-verify.sh"
   "$PLUGIN_ROOT/codex/AGENTS.md"
   "$PLUGIN_ROOT/codex/install.sh"
+  "$PLUGIN_ROOT/codex/profile.toml"
   "$PLUGIN_ROOT/codex/wk-im-dev.toml"
   "$PLUGIN_ROOT/core/wk-im-dev-core.md"
   "$PLUGIN_ROOT/hooks/hooks.json"
@@ -151,11 +153,16 @@ require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMModule"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" 'name = "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "Core spec version: 1"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "docs/agent-knowledge/"
+require_contains "$PLUGIN_ROOT/codex/profile.toml" "[profiles.wk-im-dev]"
+require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:START"
+require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:END"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "Version: 1"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "ThirdPartyIMSDK"
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/skills/setup/SKILL.md" "wk-im-init.sh"
 require_contains "$PLUGIN_ROOT/README.md" "WK-IM-DEV:START"
+require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev-core.md"
+require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev"
 
 while IFS= read -r agent; do
   check_frontmatter "$agent"
@@ -164,6 +171,11 @@ done < <(find "$PLUGIN_ROOT/agents" -maxdepth 1 -type f -name '*.md' | sort)
 while IFS= read -r script; do
   check_shell_syntax "$script"
 done < <(find "$PLUGIN_ROOT/bin" "$PLUGIN_ROOT/codex" "$PLUGIN_ROOT/hooks" "$PLUGIN_ROOT/scripts" -type f -name '*.sh' | sort)
+
+# Launcher has no .sh extension — check it explicitly.
+if [ -f "$PLUGIN_ROOT/bin/wk-im-dev" ]; then
+  check_shell_syntax "$PLUGIN_ROOT/bin/wk-im-dev"
+fi
 
 check_json "$PLUGIN_ROOT/.claude-plugin/plugin.json"
 check_json "$PLUGIN_ROOT/hooks/hooks.json"
