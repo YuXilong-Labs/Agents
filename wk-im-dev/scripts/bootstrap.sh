@@ -63,4 +63,4 @@ echo "▶ 安装到: $TARGET"
 bash "$TMP_DIR/Agents/wk-im-dev/scripts/install.sh" \
   --runtime "$RUNTIME" \
   --target "$TARGET" \
-  "${EXTRA_ARGS[@]}"
+  ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
