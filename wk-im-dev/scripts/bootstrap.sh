@@ -57,7 +57,7 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 echo "▶ 下载 wk-im-dev（sparse clone）..."
 git clone --depth 1 --filter=blob:none --sparse "$REPO_URL" "$TMP_DIR/Agents" --quiet
 cd "$TMP_DIR/Agents"
-git sparse-checkout set wk-im-dev --quiet
+git sparse-checkout set wk-im-dev 2>/dev/null
 
 echo "▶ 安装到: $TARGET"
 bash "$TMP_DIR/Agents/wk-im-dev/scripts/install.sh" \
