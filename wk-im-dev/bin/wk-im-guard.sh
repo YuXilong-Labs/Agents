@@ -15,15 +15,11 @@ ENV=$(echo "$ENV_JSON" | grep -o '"env":"[^"]*"' | cut -d'"' -f4)
 SVC_PATH=$(echo "$ENV_JSON" | grep -o '"service_path":"[^"]*"' | cut -d'"' -f4)
 MOD_PATH=$(echo "$ENV_JSON" | grep -o '"module_path":"[^"]*"' | cut -d'"' -f4)
 
-# Fallback: read from .wk-im-workspace.json → ~/.wk-im-dev/workspace.json → ~/.wk-im-workspace.json
-if [ -z "$SVC_PATH" ] || [ -z "$MOD_PATH" ]; then
-  for CONFIG in ".wk-im-workspace.json" "$HOME/.wk-im-dev/workspace.json" "$HOME/.wk-im-workspace.json"; do
-    if [ -f "$CONFIG" ]; then
-      SVC_PATH=$(grep -o '"service":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
-      MOD_PATH=$(grep -o '"module":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
-      [ -n "$SVC_PATH" ] && [ -n "$MOD_PATH" ] && break
-    fi
-  done
+# Read component paths from global workspace config when detect-env can't resolve them
+GLOBAL_CONFIG="$HOME/.wk-im-dev/workspace.json"
+if ([ -z "$SVC_PATH" ] || [ -z "$MOD_PATH" ]) && [ -f "$GLOBAL_CONFIG" ]; then
+  [ -z "$SVC_PATH" ] && SVC_PATH=$(grep -o '"service":"[^"]*"' "$GLOBAL_CONFIG" | cut -d'"' -f4)
+  [ -z "$MOD_PATH" ] && MOD_PATH=$(grep -o '"module":"[^"]*"'  "$GLOBAL_CONFIG" | cut -d'"' -f4)
 fi
 
 check_diff() {
@@ -56,7 +52,7 @@ check_diff() {
   fi
 
   # NOTE: This regex only catches sensitive vars on the same line as the log call.
-  # Multi-line ObjC log statements (e.g. NSLog(@"...", \n messageBody)) are not detected.
+  # Multi-line ObjC log statements are not detected.
   if echo "$DIFF" | grep -E "^\+" | grep -qE "(NSLog|print|DDLog|os_log|logger)\b.*\b(messageBody|msgContent|token|accessToken|cookie|attachmentURL)\b"; then
     VIOLATIONS+=("⚠️  PRIVACY [$label]: Possible sensitive data in log statement (single-line check only)")
   fi

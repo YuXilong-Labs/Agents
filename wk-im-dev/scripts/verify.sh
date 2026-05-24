@@ -152,7 +152,7 @@ require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "Core spec version: 1"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "docs/agent-knowledge/"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "Version: 1"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "ThirdPartyIMSDK"
-require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk"'
+require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/skills/setup/SKILL.md" "wk-im-init.sh"
 require_contains "$PLUGIN_ROOT/README.md" "WK-IM-DEV:START"
 

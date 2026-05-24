@@ -26,6 +26,17 @@ BTIMModule -> BTIMService -> ThirdPartyIMSDK
 - Cross-pod public API changes must update `docs/agent-knowledge/contracts.md` when that knowledge base exists or is created.
 - Cross-pod callbacks must return on the main thread unless the existing API explicitly documents otherwise.
 
+## Setup
+
+To initialize the workspace for the first time, use the setup skill:
+
+```
+$wk-im-dev:setup
+$wk-im-dev:setup --host-app /path/to/App1 --host-app /path/to/App2
+```
+
+This runs `wk-im-init.sh`, detects BTIMService/BTIMModule paths, writes `~/.wk-im-dev/workspace.json`, and bootstraps `docs/agent-knowledge/`.
+
 ## Local Tools
 
 The Codex installer places helper scripts in `~/.wk-im-dev/bin`.

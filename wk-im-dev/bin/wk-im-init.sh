@@ -1,22 +1,27 @@
 #!/bin/bash
 # wk-im-init.sh
 # Initialize wk-im-dev workspace detection and component knowledge bases.
+# Workspace config is written only to ~/.wk-im-dev/workspace.json (global).
+# Multiple --host-app flags are supported for multi-app workspaces.
 
 set -euo pipefail
 
 ROOT=""
 SERVICE_PATH=""
 MODULE_PATH=""
-HOST_APP=""
+HOST_APP_LIST=()
 QUIET=0
 
 usage() {
   cat <<'USAGE'
-Usage: wk-im-init.sh [--root <repo>] [--service <path>] [--module <path>] [--host-app <path>] [--quiet]
+Usage: wk-im-init.sh [--root <repo>] [--service <path>] [--module <path>]
+                     [--host-app <path>] [--host-app <path2> ...] [--quiet]
 
-Initializes wk-im-dev for a component repo or host app workspace. It detects
-BTIMService/BTIMModule paths, writes .wk-im-workspace.json only when a
-multi-path workspace is known, then scans and checks docs/agent-knowledge/.
+Initializes wk-im-dev for a component repo or host app workspace. Detects
+BTIMService/BTIMModule paths, writes workspace config to ~/.wk-im-dev/workspace.json,
+then scans and checks docs/agent-knowledge/.
+
+Multiple --host-app flags are supported (e.g. two separate host apps).
 USAGE
 }
 
@@ -53,6 +58,29 @@ add_scan_root() {
   SCAN_ROOTS+=("$path")
 }
 
+write_workspace_json() {
+  local out="$1"
+  local service="$2"
+  local mod="$3"
+  shift 3
+  local apps=("$@")
+
+  {
+    echo "{"
+    echo "  \"service\": \"$(json_escape "$service")\","
+    echo "  \"module\": \"$(json_escape "$mod")\","
+    printf '  "hostApps": ['
+    local first=1
+    for app in "${apps[@]}"; do
+      [ "$first" -eq 0 ] && printf ', '
+      printf '"%s"' "$(json_escape "$app")"
+      first=0
+    done
+    echo ']'
+    echo "}"
+  } > "$out"
+}
+
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --root)
@@ -68,7 +96,7 @@ while [ "$#" -gt 0 ]; do
       shift 2
       ;;
     --host-app)
-      HOST_APP="${2:-}"
+      HOST_APP_LIST+=("${2:-}")
       shift 2
       ;;
     --quiet)
@@ -92,8 +120,8 @@ ROOT="$(abs_dir "$ROOT")" || fail "Root directory does not exist: $ROOT"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 [ -x "$SCRIPT_DIR/wk-im-detect-env.sh" ] || fail "Missing executable: $SCRIPT_DIR/wk-im-detect-env.sh"
-[ -x "$SCRIPT_DIR/wk-im-kb-scan.sh" ] || fail "Missing executable: $SCRIPT_DIR/wk-im-kb-scan.sh"
-[ -x "$SCRIPT_DIR/wk-im-kb-check.sh" ] || fail "Missing executable: $SCRIPT_DIR/wk-im-kb-check.sh"
+[ -x "$SCRIPT_DIR/wk-im-kb-scan.sh" ]    || fail "Missing executable: $SCRIPT_DIR/wk-im-kb-scan.sh"
+[ -x "$SCRIPT_DIR/wk-im-kb-check.sh" ]   || fail "Missing executable: $SCRIPT_DIR/wk-im-kb-check.sh"
 
 DETECTED_JSON="$("$SCRIPT_DIR/wk-im-detect-env.sh" "$ROOT")"
 ENV_NAME="$(printf '%s\n' "$DETECTED_JSON" | json_value env)"
@@ -112,12 +140,15 @@ else
   MODULE_PATH="$DETECTED_MODULE"
 fi
 
-if [ -n "$HOST_APP" ]; then
-  HOST_APP="$(abs_dir "$HOST_APP")" || fail "HostApp path does not exist: $HOST_APP"
+# Resolve and validate each host app; auto-detect from main-app env if none given
+RESOLVED_HOST_APPS=()
+if [ "${#HOST_APP_LIST[@]}" -gt 0 ]; then
+  for raw in "${HOST_APP_LIST[@]}"; do
+    resolved="$(abs_dir "$raw")" || fail "HostApp path does not exist: $raw"
+    RESOLVED_HOST_APPS+=("$resolved")
+  done
 elif [ "$ENV_NAME" = "main-app" ]; then
-  HOST_APP="$ROOT"
-else
-  HOST_APP=""
+  RESOLVED_HOST_APPS=("$ROOT")
 fi
 
 SCAN_ROOTS=()
@@ -130,43 +161,32 @@ case "$ENV_NAME" in
     add_scan_root "$MODULE_PATH"
     ;;
 esac
-
 add_scan_root "$SERVICE_PATH"
 add_scan_root "$MODULE_PATH"
 
 SHOULD_WRITE_CONFIG=0
-if [ "$ENV_NAME" = "main-app" ] || [ -n "$HOST_APP" ]; then
+if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ]; then
   SHOULD_WRITE_CONFIG=1
 elif [ -n "$SERVICE_PATH" ] && [ -n "$MODULE_PATH" ]; then
   SHOULD_WRITE_CONFIG=1
 fi
 
 if [ "$SHOULD_WRITE_CONFIG" -eq 1 ]; then
-  CONFIG="$ROOT/.wk-im-workspace.json"
-  {
-    echo "{"
-    echo "  \"service\": \"$(json_escape "$SERVICE_PATH")\","
-    echo "  \"module\": \"$(json_escape "$MODULE_PATH")\","
-    echo "  \"hostApp\": \"$(json_escape "$HOST_APP")\""
-    echo "}"
-  } > "$CONFIG"
-  [ "$QUIET" -eq 1 ] || echo "Workspace config written: $CONFIG"
-
-  # Also write a global copy so guard/verify can find component paths when
-  # Claude Code is opened directly inside a component repo (not the HostApp).
   GLOBAL_CONFIG_DIR="$HOME/.wk-im-dev"
   mkdir -p "$GLOBAL_CONFIG_DIR"
   GLOBAL_CONFIG="$GLOBAL_CONFIG_DIR/workspace.json"
-  cp "$CONFIG" "$GLOBAL_CONFIG"
-  [ "$QUIET" -eq 1 ] || echo "Global workspace config written: $GLOBAL_CONFIG"
+  write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH" "${RESOLVED_HOST_APPS[@]}"
+  [ "$QUIET" -eq 1 ] || echo "Workspace config written: $GLOBAL_CONFIG"
 fi
 
 if [ "$QUIET" -ne 1 ]; then
   echo "Environment: $ENV_NAME"
   echo "Root:        $ROOT"
   [ -n "$SERVICE_PATH" ] && echo "BTIMService: $SERVICE_PATH"
-  [ -n "$MODULE_PATH" ] && echo "BTIMModule:  $MODULE_PATH"
-  [ -n "$HOST_APP" ] && echo "HostApp:     $HOST_APP"
+  [ -n "$MODULE_PATH" ]  && echo "BTIMModule:  $MODULE_PATH"
+  for app in "${RESOLVED_HOST_APPS[@]}"; do
+    echo "HostApp:     $app"
+  done
 fi
 
 if [ "${#SCAN_ROOTS[@]}" -eq 0 ]; then
@@ -187,6 +207,10 @@ done
 if [ "$QUIET" -ne 1 ]; then
   echo ""
   echo "wk-im-dev initialization finished."
-  echo "Codex:  cd \"$ROOT\" && codex"
-  echo "Claude: claude --plugin-dir \"$(cd "$SCRIPT_DIR/.." && pwd)\""
+  echo "Codex:       cd \"$ROOT\" && codex"
+  echo "Claude Code: claude --plugin-dir \"$(cd "$SCRIPT_DIR/.." && pwd)\""
+  echo ""
+  echo "Setup via agent:"
+  echo "  Claude Code: /wk-im-dev:setup"
+  echo "  Codex:       \$wk-im-dev:setup"
 fi
