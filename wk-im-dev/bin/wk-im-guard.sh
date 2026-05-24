@@ -15,6 +15,12 @@ ENV=$(echo "$ENV_JSON" | grep -o '"env":"[^"]*"' | cut -d'"' -f4)
 SVC_PATH=$(echo "$ENV_JSON" | grep -o '"service_path":"[^"]*"' | cut -d'"' -f4)
 MOD_PATH=$(echo "$ENV_JSON" | grep -o '"module_path":"[^"]*"' | cut -d'"' -f4)
 
+# Fast exit for non-IM repos — safe to use as a globally-installed plugin hook
+if [ "$ENV" = "unknown" ]; then
+  [ "$QUIET" != "--quiet" ] && echo "✅ Guard skipped (not an IM repo)."
+  exit 0
+fi
+
 # Read component paths from global workspace config when detect-env can't resolve them
 GLOBAL_CONFIG="$HOME/.wk-im-dev/workspace.json"
 if ([ -z "$SVC_PATH" ] || [ -z "$MOD_PATH" ]) && [ -f "$GLOBAL_CONFIG" ]; then

@@ -188,6 +188,68 @@ Last verified commit: $commit
 Run \`wk-im-kb-scan.sh --root "$ROOT"\` to populate key classes, routers, and source files.
 EOF
 
+write_page_if_missing "$TOPICS_DIR/common-flows.md" "Common Flows" "topic" <<EOF
+Curated: fill in concrete file paths and class names after first source scan.
+Run \`wk-im-kb-scan.sh --root "$ROOT"\` to populate entrypoints, then update this page.
+
+## Message Send Flow
+
+\`\`\`
+BTIMModule UI action
+  → BTIMService.sendMessage(content:to:)
+    → validate content & session state
+    → persist to local DB (status: sending)
+    → ThirdPartyIMSDK.sendMessage()
+      → [network]
+      → onSuccess: update DB status → sending_success
+      → onFailure: update DB status → sending_failed
+    → notify BTIMModule via onMessageStatusChanged()
+\`\`\`
+
+Entry: <!-- fill: path to BTIMServiceTool.h sendMessage method -->
+State machine file: <!-- fill: path to message status model -->
+
+## Message Receive Flow
+
+\`\`\`
+ThirdPartyIMSDK push/pull callback
+  → BTIMService Adapter.onMessageReceived()
+    → parse SDK message → internal BTChatMessageModel
+    → persist to local DB
+    → update session unread count
+    → notify BTIMModule via onMessageReceived()
+\`\`\`
+
+Entry: <!-- fill: path to adapter/callback registration -->
+
+## Unread Count Update
+
+\`\`\`
+Message received → session update → onUnreadCountChanged(conversationId:count:)
+  → BTIMModule updates badge / list cell
+\`\`\`
+
+Entry: <!-- fill: where unread count is calculated/stored -->
+Callback: <!-- fill: onUnreadCountChanged implementation in BTIMModule -->
+
+## Message Revoke Flow
+
+\`\`\`
+BTIMModule → BTIMService.revokeMessage(messageId:)
+  → check time limit (default 2 min)
+  → ThirdPartyIMSDK.revokeMessage()
+  → update local DB: status = revoked
+  → notify all sessions via onMessageStatusChanged()
+\`\`\`
+
+## Session List Refresh
+
+\`\`\`
+App foreground / message received → BTIMService.getSessions()
+  → return sorted session list → BTIMModule updates list UI
+\`\`\`
+EOF
+
 if [ "$created" -eq 1 ]; then
   if ! grep -q "bootstrap | initialized agent knowledge" "$KB_DIR/log.md"; then
     {

@@ -170,6 +170,7 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
   echo "- [Workflows](workflows.md)"
   echo "- [Contracts](contracts.md)"
   echo "- [Entrypoints](topics/entrypoints.md)"
+  echo "- [Common Flows](topics/common-flows.md)"
   echo ""
   echo "## Topics"
   echo ""
@@ -296,6 +297,26 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
   fi
 } > "$contracts_gen"
 
+# Helper: extract public method signatures from an ObjC header
+extract_objc_methods() {
+  local file="$1"
+  [ -f "$file" ] || return
+  # Match lines starting with - or + (instance/class methods), skip empty/comment lines
+  grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$file" 2>/dev/null \
+    | sed 's/[[:space:]]*$//' \
+    | head -20 \
+    | sed 's/^/  - `/' | sed 's/$/`/'
+}
+
+# Helper: extract Swift public declarations (class/struct/protocol/func/var at top level)
+extract_swift_symbols() {
+  local dir="$1"
+  [ -d "$dir" ] || return
+  rg -n "^(public|open)\s+(class|struct|protocol|func|var|let)\s+\w+" "$dir" 2>/dev/null \
+    | sed "s#^$ROOT/##" | head -30 \
+    | sed 's/^/- `/' | sed 's/$/`/'
+}
+
 {
   echo "Generated: $now"
   echo "Component: $component"
@@ -330,13 +351,43 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
     done
   fi
   echo ""
-  echo "## Symbol Search Seeds"
+  echo "## Key Class Declarations"
   echo ""
   if [ -d "$source_root" ]; then
-    rg -n "(@interface|@protocol|@implementation) (BTIMServiceTool|BTIMLibService|BTRYService|BTChatMessageModel|Target_BTMessage|Target_BTGroupMessage|BTIMModuleTool|BTIMModuleChatInputView|BTIMModulePrivateChatViewController|BTIMModuleGroupChatViewController)" "$source_root" 2>/dev/null \
+    rg -n "@(interface|protocol)\s+\w+" "$source_root" 2>/dev/null \
+      | grep -v "@interface.*()$" \
       | sed "s#^$ROOT/##" \
-      | sed 's/^/- `/' \
-      | sed 's/$/`/' || true
+      | sed 's/^/- `/' | sed 's/$/`/' \
+      | head -30 || true
+    # Swift public types
+    extract_swift_symbols "$source_root"
+  fi
+  echo ""
+  echo "## Public Method Signatures (Key Headers)"
+  echo ""
+  if [ "$component" = "BTIMService" ]; then
+    for hdr in \
+      "BTIMService/Classes/Base/BTIMServiceTool.h" \
+      "BTIMService/Classes/Common/BTIMServiceProtocol.h" \
+      "BTIMService/Classes/Common/BTIMMsgIdMapProtocol.h"; do
+      if [ -f "$ROOT/$hdr" ]; then
+        echo "### \`$hdr\`"
+        echo ""
+        extract_objc_methods "$ROOT/$hdr"
+        echo ""
+      fi
+    done
+  elif [ "$component" = "BTIMModule" ]; then
+    for hdr in \
+      "BTIMModule/Classes/Tool/BTIMModuleTool.h" \
+      "BTIMModule/Classes/Router/Target_BTMessage.h"; do
+      if [ -f "$ROOT/$hdr" ]; then
+        echo "### \`$hdr\`"
+        echo ""
+        extract_objc_methods "$ROOT/$hdr"
+        echo ""
+      fi
+    done
   fi
 } > "$entrypoints_gen"
 

@@ -31,6 +31,7 @@ REQUIRED_FILES=(
   "workflows.md"
   "contracts.md"
   "topics/entrypoints.md"
+  "topics/common-flows.md"
 )
 
 failures=()

@@ -129,6 +129,7 @@ required_files=(
   "$PLUGIN_ROOT/codex/wk-im-dev.toml"
   "$PLUGIN_ROOT/core/wk-im-dev-core.md"
   "$PLUGIN_ROOT/hooks/hooks.json"
+  "$PLUGIN_ROOT/hooks/kb-refresh.sh"
   "$PLUGIN_ROOT/hooks/scope-check.sh"
   "$PLUGIN_ROOT/scripts/install.sh"
   "$PLUGIN_ROOT/scripts/verify.sh"

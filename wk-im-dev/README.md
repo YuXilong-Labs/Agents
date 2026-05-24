@@ -160,6 +160,47 @@ test -f ~/.codex/agents/wk-im-dev.toml && echo "Codex agent OK"
 bash /path/to/Agents/wk-im-dev/scripts/install.sh --runtime codex --target /path/to/BTIMService
 ```
 
+### `/plugin install` 全局安装评估
+
+> **结论：可用，但推荐仅在 IM 专项仓库下使用 `--plugin-dir`。**
+
+#### 全局安装做了什么
+
+```
+/plugin install wk-im-dev@YuXilong-Labs
+```
+
+将 plugin 写入 `~/.claude/settings.json`，**所有后续 `claude` 会话**都会加载此 plugin，包括与 IM 无关的项目。
+
+#### Hooks 是否安全
+
+| Hook | 触发时机 | 非 IM 项目的行为 |
+|------|----------|-----------------|
+| `scope-check.sh` (PostToolUse) | 每次 Write/Edit | 检查文件路径是否含 `Pods/`/`ThirdPartySDK/`；非 IM 项目永远不写这些路径 → 立即退出 0 |
+| `kb-refresh.sh` (PostToolUse) | 每次 Write/Edit | 走路径向上查找 `*.podspec`；非 IM 仓库找不到 → 退出 0（< 5 ms） |
+| `wk-im-guard.sh` (Stop) | 每次会话结束 | `detect-env.sh` 返回 `unknown` → 立即退出 0（已加快速路径）|
+
+**所有 hooks 对非 IM 项目均是无副作用的快速 no-op。**
+
+#### 剩余风险
+
+- **Agent 路由污染**：`im-dev` 等 agent 在所有会话中可被调用。Agent 的 description 要求 "Use PROACTIVELY when working on BTIMService or BTIMModule"，正常会话不会误触发，但若项目名碰巧含相关词，模型可能误路由。
+- **上下文占用**：Plugin 的 agents/skills 定义会注入到每个会话的 system prompt，轻微增加 token 消耗（约 2-4k tokens）。
+- **升级同步**：全局安装后，plugin 版本由 marketplace 控制，本地修改不会自动同步。
+
+#### 推荐方式对比
+
+| 方式 | 隔离性 | 方便性 | 适合场景 |
+|------|--------|--------|----------|
+| `claude --plugin-dir <path>` | 完全隔离（当次会话） | 需每次指定 | 多类型项目混用，只在 IM 仓库激活 |
+| `/plugin install wk-im-dev@…` | 全局生效 | 一次安装永久可用 | 专职 IM 开发，所有会话都需要 agent |
+
+#### 安全使用全局安装的前提
+
+1. 已确认所有 hooks 在非 IM 仓库中测试无副作用（本 plugin 已满足）
+2. 理解 agent 路由在 IM 关键词触发时会自动激活
+3. 接受约 2-4k tokens 的系统上下文开销
+
 ### Source Verification
 
 ```bash
