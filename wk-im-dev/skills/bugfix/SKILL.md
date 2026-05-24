@@ -21,6 +21,13 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_RO
 5. **更新知识库**：如行为、路由、状态机或 API 契约变化，委派 `im-knowledge-maintainer` 更新组件 `docs/agent-knowledge/`。
 6. **验证**：委派 `im-verifier` 独立检查失败测试、回归测试、guard、diff 范围和 knowledge sync；失败则继续修复。
 
+## HostApp 验证说明（本地 :path => pod 场景）
+
+使用 cocoapods 本地 `:path =>` 依赖时：
+- 源文件改动**无需** `pod install`，直接从 HostApp xcworkspace 执行 build 即可复现和验证 bug。
+- `wk-im-verify.sh` 会自动读取 `~/.wk-im-dev/workspace.json` 找到 HostApp，无需手动指定。
+- 若 bug 复现需要真机，加 `-destination 'id=<device-id>'` 参数给 xcodebuild。
+
 ## 回复用户
 - 用通俗语言说明根因（1-2 句）
 - 改了什么、为什么改

@@ -22,6 +22,14 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_RO
 6. **更新契约/知识库**：如有 public API、路由、工作流或行为变化，委派 `im-knowledge-maintainer` 更新组件 `docs/agent-knowledge/`。
 7. **验证**：委派 `im-verifier` 独立检查 build/test、guard、diff 范围和 knowledge sync；失败则修复后再回复。
 
+## HostApp 验证说明（本地 :path => pod 场景）
+
+使用 cocoapods 本地 `:path =>` 依赖时：
+- 源文件改动**无需** `pod install`，Xcode 直接通过路径读取最新源码。
+- 验证须从 **HostApp 的 `.xcworkspace`** 执行 `xcodebuild`，而非在组件仓库执行 `pod lib lint`。
+- `wk-im-verify.sh` 会自动识别 HostApp 路径（来自 `.wk-im-workspace.json` 或 `~/.wk-im-dev/workspace.json`）并使用正确的 workspace build。
+- 跨仓库改动的提交顺序：先 commit BTIMService，再 commit BTIMModule（保持依赖方向的提交顺序）。
+
 ## 回复用户
 - 简要说明实现了什么
 - 变更文件（只用相对路径）

@@ -4,15 +4,18 @@
 # In single-component env: pod lib lint.
 # Usage: wk-im-verify.sh [--build-only]
 
-ENV_JSON=$(wk-im-detect-env.sh 2>/dev/null || echo '{"env":"unknown"}')
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+ENV_JSON=$("$SCRIPT_DIR/wk-im-detect-env.sh" 2>/dev/null || echo '{"env":"unknown"}')
 ENV=$(echo "$ENV_JSON" | grep -o '"env":"[^"]*"' | cut -d'"' -f4)
 
 HOST_APP=""
-CONFIG=".wk-im-workspace.json"
-[ ! -f "$CONFIG" ] && CONFIG="$HOME/.wk-im-workspace.json"
-if [ -f "$CONFIG" ]; then
-  HOST_APP=$(grep -o '"hostApp":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
-fi
+for CONFIG in ".wk-im-workspace.json" "$HOME/.wk-im-dev/workspace.json" "$HOME/.wk-im-workspace.json"; do
+  if [ -f "$CONFIG" ]; then
+    HOST_APP=$(grep -o '"hostApp":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
+    [ -n "$HOST_APP" ] && break
+  fi
+done
 
 if [ "$ENV" = "main-app" ]; then
   HOST_APP="${HOST_APP:-$(pwd)}"
@@ -37,9 +40,17 @@ if [ -z "$WORKSPACE" ]; then
 fi
 
 SCHEME=$(basename "$WORKSPACE" .xcworkspace)
-echo "🔨 Building $SCHEME..."
+
+# Pick the first available iPhone simulator; fall back to generic iOS Simulator.
+DESTINATION=$(xcrun simctl list devices available 2>/dev/null \
+  | grep -E "iPhone" | grep -v "unavailable" \
+  | sed -nE 's/.*\(([-0-9A-F]{8}-[-0-9A-F]{4}-[-0-9A-F]{4}-[-0-9A-F]{4}-[-0-9A-F]{12})\).*/id=\1/p' \
+  | head -1)
+DESTINATION="${DESTINATION:-generic/platform=iOS Simulator}"
+
+echo "🔨 Building $SCHEME (destination: $DESTINATION)..."
 xcodebuild -workspace "$WORKSPACE" -scheme "$SCHEME" \
-  -destination 'platform=iOS Simulator,name=iPhone 16' \
+  -destination "$DESTINATION" \
   build 2>&1 | grep -E "error:|Build succeeded|Build FAILED" | tail -5
 
 STATUS=${PIPESTATUS[0]}

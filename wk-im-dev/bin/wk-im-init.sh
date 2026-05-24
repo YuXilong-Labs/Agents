@@ -151,6 +151,14 @@ if [ "$SHOULD_WRITE_CONFIG" -eq 1 ]; then
     echo "}"
   } > "$CONFIG"
   [ "$QUIET" -eq 1 ] || echo "Workspace config written: $CONFIG"
+
+  # Also write a global copy so guard/verify can find component paths when
+  # Claude Code is opened directly inside a component repo (not the HostApp).
+  GLOBAL_CONFIG_DIR="$HOME/.wk-im-dev"
+  mkdir -p "$GLOBAL_CONFIG_DIR"
+  GLOBAL_CONFIG="$GLOBAL_CONFIG_DIR/workspace.json"
+  cp "$CONFIG" "$GLOBAL_CONFIG"
+  [ "$QUIET" -eq 1 ] || echo "Global workspace config written: $GLOBAL_CONFIG"
 fi
 
 if [ "$QUIET" -ne 1 ]; then

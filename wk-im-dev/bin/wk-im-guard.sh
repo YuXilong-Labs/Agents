@@ -4,22 +4,26 @@
 # Usage: wk-im-guard.sh [--quiet]
 # Exit 0: all clear. Exit 1: violations found.
 
+set -uo pipefail
+
 QUIET="${1:-}"
 VIOLATIONS=()
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-ENV_JSON=$(wk-im-detect-env.sh 2>/dev/null || echo '{"env":"unknown"}')
+ENV_JSON=$("$SCRIPT_DIR/wk-im-detect-env.sh" 2>/dev/null || echo '{"env":"unknown"}')
 ENV=$(echo "$ENV_JSON" | grep -o '"env":"[^"]*"' | cut -d'"' -f4)
 SVC_PATH=$(echo "$ENV_JSON" | grep -o '"service_path":"[^"]*"' | cut -d'"' -f4)
 MOD_PATH=$(echo "$ENV_JSON" | grep -o '"module_path":"[^"]*"' | cut -d'"' -f4)
 
-# Fallback: read from .wk-im-workspace.json
+# Fallback: read from .wk-im-workspace.json → ~/.wk-im-dev/workspace.json → ~/.wk-im-workspace.json
 if [ -z "$SVC_PATH" ] || [ -z "$MOD_PATH" ]; then
-  CONFIG=".wk-im-workspace.json"
-  [ ! -f "$CONFIG" ] && CONFIG="$HOME/.wk-im-workspace.json"
-  if [ -f "$CONFIG" ]; then
-    SVC_PATH=$(grep -o '"service":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
-    MOD_PATH=$(grep -o '"module":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
-  fi
+  for CONFIG in ".wk-im-workspace.json" "$HOME/.wk-im-dev/workspace.json" "$HOME/.wk-im-workspace.json"; do
+    if [ -f "$CONFIG" ]; then
+      SVC_PATH=$(grep -o '"service":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
+      MOD_PATH=$(grep -o '"module":"[^"]*"' "$CONFIG" | cut -d'"' -f4)
+      [ -n "$SVC_PATH" ] && [ -n "$MOD_PATH" ] && break
+    fi
+  done
 fi
 
 check_diff() {
@@ -51,8 +55,10 @@ check_diff() {
     fi
   fi
 
+  # NOTE: This regex only catches sensitive vars on the same line as the log call.
+  # Multi-line ObjC log statements (e.g. NSLog(@"...", \n messageBody)) are not detected.
   if echo "$DIFF" | grep -E "^\+" | grep -qE "(NSLog|print|DDLog|os_log|logger)\b.*\b(messageBody|msgContent|token|accessToken|cookie|attachmentURL)\b"; then
-    VIOLATIONS+=("⚠️  PRIVACY [$label]: Possible sensitive data in log statement")
+    VIOLATIONS+=("⚠️  PRIVACY [$label]: Possible sensitive data in log statement (single-line check only)")
   fi
 }
 

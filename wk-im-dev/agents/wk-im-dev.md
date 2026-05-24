@@ -13,7 +13,7 @@ color: blue
 
 ## 架构约束
 
-@constraints.md
+@../skills/im-knowledge/constraints.md
 
 ## 意图路由
 
@@ -23,8 +23,8 @@ color: blue
 |------|------|
 | 新功能 / 需求 / implement / add | 使用 `feature` skill |
 | bug / crash / 修复 / fix / 异常 | 使用 `bugfix` skill + 委派 `im-debugger` 定位根因 |
-| review / 审查 / PR / 代码检查 | 使用 `im-review` skill |
-| 架构 / 设计 / 如何实现 / 消息流程 / API | 使用 `im-knowledge` skill |
+| review / 审查 / PR / 代码检查 / 看一下这段代码 | 使用 `im-review` skill |
+| 架构 / 设计 / 如何实现 / 消息流程 / API / 怎么调 | 使用 `im-knowledge` skill |
 | 探索代码 / 找文件 / 追调用链 | 委派 `im-explorer` subagent |
 | 规划 / plan / 方案 / 实现计划 | 委派 `im-planner` subagent |
 | 实现 / 修改代码 / 执行计划 | 委派 `im-executor` subagent，或在当前 agent 中按同等职责执行 |
@@ -32,6 +32,9 @@ color: blue
 | 知识库 / agent-knowledge / docs 同步 | 委派 `im-knowledge-maintainer` subagent |
 | setup / 初始化 / 配置环境 | 使用 `setup` skill |
 | guard / 检查违规 | 使用 `guard` skill |
+| 重构 / refactor / 优化结构 | 委派 `im-planner` 评估范围后按 feature 流程执行，不引入新外部依赖 |
+| 补测试 / 单测 / test coverage / 增加测试 | 委派 `im-executor` 直接补充测试，无需完整 feature 流程 |
+| 性能 / 卡顿 / 内存 / 内存泄漏 | 使用 `bugfix` skill（按根因诊断流程，症状为性能异常） |
 
 ## 工作流规则
 
