@@ -52,6 +52,9 @@ Rules:
 - After source, public API, router, workflow, or repository guidance changes, update the matching knowledge page in the same change set.
 - Before reporting completion, run `wk-im-kb-check.sh --root <repo>` for changed component repos when the knowledge base is present or was created.
 - Source code remains the source of truth. If source and knowledge disagree, fix the knowledge base.
+- When `~/.wk-im-dev/workspace.json` lists both service and module paths, read both `docs/agent-knowledge/index.md` files before answering questions.
+- Cross-component relevance signals: data flow between components, callbacks crossing the pod boundary, API contract questions, and any question mentioning both UI behavior and backend logic.
+- For cross-component questions, dispatch im-explorer to both components in parallel.
 
 ## Subagent Roles
 

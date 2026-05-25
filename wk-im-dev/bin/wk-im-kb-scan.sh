@@ -153,7 +153,9 @@ source_map_gen="$(mktemp)"
 workflows_gen="$(mktemp)"
 contracts_gen="$(mktemp)"
 entrypoints_gen="$(mktemp)"
-trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$entrypoints_gen"' EXIT
+topic1_gen="$(mktemp)"
+topic2_gen="$(mktemp)"
+trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$entrypoints_gen" "$topic1_gen" "$topic2_gen"' EXIT
 
 {
   echo "Generated: $now"
@@ -297,15 +299,25 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
   fi
 } > "$contracts_gen"
 
-# Helper: extract public method signatures from an ObjC header
+# Helper: extract public method signatures from an ObjC header (no limit)
 extract_objc_methods() {
   local file="$1"
   [ -f "$file" ] || return
-  # Match lines starting with - or + (instance/class methods), skip empty/comment lines
   grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$file" 2>/dev/null \
     | sed 's/[[:space:]]*$//' \
-    | head -20 \
     | sed 's/^/  - `/' | sed 's/$/`/'
+}
+
+# Helper: find callers of a method name in source root (up to 5 results)
+find_callers() {
+  local method_name="$1"
+  local search_dir="$2"
+  [ -d "$search_dir" ] || return
+  [ -n "$method_name" ] || return
+  rg -n "\b${method_name}\b" "$search_dir" 2>/dev/null \
+    | sed "s#^$ROOT/##" \
+    | head -5 \
+    | sed 's/^/  - `/' | sed 's/$/`/' || true
 }
 
 # Helper: extract Swift public declarations (class/struct/protocol/func/var at top level)
@@ -363,7 +375,7 @@ extract_swift_symbols() {
     extract_swift_symbols "$source_root"
   fi
   echo ""
-  echo "## Public Method Signatures (Key Headers)"
+  echo "## Public Method Signatures & Callers (Key Headers)"
   echo ""
   if [ "$component" = "BTIMService" ]; then
     for hdr in \
@@ -375,6 +387,19 @@ extract_swift_symbols() {
         echo ""
         extract_objc_methods "$ROOT/$hdr"
         echo ""
+        # Emit callers for each method name extracted from this header
+        while IFS= read -r sig; do
+          # Extract bare method name: first word after (ReturnType) up to next : or ;
+          method_name="$(printf '%s\n' "$sig" | sed -nE 's/.*\([^)]+\)[[:space:]]*([a-zA-Z_][a-zA-Z0-9_]*).*/\1/p' | head -1)"
+          [ -n "$method_name" ] || continue
+          callers="$(find_callers "$method_name" "$source_root")"
+          if [ -n "$callers" ]; then
+            echo "#### Callers of \`$method_name\`"
+            echo ""
+            printf '%s\n' "$callers"
+            echo ""
+          fi
+        done < <(grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$ROOT/$hdr" 2>/dev/null || true)
       fi
     done
   elif [ "$component" = "BTIMModule" ]; then
@@ -386,8 +411,27 @@ extract_swift_symbols() {
         echo ""
         extract_objc_methods "$ROOT/$hdr"
         echo ""
+        while IFS= read -r sig; do
+          method_name="$(printf '%s\n' "$sig" | sed -nE 's/.*\([^)]+\)[[:space:]]*([a-zA-Z_][a-zA-Z0-9_]*).*/\1/p' | head -1)"
+          [ -n "$method_name" ] || continue
+          callers="$(find_callers "$method_name" "$source_root")"
+          if [ -n "$callers" ]; then
+            echo "#### Callers of \`$method_name\`"
+            echo ""
+            printf '%s\n' "$callers"
+            echo ""
+          fi
+        done < <(grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$ROOT/$hdr" 2>/dev/null || true)
       fi
     done
+  fi
+  echo ""
+  echo "## Protocol Conformances"
+  echo ""
+  if [ -d "$source_root" ]; then
+    rg -n "@interface\s+\w+.*<\w+Protocol" "$source_root" 2>/dev/null \
+      | sed "s#^$ROOT/##" \
+      | sed 's/^/- `/' | sed 's/$/`/' || true
   fi
 } > "$entrypoints_gen"
 
@@ -396,6 +440,37 @@ write_generated_page "$KB_DIR/source-map.md" "Source Map" "source-map" "$source_
 write_generated_page "$KB_DIR/workflows.md" "Workflows" "workflows" "$workflows_gen"
 write_generated_page "$KB_DIR/contracts.md" "Contracts" "contracts" "$contracts_gen"
 write_generated_page "$TOPICS_DIR/entrypoints.md" "Entrypoints" "topic" "$entrypoints_gen"
+
+# Business-domain topic files — generated from keyword search in source
+gen_keyword_topic() {
+  local out="$1"; local title="$2"; local keywords="$3"
+  {
+    echo "Generated: $now"
+    echo "Component: $component"
+    echo "Last verified commit: $commit"
+    echo ""
+    echo "## Source References (keyword: $keywords)"
+    echo ""
+    if [ -d "$source_root" ]; then
+      rg -n "$keywords" "$source_root" 2>/dev/null \
+        | sed "s#^$ROOT/##" \
+        | head -30 \
+        | sed 's/^/- `/' | sed 's/$/`/' || true
+    fi
+  } > "$out"
+}
+
+if [ "$component" = "BTIMService" ]; then
+  gen_keyword_topic "$topic1_gen" "Unread Count" "unread|UnreadCount"
+  write_generated_page "$TOPICS_DIR/unread-count.md" "Unread Count" "topic" "$topic1_gen"
+  gen_keyword_topic "$topic2_gen" "Session Management" "session|Session"
+  write_generated_page "$TOPICS_DIR/session-management.md" "Session Management" "topic" "$topic2_gen"
+elif [ "$component" = "BTIMModule" ]; then
+  gen_keyword_topic "$topic1_gen" "Chat Input" "ChatInput|InputView"
+  write_generated_page "$TOPICS_DIR/chat-input.md" "Chat Input" "topic" "$topic1_gen"
+  gen_keyword_topic "$topic2_gen" "Conversation List" "ConversationList|SessionList"
+  write_generated_page "$TOPICS_DIR/conversation-list.md" "Conversation List" "topic" "$topic2_gen"
+fi
 
 {
   echo ""

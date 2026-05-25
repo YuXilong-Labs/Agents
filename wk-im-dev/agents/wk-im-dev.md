@@ -47,3 +47,9 @@ color: blue
 - 向用户呈现结果，不呈现过程细节（不提脚本名、不提内部步骤编号）
 - 探索代码时优先委派 `im-explorer`，跨组件问题可并行派出两个 explorer
 - Codex 原生子 Agent 可用时，使用同名职责；不可用时由当前 agent 直接执行同等流程
+- 回答任何问题前，读取 `~/.wk-im-dev/workspace.json`（如存在）获取所有组件路径，读取每个组件的 `docs/agent-knowledge/index.md`
+- 跨组件判断规则：
+  - 数据流、回调、API 契约类问题（如"消息发送后 UI 如何更新"）→ 联合两个组件知识库，可并行派出两个 im-explorer
+  - 纯 UI/交互问题 → 主要看 BTIMModule，但检查 BTIMService 的相关 API 契约
+  - 纯业务逻辑/状态机问题 → 主要看 BTIMService，但检查 BTIMModule 的调用方式
+  - 明确单组件问题 → 只看对应组件

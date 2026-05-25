@@ -134,6 +134,7 @@ required_files=(
   "$PLUGIN_ROOT/hooks/kb-refresh.sh"
   "$PLUGIN_ROOT/hooks/scope-check.sh"
   "$PLUGIN_ROOT/scripts/install.sh"
+  "$PLUGIN_ROOT/scripts/uninstall.sh"
   "$PLUGIN_ROOT/scripts/verify.sh"
   "$PLUGIN_ROOT/skills/setup/SKILL.md"
 )

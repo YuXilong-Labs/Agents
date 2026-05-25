@@ -32,3 +32,15 @@ color: green
 - 更新的知识库文件。
 - 触发更新的源码文件。
 - 验证命令及结果。
+
+## 首次深度初始化模式
+
+当被 setup skill 告知执行首次深度初始化时：
+
+1. 读取 `topics/common-flows.md`，找到所有 `<!-- fill: ... -->` 占位符
+2. 对每个占位符描述的内容，用 grep/glob 在源码中定位实际文件路径和类名，替换占位符
+3. 按以下业务域创建/补充 topics（每个 topic 包含：相关文件列表、关键类/方法、简要流程说明）：
+   - BTIMService: `unread-count.md`（未读数计算、存储、通知链路）、`message-status.md`（状态机转换、DB 更新、回调）
+   - BTIMModule: `chat-input.md`（输入框组件、草稿、发送触发）、`conversation-list.md`（列表刷新、未读角标更新）
+4. 在 `log.md` 追加条目：`## <timestamp> | deep-init | 首次深度初始化完成`
+5. 运行 `wk-im-kb-check.sh --root <repo>`
