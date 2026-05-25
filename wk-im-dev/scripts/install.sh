@@ -372,7 +372,8 @@ fi
 
 if runtime_includes claude; then
   echo "  OK Claude Code plugin source verified: $PLUGIN_ROOT"
-  echo "  NOTE Claude Code remains plugin-first; target CLAUDE.md is not written by default."
+  echo "  NOTE Agent 'wk-im-dev' is registered via plugin agents/ directory."
+  echo "       Install plugin first: /plugin install wk-im-dev@yuxilong-labs"
 fi
 
 echo ""
@@ -395,5 +396,6 @@ if runtime_includes codex; then
   echo "  cd \"$TARGET\" && codex        # 路径隔离（AGENTS.md 仍有效）"
 fi
 if runtime_includes claude; then
-  echo "  claude --plugin-dir \"$PLUGIN_ROOT\""
+  echo "  claude --agent wk-im-dev          # 激活 wk-im-dev agent"
+  echo "  claude --plugin-dir \"$PLUGIN_ROOT\"  # 或本地加载 plugin"
 fi
