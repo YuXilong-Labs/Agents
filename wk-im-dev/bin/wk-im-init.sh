@@ -63,19 +63,22 @@ write_workspace_json() {
   local service="$2"
   local mod="$3"
   shift 3
-  local apps=("$@")
+  local count=$#
 
   {
     echo "{"
     echo "  \"service\": \"$(json_escape "$service")\","
     echo "  \"module\": \"$(json_escape "$mod")\","
     printf '  "hostApps": ['
-    local first=1
-    for app in "${apps[@]}"; do
-      [ "$first" -eq 0 ] && printf ', '
-      printf '"%s"' "$(json_escape "$app")"
-      first=0
-    done
+    if [ "$count" -gt 0 ]; then
+      local first=1
+      local app
+      for app in "$@"; do
+        [ "$first" -eq 0 ] && printf ', '
+        printf '"%s"' "$(json_escape "$app")"
+        first=0
+      done
+    fi
     echo ']'
     echo "}"
   } > "$out"
@@ -175,7 +178,11 @@ if [ "$SHOULD_WRITE_CONFIG" -eq 1 ]; then
   GLOBAL_CONFIG_DIR="$HOME/.wk-im-dev"
   mkdir -p "$GLOBAL_CONFIG_DIR"
   GLOBAL_CONFIG="$GLOBAL_CONFIG_DIR/workspace.json"
-  write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH" "${RESOLVED_HOST_APPS[@]}"
+  if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ]; then
+    write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH" "${RESOLVED_HOST_APPS[@]}"
+  else
+    write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH"
+  fi
   [ "$QUIET" -eq 1 ] || echo "Workspace config written: $GLOBAL_CONFIG"
 fi
 
@@ -184,9 +191,11 @@ if [ "$QUIET" -ne 1 ]; then
   echo "Root:        $ROOT"
   [ -n "$SERVICE_PATH" ] && echo "BTIMService: $SERVICE_PATH"
   [ -n "$MODULE_PATH" ]  && echo "BTIMModule:  $MODULE_PATH"
-  for app in "${RESOLVED_HOST_APPS[@]}"; do
-    echo "HostApp:     $app"
-  done
+  if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ]; then
+    for app in "${RESOLVED_HOST_APPS[@]}"; do
+      echo "HostApp:     $app"
+    done
+  fi
 fi
 
 if [ "${#SCAN_ROOTS[@]}" -eq 0 ]; then
@@ -206,13 +215,18 @@ done
 
 # CodeGraph: detect + offer install + init per scan root.
 # Failure is non-fatal — agents fall back to knowledge base + grep.
+# Build flag list as a string to stay compatible with bash 3.2 + set -u.
 if [ -x "$SCRIPT_DIR/wk-im-codegraph.sh" ]; then
-  CG_ARGS=()
-  [ "$QUIET" -eq 1 ] && CG_ARGS+=("--quiet" "--yes")
-  if ! "$SCRIPT_DIR/wk-im-codegraph.sh" detect "${CG_ARGS[@]}" >/dev/null 2>&1; then
+  if [ "$QUIET" -eq 1 ]; then
+    CG_FLAGS="--quiet --yes"
+  else
+    CG_FLAGS=""
+  fi
+
+  if ! "$SCRIPT_DIR/wk-im-codegraph.sh" detect $CG_FLAGS >/dev/null 2>&1; then
     [ "$QUIET" -eq 1 ] || echo ""
     [ "$QUIET" -eq 1 ] || echo "CodeGraph not installed. Recommended for ~35% cheaper agent queries."
-    if "$SCRIPT_DIR/wk-im-codegraph.sh" install "${CG_ARGS[@]}"; then
+    if "$SCRIPT_DIR/wk-im-codegraph.sh" install $CG_FLAGS; then
       [ "$QUIET" -eq 1 ] || echo "codegraph installed."
     else
       [ "$QUIET" -eq 1 ] || echo "codegraph install skipped or failed — agents will fall back to grep."
@@ -223,7 +237,7 @@ if [ -x "$SCRIPT_DIR/wk-im-codegraph.sh" ]; then
     if "$SCRIPT_DIR/wk-im-codegraph.sh" detect --quiet >/dev/null 2>&1; then
       if [ ! -d "$scan_root/.codegraph" ]; then
         [ "$QUIET" -eq 1 ] || echo "Initializing codegraph index: $scan_root"
-        "$SCRIPT_DIR/wk-im-codegraph.sh" init --root "$scan_root" "${CG_ARGS[@]}" || true
+        "$SCRIPT_DIR/wk-im-codegraph.sh" init --root "$scan_root" $CG_FLAGS || true
       fi
     fi
   done

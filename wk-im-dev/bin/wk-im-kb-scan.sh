@@ -313,12 +313,14 @@ extract_objc_methods() {
 # and produced false positives. See docs/codegraph-integration.md.
 
 # Helper: extract Swift public declarations (class/struct/protocol/func/var at top level)
+# rg returns 1 when no match — bypass pipefail with `|| true` after each pipeline.
 extract_swift_symbols() {
   local dir="$1"
   [ -d "$dir" ] || return
-  rg -n "^(public|open)\s+(class|struct|protocol|func|var|let)\s+\w+" "$dir" 2>/dev/null \
-    | sed "s#^$ROOT/##" | head -30 \
-    | sed 's/^/- `/' | sed 's/$/`/'
+  (rg -n "^(public|open)\s+(class|struct|protocol|func|var|let)\s+\w+" "$dir" 2>/dev/null \
+    | sed "s#^$ROOT/##" \
+    | head -30 \
+    | sed 's/^/- `/' | sed 's/$/`/') || true
 }
 
 {
