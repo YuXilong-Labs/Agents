@@ -88,6 +88,17 @@ To check or install codegraph: `wk-im-codegraph.sh detect|install|init|status`.
 
 Use subagents for bounded independent work when it improves throughput or confidence. Keep trivial work local.
 
+## First-session self-check
+
+At the start of every new session, before producing the first reply:
+
+1. Check whether `~/.wk-im-dev/workspace.json` exists.
+   - If yes, load `service` / `module` / `hostApps` paths and read each component's `docs/agent-knowledge/index.md` if present.
+   - If no, surface a short one-line notice in Chinese **before** continuing with the user's request:
+     > 还没检测到 wk-im-dev 工作区配置。建议先执行 `$wk-im-dev:setup`（Claude Code 下用 `/wk-im-dev:setup`）初始化，否则我每次都需要重新探索仓库。
+2. Detect repo context via the equivalent of `wk-im-detect-env.sh`. If pwd looks like an IM repo but `workspace.json` is missing, escalate the same notice.
+3. Self-check runs once per session; do not repeat it on every subsequent reply.
+
 ## Workflow
 
 Feature work:

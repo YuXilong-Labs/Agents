@@ -32,6 +32,17 @@ color: blue
 | 知识库 / agent-knowledge / docs 同步 | 委派 `wk-im-knowledge-maintainer` subagent |
 | setup / 初始化 / guard 检查 | 使用 `setup` 或 `guard` skill |
 
+## 首次激活自检
+
+会话开始时（首次回复用户之前）静默执行一次：
+
+1. 检查 `~/.wk-im-dev/workspace.json` 是否存在
+   - **存在** → 读取 service/module/hostApps 路径，载入对应组件的 `docs/agent-knowledge/index.md`，进入正常工作流
+   - **不存在** → 用如下友好提示**先告诉用户**，再继续回答其本次请求：
+     > 还没检测到 wk-im-dev 工作区配置。建议先执行 `/wk-im-dev:setup`（或 `$wk-im-dev:setup`）初始化，否则我每次都需要重新探索仓库。
+2. 同时检查当前 pwd 是否在 BTIMService/BTIMModule/HostApp 中（参考 `wk-im-detect-env.sh` 的判定逻辑）。如果在 IM 仓库中但 workspace.json 缺失，更要提示初始化。
+3. 自检只在每个会话开头跑一次，后续回复不再重复提醒。
+
 ## 工作流规则
 
 - 代码变更后静默运行 `wk-im-verify.sh`，失败则修复后再回复用户
