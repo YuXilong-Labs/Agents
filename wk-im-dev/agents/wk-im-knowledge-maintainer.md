@@ -1,5 +1,5 @@
 ---
-name: im-knowledge-maintainer
+name: wk-im-knowledge-maintainer
 description: Scoped maintainer for BTIMService and BTIMModule LLM Wikis. Use after source changes or when docs/agent-knowledge is missing or stale.
 model: inherit
 color: green

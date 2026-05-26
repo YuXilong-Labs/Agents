@@ -15,11 +15,11 @@ allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_RO
 ## 工作流程（不向用户描述步骤）
 
 1. **知识库**：先读组件仓库 `docs/agent-knowledge/index.md`；缺失且需要定位代码时运行 `wk-im-kb-scan.sh --root <repo>` 自动创建。
-2. **定位**：委派 `im-debugger` subagent 追踪相关流程，找到根因。
+2. **定位**：委派 `wk-im-debugger` subagent 追踪相关流程，找到根因。
 3. **先写失败测试**：可行时测试必须在当前代码下失败；之后不得为了通过而削弱测试。
-4. **修复**：委派 `im-executor` subagent 针对根因做最小改动，不修复症状。
-5. **更新知识库**：如行为、路由、状态机或 API 契约变化，委派 `im-knowledge-maintainer` 更新组件 `docs/agent-knowledge/`。
-6. **验证**：委派 `im-verifier` 独立检查失败测试、回归测试、guard、diff 范围和 knowledge sync；失败则继续修复。
+4. **修复**：委派 `wk-im-executor` subagent 针对根因做最小改动，不修复症状。
+5. **更新知识库**：如行为、路由、状态机或 API 契约变化，委派 `wk-im-knowledge-maintainer` 更新组件 `docs/agent-knowledge/`。
+6. **验证**：委派 `wk-im-verifier` 独立检查失败测试、回归测试、guard、diff 范围和 knowledge sync；失败则继续修复。
 
 ## HostApp 验证说明（本地 :path => pod 场景）
 

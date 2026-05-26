@@ -42,7 +42,7 @@ ${CLAUDE_PLUGIN_ROOT}/bin/wk-im-init.sh \
 
 ## 首次深度初始化
 
-完成上述步骤后，对每个组件检查 `docs/agent-knowledge/log.md`：如果日志中不含 `deep-init` 条目（即首次初始化），委派 `im-knowledge-maintainer` 执行首次深度填充：
+完成上述步骤后，对每个组件检查 `docs/agent-knowledge/log.md`：如果日志中不含 `deep-init` 条目（即首次初始化），委派 `wk-im-knowledge-maintainer` 执行首次深度填充：
 
 - 读取 `topics/common-flows.md`，将所有 `<!-- fill: ... -->` 占位符替换为实际文件路径（通过 grep/glob 在源码中定位）
 - 为以下高频查询场景在 `topics/` 下创建或补充知识页（已存在则补充 Curated Notes，不存在则创建）：

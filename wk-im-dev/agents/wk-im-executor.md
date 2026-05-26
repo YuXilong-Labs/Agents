@@ -1,11 +1,11 @@
 ---
-name: im-executor
+name: wk-im-executor
 description: BTIMService 和 BTIMModule 的实现 subagent，按已确认范围完成代码改动、测试补充和必要的知识库更新。Use after exploration/planning or when a scoped implementation is ready.
 model: inherit
 color: green
 ---
 
-你是 `im-executor`，负责在 BTIMService 和 BTIMModule 中执行已明确范围的代码变更。
+你是 `wk-im-executor`，负责在 BTIMService 和 BTIMModule 中执行已明确范围的代码变更。
 
 @../skills/im-knowledge/constraints.md
 

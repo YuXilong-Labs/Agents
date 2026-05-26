@@ -281,18 +281,18 @@ PLUGIN_DIR=/path/to/Agents/wk-im-dev PROJECT_DIR=/path/to/BTIMService python exa
 ### 新功能
 
 1. 读或创建 `docs/agent-knowledge/`。
-2. `im-explorer` 定位入口和调用链。
-3. `im-planner` 输出计划；非平凡需求先确认计划。
-4. `im-executor` 实现。
-5. `im-knowledge-maintainer` 更新知识库。
-6. `im-verifier` 检查 build/test、guard、diff 范围和知识库同步。
+2. `wk-im-explorer` 定位入口和调用链。
+3. `wk-im-planner` 输出计划；非平凡需求先确认计划。
+4. `wk-im-executor` 实现。
+5. `wk-im-knowledge-maintainer` 更新知识库。
+6. `wk-im-verifier` 检查 build/test、guard、diff 范围和知识库同步。
 
 ### Bug 修复
 
-1. `im-debugger` 定位根因。
+1. `wk-im-debugger` 定位根因。
 2. 可行时先补失败回归测试。
-3. `im-executor` 做最小根因修复。
-4. `im-verifier` 验证回归、guard 和知识库同步。
+3. `wk-im-executor` 做最小根因修复。
+4. `wk-im-verifier` 验证回归、guard 和知识库同步。
 
 ### 代码审查
 
@@ -302,7 +302,7 @@ PLUGIN_DIR=/path/to/Agents/wk-im-dev PROJECT_DIR=/path/to/BTIMService python exa
 
 agent 在回答问题前会读取 `~/.wk-im-dev/workspace.json` 中的所有组件路径，并读取每个组件的 `docs/agent-knowledge/index.md`。根据问题内容智能判断：
 
-- 数据流、回调、API 契约类问题 → 联合两个组件知识库，可并行派出两个 `im-explorer`
+- 数据流、回调、API 契约类问题 → 联合两个组件知识库，可并行派出两个 `wk-im-explorer`
 - 纯 UI/交互问题 → 主要看 BTIMModule，但检查 BTIMService 的相关 API 契约
 - 纯业务逻辑/状态机问题 → 主要看 BTIMService，但检查 BTIMModule 的调用方式
 - 明确单组件问题 → 只看对应组件
@@ -357,7 +357,7 @@ wk-im-dev/
 │   ├── wk-im-debugger.md
 │   ├── wk-im-executor.md
 │   ├── wk-im-verifier.md
-│   └── im-knowledge-maintainer.md
+│   └── wk-im-knowledge-maintainer.md
 ├── bin/
 │   ├── wk-im-detect-env.sh
 │   ├── wk-im-init.sh
@@ -424,11 +424,11 @@ claude plugin marketplace remove YuXilong-Labs/Agents
 
 **首次知识库生成包含什么？**
 
-采用混合方案：脚本（`wk-im-kb-scan.sh`）在 generated block 中生成静态结构——目录树、public header 方法签名、每个方法的调用者映射（最多 5 个）、protocol conformance 列表，以及按业务关键词（未读数、会话、输入框、会话列表）搜索出的相关文件引用。setup 完成后，agent 会检测是否首次初始化，如果是，则自动委派 `im-knowledge-maintainer` 深度填充 `topics/` 下的业务知识页（填充 `common-flows.md` 中的占位符、创建 `unread-count.md`/`message-status.md` 等），使后续提问可直接从知识库获取答案而无需重新探索代码库。
+采用混合方案：脚本（`wk-im-kb-scan.sh`）在 generated block 中生成静态结构——目录树、public header 方法签名、每个方法的调用者映射（最多 5 个）、protocol conformance 列表，以及按业务关键词（未读数、会话、输入框、会话列表）搜索出的相关文件引用。setup 完成后，agent 会检测是否首次初始化，如果是，则自动委派 `wk-im-knowledge-maintainer` 深度填充 `topics/` 下的业务知识页（填充 `common-flows.md` 中的占位符、创建 `unread-count.md`/`message-status.md` 等），使后续提问可直接从知识库获取答案而无需重新探索代码库。
 
 **跨组件问题如何处理？**
 
-agent 在回答任何问题前会读取 `~/.wk-im-dev/workspace.json` 获取所有组件路径，并读取每个组件的 `docs/agent-knowledge/index.md`。对于涉及数据流、回调或 API 契约的跨组件问题，agent 会联合两个组件的知识库来回答，必要时并行派出两个 `im-explorer`。即使在 BTIMService 仓库中激活，问到"消息发送后 UI 如何更新"这类问题，也会同时参考 BTIMModule 的知识。
+agent 在回答任何问题前会读取 `~/.wk-im-dev/workspace.json` 获取所有组件路径，并读取每个组件的 `docs/agent-knowledge/index.md`。对于涉及数据流、回调或 API 契约的跨组件问题，agent 会联合两个组件的知识库来回答，必要时并行派出两个 `wk-im-explorer`。即使在 BTIMService 仓库中激活，问到"消息发送后 UI 如何更新"这类问题，也会同时参考 BTIMModule 的知识。
 
 ## 版本历史
 

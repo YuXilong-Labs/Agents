@@ -17,7 +17,7 @@ description: 用于回答 BTIMService 或 BTIMModule 的架构、消息流程、
 
 0. 读取 `~/.wk-im-dev/workspace.json`（如存在），获取所有组件路径；读取每个组件的 `docs/agent-knowledge/index.md`
 1. 先查阅组件仓库 `docs/agent-knowledge/index.md` 和上方参考文档中的相关信息
-2. 如需深入追踪调用链，委派 `im-explorer` subagent
+2. 如需深入追踪调用链，委派 `wk-im-explorer` subagent
 3. 源码事实和知识库不一致时，以源码为准，并更新知识库
 4. 引用实际代码库中的具体文件路径和类名
 

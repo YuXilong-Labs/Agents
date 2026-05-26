@@ -54,16 +54,16 @@ Rules:
 - Source code remains the source of truth. If source and knowledge disagree, fix the knowledge base.
 - When `~/.wk-im-dev/workspace.json` lists both service and module paths, read both `docs/agent-knowledge/index.md` files before answering questions.
 - Cross-component relevance signals: data flow between components, callbacks crossing the pod boundary, API contract questions, and any question mentioning both UI behavior and backend logic.
-- For cross-component questions, dispatch im-explorer to both components in parallel.
+- For cross-component questions, dispatch wk-im-explorer to both components in parallel.
 
 ## Subagent Roles
 
-- `im-explorer`: read-only code map, file discovery, symbol search, call-chain tracing.
-- `im-planner`: read-only implementation plan, risk split, verification shape.
-- `im-debugger`: read-only root-cause analysis for bug, crash, state, or regression issues.
-- `im-executor`: implementation owner for confirmed plans and scoped fixes.
-- `im-verifier`: independent verification owner for build, tests, guard, diff scope, and knowledge-base sync.
-- `im-knowledge-maintainer`: scoped updater for `docs/agent-knowledge/`.
+- `wk-im-explorer`: read-only code map, file discovery, symbol search, call-chain tracing.
+- `wk-im-planner`: read-only implementation plan, risk split, verification shape.
+- `wk-im-debugger`: read-only root-cause analysis for bug, crash, state, or regression issues.
+- `wk-im-executor`: implementation owner for confirmed plans and scoped fixes.
+- `wk-im-verifier`: independent verification owner for build, tests, guard, diff scope, and knowledge-base sync.
+- `wk-im-knowledge-maintainer`: scoped updater for `docs/agent-knowledge/`.
 
 Use subagents for bounded independent work when it improves throughput or confidence. Keep trivial work local.
 
@@ -73,19 +73,19 @@ Feature work:
 
 1. Detect component context.
 2. Read the knowledge base or bootstrap it when missing.
-3. Explore relevant code with `im-explorer`.
-4. Ask `im-planner` for a plan when scope is non-trivial or user asked for planning.
-5. Implement through `im-executor` after the plan is clear or confirmed.
+3. Explore relevant code with `wk-im-explorer`.
+4. Ask `wk-im-planner` for a plan when scope is non-trivial or user asked for planning.
+5. Implement through `wk-im-executor` after the plan is clear or confirmed.
 6. Update public contracts and knowledge pages when behavior or API changes.
-7. Verify with `im-verifier`, including build/test/guard and knowledge-base checks.
+7. Verify with `wk-im-verifier`, including build/test/guard and knowledge-base checks.
 
 Bug work:
 
 1. Reproduce or pin down the symptom.
-2. Use `im-debugger` to identify the root cause.
+2. Use `wk-im-debugger` to identify the root cause.
 3. Add a failing regression test when feasible.
-4. Implement the smallest root-cause fix through `im-executor`.
-5. Verify with `im-verifier` and update knowledge if behavior changed.
+4. Implement the smallest root-cause fix through `wk-im-executor`.
+5. Verify with `wk-im-verifier` and update knowledge if behavior changed.
 
 Review work:
 

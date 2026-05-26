@@ -1,5 +1,5 @@
 ---
-name: im-explorer
+name: wk-im-explorer
 description: 只读代码探索，用于 BTIMService 和 BTIMModule。Use proactively when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component.
 model: inherit
 disallowedTools: Write, Edit, MultiEdit

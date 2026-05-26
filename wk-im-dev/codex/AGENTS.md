@@ -77,18 +77,18 @@ It is maintained during agent work; it is not a constantly running background wa
 - Before reporting completion, run `wk-im-kb-check.sh --root <repo>` for each changed component repo when the knowledge base is present or was created.
 - When `~/.wk-im-dev/workspace.json` lists both service and module paths, read both `docs/agent-knowledge/index.md` files before answering questions.
 - Cross-component relevance signals: data flow between components, callbacks crossing the pod boundary, API contract questions, and any question mentioning both UI behavior and backend logic.
-- For cross-component questions, dispatch im-explorer to both components in parallel.
+- For cross-component questions, dispatch wk-im-explorer to both components in parallel.
 
 ## Subagent Mapping
 
 Use Codex native subagents when available and the subtask is bounded:
 
-- `im-explorer`: read-only code search, call chains, file maps.
-- `im-planner`: read-only plans, risk split, validation design.
-- `im-debugger`: read-only root-cause analysis.
-- `im-executor`: scoped implementation after plan/root cause is clear.
-- `im-verifier`: independent build/test/guard/diff/knowledge verification.
-- `im-knowledge-maintainer`: writes only under `docs/agent-knowledge/`.
+- `wk-im-explorer`: read-only code search, call chains, file maps.
+- `wk-im-planner`: read-only plans, risk split, validation design.
+- `wk-im-debugger`: read-only root-cause analysis.
+- `wk-im-executor`: scoped implementation after plan/root cause is clear.
+- `wk-im-verifier`: independent build/test/guard/diff/knowledge verification.
+- `wk-im-knowledge-maintainer`: writes only under `docs/agent-knowledge/`.
 
 If these custom agents are not available in the current Codex runtime, use the same role boundaries with the built-in explorer/executor/verifier roles or execute directly.
 
