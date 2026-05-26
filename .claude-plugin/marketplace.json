@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "yuxilong-labs",
+  "name": "yuxilong-agents",
   "description": "YuXilong-Labs 可复用 Agent 与工作流资产",
   "owner": {
     "name": "YuXilong-Labs"
@@ -19,8 +19,7 @@
         "source": "git-subdir",
         "url": "https://github.com/YuXilong-Labs/Agents.git",
         "path": "wk-im-dev",
-        "ref": "main",
-        "sha": "0c9e71d1686b7359b22f41b3308177fc707f39f3"
+        "ref": "main"
       }
     }
   ]
