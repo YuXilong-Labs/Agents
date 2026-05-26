@@ -13,6 +13,8 @@ REPLACE_PROJECT_AGENTS=0
 INSTALL_CODEX_AGENT=1
 INSTALL_CODEX_PROFILE=1
 UPDATE_SHELL_RC=1
+RUN_INIT=1
+WITH_CODEGRAPH=0
 
 MARKER_START="<!-- WK-IM-DEV:START -->"
 MARKER_END="<!-- WK-IM-DEV:END -->"
@@ -27,6 +29,8 @@ Options:
   --runtime <codex|claude|both>
                            Runtime support to install or validate. Default: both.
   --target <project_dir>   Component or host repo to initialize. Default: current directory.
+  --skip-init              Do not auto-run wk-im-init.sh after install.
+  --with-codegraph         Auto install + index CodeGraph during init (default: off).
   --skip-project-agents    Do not create or merge target AGENTS.md.
   --replace-project-agents Backup and replace target AGENTS.md instead of marker merging.
   --skip-codex-agent       Do not install ~/.codex/agents/wk-im-dev.toml.
@@ -273,6 +277,22 @@ update_shell_rc() {
   fi
 }
 
+looks_like_im_repo() {
+  local dir="$1"
+  [ -d "$dir" ] || return 1
+  # Direct component repo: BTIMService.podspec / BTIMModule.podspec at root
+  if ls "$dir"/BTIMService.podspec "$dir"/BTIMModule.podspec >/dev/null 2>&1; then
+    return 0
+  fi
+  # HostApp: Podfile referencing both components
+  if [ -f "$dir/Podfile" ] \
+     && grep -q "BTIMService" "$dir/Podfile" 2>/dev/null \
+     && grep -q "BTIMModule" "$dir/Podfile" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
 validate_source_layout() {
   [ -f "$CODEX_DIR/AGENTS.md" ] || fail "Missing $CODEX_DIR/AGENTS.md"
   [ -f "$CODEX_DIR/wk-im-dev.toml" ] || fail "Missing $CODEX_DIR/wk-im-dev.toml"
@@ -312,6 +332,14 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-shell-rc)
       UPDATE_SHELL_RC=0
+      shift
+      ;;
+    --skip-init)
+      RUN_INIT=0
+      shift
+      ;;
+    --with-codegraph)
+      WITH_CODEGRAPH=1
       shift
       ;;
     -h|--help)
@@ -373,29 +401,50 @@ fi
 if runtime_includes claude; then
   echo "  OK Claude Code plugin source verified: $PLUGIN_ROOT"
   echo "  NOTE Agent 'wk-im-dev' is registered via plugin agents/ directory."
-  echo "       Install plugin first: /plugin install wk-im-dev@yuxilong-labs"
+  echo "       Install plugin first: claude plugin install wk-im-dev@yuxilong-agents"
 fi
+
+# Auto-init knowledge base when target looks like an IM repo (HostApp / component).
+INIT_RAN=0
+if [ "$RUN_INIT" -eq 1 ] && looks_like_im_repo "$TARGET"; then
+  echo ""
+  echo "Detected IM repo at target; running wk-im-init.sh ..."
+  INIT_ARGS=(--root "$TARGET" --quiet)
+  if [ "$WITH_CODEGRAPH" -eq 1 ]; then
+    INIT_ARGS+=(--with-codegraph)
+  fi
+  if "$HOME/.wk-im-dev/bin/wk-im-init.sh" "${INIT_ARGS[@]}"; then
+    echo "  OK knowledge base initialized for $TARGET"
+    INIT_RAN=1
+  else
+    echo "  NOTE auto-init failed; run manually:"
+    echo "       \"$HOME/.wk-im-dev/bin/wk-im-init.sh\" --root \"$TARGET\""
+  fi
+elif [ "$RUN_INIT" -eq 1 ]; then
+  echo ""
+  echo "NOTE target is not a BTIMService/BTIMModule/HostApp; skipping auto-init."
+  echo "     Run later inside an IM repo: wk-im-init.sh"
+fi
+
+LAUNCHER="$HOME/.wk-im-dev/bin/wk-im-dev"
 
 echo ""
 echo "wk-im-dev install finished."
 echo ""
-echo "Validation:"
-if runtime_includes codex && [ "$INSTALL_CODEX_AGENT" -eq 1 ]; then
-  echo "  test -f \"$HOME/.codex/agents/wk-im-dev.toml\""
+if [ "$UPDATE_SHELL_RC" -eq 1 ]; then
+  echo "Current shell — activate PATH now (one-time, copy & paste):"
+  echo "    export PATH=\"\$HOME/.wk-im-dev/bin:\$PATH\""
+  echo "  (new terminals: already wired via shell rc)"
+  echo ""
 fi
-if runtime_includes codex; then
-  echo "  test -f \"$HOME/.wk-im-dev/wk-im-dev-core.md\""
-  echo "  test -f \"$HOME/.wk-im-dev/bin/wk-im-dev\""
-fi
-echo "  \"$HOME/.wk-im-dev/bin/wk-im-init.sh\" --root \"$TARGET\""
+echo "Start (works regardless of PATH):"
+echo "    $LAUNCHER                # auto-detect Claude Code or Codex"
+echo "    $LAUNCHER doctor         # status check"
 echo ""
-echo "Start:"
-if runtime_includes codex; then
-  echo "  wk-im-dev                    # 显式激活 wk-im-dev（推荐，repo 无关）"
-  echo "  codex -p wk-im-dev           # 仅 profile（无人格注入，作备选）"
-  echo "  cd \"$TARGET\" && codex        # 路径隔离（AGENTS.md 仍有效）"
-fi
+echo "Manual launch:"
 if runtime_includes claude; then
-  echo "  claude --agent wk-im-dev          # 激活 wk-im-dev agent"
-  echo "  claude --plugin-dir \"$PLUGIN_ROOT\"  # 或本地加载 plugin"
+  echo "    claude --agent wk-im-dev"
+fi
+if runtime_includes codex; then
+  echo "    codex -p wk-im-dev       # profile only"
 fi

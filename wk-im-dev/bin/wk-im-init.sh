@@ -11,15 +11,24 @@ SERVICE_PATH=""
 MODULE_PATH=""
 HOST_APP_LIST=()
 QUIET=0
+WITH_CODEGRAPH=0
 
 usage() {
   cat <<'USAGE'
 Usage: wk-im-init.sh [--root <repo>] [--service <path>] [--module <path>]
-                     [--host-app <path>] [--host-app <path2> ...] [--quiet]
+                     [--host-app <path>] [--host-app <path2> ...]
+                     [--with-codegraph] [--quiet]
 
 Initializes wk-im-dev for a component repo or host app workspace. Detects
 BTIMService/BTIMModule paths, writes workspace config to ~/.wk-im-dev/workspace.json,
 then scans and checks docs/agent-knowledge/.
+
+When --root is omitted, walks up from the current directory looking for a
+BTIMService/BTIMModule .podspec or a Podfile referencing both pods. Falls back
+to ~/.wk-im-dev/workspace.json if nothing matches.
+
+CodeGraph is NOT installed by default. Pass --with-codegraph to auto install
+and index it (or run `wk-im-codegraph.sh install` manually later).
 
 Multiple --host-app flags are supported (e.g. two separate host apps).
 USAGE
@@ -43,6 +52,56 @@ abs_dir() {
   local path="$1"
   [ -n "$path" ] || return 0
   cd "$path" 2>/dev/null && pwd
+}
+
+looks_like_im_root() {
+  local dir="$1"
+  [ -d "$dir" ] || return 1
+  if [ -f "$dir/BTIMService.podspec" ] || [ -f "$dir/BTIMModule.podspec" ]; then
+    return 0
+  fi
+  if [ -f "$dir/Podfile" ] \
+     && grep -q "BTIMService" "$dir/Podfile" 2>/dev/null \
+     && grep -q "BTIMModule" "$dir/Podfile" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
+# Walk up from $1 looking for the nearest IM root (component pod or HostApp).
+walk_up_for_im_root() {
+  local cur="$1"
+  while [ "$cur" != "/" ] && [ -n "$cur" ]; do
+    if looks_like_im_root "$cur"; then
+      printf '%s\n' "$cur"
+      return 0
+    fi
+    cur="$(dirname "$cur")"
+  done
+  return 1
+}
+
+# Read service/module/first hostApp from existing global workspace.json.
+read_workspace_fallback() {
+  local cfg="$HOME/.wk-im-dev/workspace.json"
+  [ -f "$cfg" ] || return 1
+  local svc mod host
+  svc="$(grep -oE '"service"[[:space:]]*:[[:space:]]*"[^"]*"' "$cfg" | head -1 | sed -E 's/.*"([^"]*)"$/\1/')"
+  mod="$(grep -oE '"module"[[:space:]]*:[[:space:]]*"[^"]*"' "$cfg" | head -1 | sed -E 's/.*"([^"]*)"$/\1/')"
+  host="$(grep -oE '"hostApps"[[:space:]]*:[[:space:]]*\[[^]]*\]' "$cfg" | sed -E 's/.*\[(.*)\].*/\1/' | head -1 | grep -oE '"[^"]+"' | head -1 | sed -E 's/^"(.*)"$/\1/')"
+  if [ -n "$host" ] && [ -d "$host" ]; then
+    printf '%s\n' "$host"
+    return 0
+  fi
+  if [ -n "$svc" ] && [ -d "$svc" ]; then
+    printf '%s\n' "$svc"
+    return 0
+  fi
+  if [ -n "$mod" ] && [ -d "$mod" ]; then
+    printf '%s\n' "$mod"
+    return 0
+  fi
+  return 1
 }
 
 add_scan_root() {
@@ -106,6 +165,10 @@ while [ "$#" -gt 0 ]; do
       QUIET=1
       shift
       ;;
+    --with-codegraph)
+      WITH_CODEGRAPH=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -118,9 +181,27 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-ROOT="${ROOT:-$(pwd)}"
-ROOT="$(abs_dir "$ROOT")" || fail "Root directory does not exist: $ROOT"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Resolve ROOT with smart defaults when omitted:
+#   1. Use $ROOT if user passed --root.
+#   2. Otherwise walk up from pwd looking for BTIMService/BTIMModule pod or HostApp Podfile.
+#   3. Fall back to first host-app / service / module recorded in ~/.wk-im-dev/workspace.json.
+#   4. Last resort: keep pwd (downstream detect-env will say "unknown" and error politely).
+if [ -z "$ROOT" ]; then
+  AUTO=""
+  if AUTO="$(walk_up_for_im_root "$(pwd)")"; then
+    [ "$QUIET" -eq 1 ] || echo "Auto-detected IM root: $AUTO"
+    ROOT="$AUTO"
+  elif AUTO="$(read_workspace_fallback)"; then
+    [ "$QUIET" -eq 1 ] || echo "Using workspace fallback: $AUTO (from ~/.wk-im-dev/workspace.json)"
+    ROOT="$AUTO"
+  else
+    ROOT="$(pwd)"
+  fi
+fi
+
+ROOT="$(abs_dir "$ROOT")" || fail "Root directory does not exist: $ROOT"
 
 [ -x "$SCRIPT_DIR/wk-im-detect-env.sh" ] || fail "Missing executable: $SCRIPT_DIR/wk-im-detect-env.sh"
 [ -x "$SCRIPT_DIR/wk-im-kb-scan.sh" ]    || fail "Missing executable: $SCRIPT_DIR/wk-im-kb-scan.sh"
@@ -213,34 +294,38 @@ for scan_root in "${SCAN_ROOTS[@]}"; do
   "$SCRIPT_DIR/wk-im-kb-check.sh" --root "$scan_root"
 done
 
-# CodeGraph: detect + offer install + init per scan root.
-# Failure is non-fatal — agents fall back to knowledge base + grep.
-# Build flag list as a string to stay compatible with bash 3.2 + set -u.
+# CodeGraph: only auto-install when --with-codegraph is passed.
+# Otherwise we just print a hint, keeping init non-interactive and fast.
+# Failure of any codegraph operation is non-fatal — agents fall back to wiki + grep.
 if [ -x "$SCRIPT_DIR/wk-im-codegraph.sh" ]; then
-  if [ "$QUIET" -eq 1 ]; then
-    CG_FLAGS="--quiet --yes"
-  else
-    CG_FLAGS=""
-  fi
+  CG_FLAGS="--yes"
+  [ "$QUIET" -eq 1 ] && CG_FLAGS="--quiet --yes"
 
-  if ! "$SCRIPT_DIR/wk-im-codegraph.sh" detect $CG_FLAGS >/dev/null 2>&1; then
-    [ "$QUIET" -eq 1 ] || echo ""
-    [ "$QUIET" -eq 1 ] || echo "CodeGraph not installed. Recommended for ~35% cheaper agent queries."
-    if "$SCRIPT_DIR/wk-im-codegraph.sh" install $CG_FLAGS; then
-      [ "$QUIET" -eq 1 ] || echo "codegraph installed."
-    else
-      [ "$QUIET" -eq 1 ] || echo "codegraph install skipped or failed — agents will fall back to grep."
-    fi
-  fi
-
-  for scan_root in "${SCAN_ROOTS[@]}"; do
-    if "$SCRIPT_DIR/wk-im-codegraph.sh" detect --quiet >/dev/null 2>&1; then
+  if "$SCRIPT_DIR/wk-im-codegraph.sh" detect --quiet >/dev/null 2>&1; then
+    # Already installed — only init missing indexes (cheap, non-interactive).
+    for scan_root in "${SCAN_ROOTS[@]}"; do
       if [ ! -d "$scan_root/.codegraph" ]; then
         [ "$QUIET" -eq 1 ] || echo "Initializing codegraph index: $scan_root"
         "$SCRIPT_DIR/wk-im-codegraph.sh" init --root "$scan_root" $CG_FLAGS || true
       fi
+    done
+  elif [ "$WITH_CODEGRAPH" -eq 1 ]; then
+    [ "$QUIET" -eq 1 ] || echo ""
+    [ "$QUIET" -eq 1 ] || echo "Installing CodeGraph (--with-codegraph) ..."
+    if "$SCRIPT_DIR/wk-im-codegraph.sh" install $CG_FLAGS; then
+      for scan_root in "${SCAN_ROOTS[@]}"; do
+        [ "$QUIET" -eq 1 ] || echo "Initializing codegraph index: $scan_root"
+        "$SCRIPT_DIR/wk-im-codegraph.sh" init --root "$scan_root" $CG_FLAGS || true
+      done
+    else
+      [ "$QUIET" -eq 1 ] || echo "codegraph install failed — agents will fall back to wiki + grep."
     fi
-  done
+  else
+    [ "$QUIET" -eq 1 ] || echo ""
+    [ "$QUIET" -eq 1 ] || echo "CodeGraph not installed (optional, recommended)."
+    [ "$QUIET" -eq 1 ] || echo "  Enable later: ~/.wk-im-dev/bin/wk-im-codegraph.sh install && \\"
+    [ "$QUIET" -eq 1 ] || echo "                ~/.wk-im-dev/bin/wk-im-codegraph.sh init --root <repo>"
+  fi
 fi
 
 if [ "$QUIET" -ne 1 ]; then

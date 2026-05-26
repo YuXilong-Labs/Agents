@@ -8,6 +8,8 @@
 #   --target <path>    要初始化的组件仓库或 HostApp 目录（必填）
 #   --runtime <value>  codex（默认）
 #   --no-shell-rc      不修改 ~/.zshrc / ~/.bashrc
+#   --skip-init        安装后不自动跑 wk-im-init.sh
+#   --with-codegraph   安装后自动安装 + 索引 CodeGraph（默认不装）
 
 set -euo pipefail
 
@@ -30,8 +32,16 @@ while [ "$#" -gt 0 ]; do
       EXTRA_ARGS+=(--no-shell-rc)
       shift
       ;;
+    --skip-init)
+      EXTRA_ARGS+=(--skip-init)
+      shift
+      ;;
+    --with-codegraph)
+      EXTRA_ARGS+=(--with-codegraph)
+      shift
+      ;;
     -h|--help)
-      sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'
+      sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
       ;;
     *)
@@ -41,11 +51,10 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-[ -n "$TARGET" ] || {
-  echo "错误：必须指定 --target <仓库路径>" >&2
-  echo "用法：curl -fsSL <url>/bootstrap.sh | bash -s -- --target /path/to/BTIMService" >&2
-  exit 1
-}
+if [ -z "$TARGET" ]; then
+  TARGET="$(pwd)"
+  echo "▶ 未指定 --target，默认使用当前目录：$TARGET"
+fi
 [ -d "$TARGET" ] || {
   echo "错误：目标目录不存在: $TARGET" >&2
   exit 1
