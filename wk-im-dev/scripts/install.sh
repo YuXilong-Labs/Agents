@@ -280,8 +280,8 @@ update_shell_rc() {
 looks_like_im_repo() {
   local dir="$1"
   [ -d "$dir" ] || return 1
-  # Direct component repo: BTIMService.podspec / BTIMModule.podspec at root
-  if ls "$dir"/BTIMService.podspec "$dir"/BTIMModule.podspec >/dev/null 2>&1; then
+  # Direct component repo: BTIMService.podspec or BTIMModule.podspec at root
+  if [ -f "$dir/BTIMService.podspec" ] || [ -f "$dir/BTIMModule.podspec" ]; then
     return 0
   fi
   # HostApp: Podfile referencing both components
@@ -406,6 +406,7 @@ fi
 
 # Auto-init knowledge base when target looks like an IM repo (HostApp / component).
 INIT_RAN=0
+INIT_STATUS=""
 if [ "$RUN_INIT" -eq 1 ] && looks_like_im_repo "$TARGET"; then
   echo ""
   echo "Detected IM repo at target; running wk-im-init.sh ..."
@@ -413,12 +414,19 @@ if [ "$RUN_INIT" -eq 1 ] && looks_like_im_repo "$TARGET"; then
   if [ "$WITH_CODEGRAPH" -eq 1 ]; then
     INIT_ARGS+=(--with-codegraph)
   fi
-  if "$HOME/.wk-im-dev/bin/wk-im-init.sh" "${INIT_ARGS[@]}"; then
+  # Don't abort install on init non-zero — kb-check warnings (unlinked topics
+  # on first scan etc.) are content-quality signals, not install failures.
+  set +e
+  "$HOME/.wk-im-dev/bin/wk-im-init.sh" "${INIT_ARGS[@]}"
+  INIT_STATUS=$?
+  set -e
+  if [ "$INIT_STATUS" -eq 0 ]; then
     echo "  OK knowledge base initialized for $TARGET"
     INIT_RAN=1
   else
-    echo "  NOTE auto-init failed; run manually:"
-    echo "       \"$HOME/.wk-im-dev/bin/wk-im-init.sh\" --root \"$TARGET\""
+    echo "  NOTE init finished with warnings (exit $INIT_STATUS) — knowledge base is usable."
+    echo "       Inspect details: \"$HOME/.wk-im-dev/bin/wk-im-init.sh\" --root \"$TARGET\""
+    INIT_RAN=1
   fi
 elif [ "$RUN_INIT" -eq 1 ]; then
   echo ""

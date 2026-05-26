@@ -249,9 +249,9 @@ add_scan_root "$SERVICE_PATH"
 add_scan_root "$MODULE_PATH"
 
 SHOULD_WRITE_CONFIG=0
-if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ]; then
-  SHOULD_WRITE_CONFIG=1
-elif [ -n "$SERVICE_PATH" ] && [ -n "$MODULE_PATH" ]; then
+if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ] \
+   || [ -n "$SERVICE_PATH" ] \
+   || [ -n "$MODULE_PATH" ]; then
   SHOULD_WRITE_CONFIG=1
 fi
 
