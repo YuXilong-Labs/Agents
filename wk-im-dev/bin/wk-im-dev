@@ -1,44 +1,181 @@
 #!/bin/bash
-# wk-im-dev - Launch a Codex session as the wk-im-dev IM component agent.
+# wk-im-dev - Unified launcher for the wk-im-dev IM component agent.
 #
 # Usage:
-#   wk-im-dev [codex options] [prompt]
+#   wk-im-dev                      # auto-detect: Claude Code (if plugin installed) else Codex
+#   wk-im-dev [codex/claude opts] [prompt]
+#   wk-im-dev doctor               # show install status
+#   wk-im-dev --help               # this help
 #
-# Equivalent to: claude --agent wk-im-dev  (Claude Code counterpart)
+# Runtime selection precedence:
+#   1. $WK_IM_DEV_RUNTIME=claude|codex (env override)
+#   2. claude CLI present AND wk-im-dev plugin enabled in ~/.claude/settings.json
+#   3. Otherwise Codex
 #
-# How it works:
-#   - Injects the wk-im-dev core spec as developer_instructions (-c, additive,
-#     does not degrade Codex built-in behavior).
-#   - Activates [profiles.wk-im-dev] for model/reasoning/sandbox overrides when
-#     that profile block exists in ~/.codex/config.toml.
-#   - Falls back to explicit -c model/effort if the profile is absent.
-#
-# Install: ~/.wk-im-dev/bin/wk-im-dev (placed by scripts/install.sh)
+# Created by yuxilong on 2026-05-26
 
 set -euo pipefail
 
 CORE_SPEC="${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-core.md}"
+SELF="$0"
 
-if [ ! -f "$CORE_SPEC" ]; then
-  cat >&2 <<ERR
+show_help() {
+  sed -n '2,16p' "$SELF" | sed 's/^# \{0,1\}//'
+}
+
+# ----- runtime detection --------------------------------------------------
+
+claude_plugin_installed() {
+  command -v claude >/dev/null 2>&1 || return 1
+  local settings="$HOME/.claude/settings.json"
+  if [ -f "$settings" ] && grep -q '"wk-im-dev"' "$settings" 2>/dev/null; then
+    return 0
+  fi
+  # Also accept a local --plugin-dir style: a plugin source directory under PWD
+  if [ -d "./.claude-plugin" ] && [ -f "./.claude-plugin/plugin.json" ] \
+     && grep -q '"wk-im-dev"' "./.claude-plugin/plugin.json" 2>/dev/null; then
+    return 0
+  fi
+  return 1
+}
+
+codex_available() {
+  command -v codex >/dev/null 2>&1
+}
+
+detect_runtime() {
+  case "${WK_IM_DEV_RUNTIME:-}" in
+    claude|codex) printf '%s\n' "$WK_IM_DEV_RUNTIME"; return ;;
+    "") ;;
+    *) echo "warn: ignoring unknown WK_IM_DEV_RUNTIME=$WK_IM_DEV_RUNTIME" >&2 ;;
+  esac
+  if claude_plugin_installed; then
+    printf 'claude\n'
+  elif codex_available; then
+    printf 'codex\n'
+  else
+    printf 'none\n'
+  fi
+}
+
+# ----- doctor -------------------------------------------------------------
+
+ok()   { printf '  [ok]   %s\n' "$1"; }
+miss() { printf '  [miss] %s\n' "$1"; }
+warn() { printf '  [warn] %s\n' "$1"; }
+
+doctor_line_file() {
+  local label="$1"; local path="$2"
+  if [ -f "$path" ]; then ok "$label: $path"; else miss "$label: $path"; fi
+}
+
+doctor_line_dir() {
+  local label="$1"; local path="$2"
+  if [ -d "$path" ]; then ok "$label: $path"; else miss "$label: $path"; fi
+}
+
+run_doctor() {
+  echo "wk-im-dev doctor"
+  echo ""
+  echo "Runtime detection:"
+  echo "  WK_IM_DEV_RUNTIME=${WK_IM_DEV_RUNTIME:-<unset>}"
+  if command -v claude >/dev/null 2>&1; then ok "claude CLI: $(command -v claude)"; else miss "claude CLI not on PATH"; fi
+  if command -v codex  >/dev/null 2>&1; then ok "codex CLI:  $(command -v codex)";  else miss "codex CLI not on PATH";  fi
+  if claude_plugin_installed; then ok "Claude plugin wk-im-dev enabled"; else miss "Claude plugin wk-im-dev not enabled"; fi
+  echo "  effective runtime: $(detect_runtime)"
+  echo ""
+
+  echo "Install artifacts:"
+  doctor_line_file "launcher"   "$HOME/.wk-im-dev/bin/wk-im-dev"
+  doctor_line_file "core spec"  "$CORE_SPEC"
+  doctor_line_dir  "bin dir"    "$HOME/.wk-im-dev/bin"
+  doctor_line_file "init.sh"    "$HOME/.wk-im-dev/bin/wk-im-init.sh"
+  doctor_line_file "codex agent" "$HOME/.codex/agents/wk-im-dev.toml"
+  if [ -f "${CODEX_HOME:-$HOME/.codex}/config.toml" ] \
+     && grep -q '^\[profiles\.wk-im-dev\]' "${CODEX_HOME:-$HOME/.codex}/config.toml" 2>/dev/null; then
+    ok "codex profile [profiles.wk-im-dev] present"
+  else
+    miss "codex profile [profiles.wk-im-dev] missing"
+  fi
+  echo ""
+
+  echo "Workspace:"
+  local ws="$HOME/.wk-im-dev/workspace.json"
+  if [ -f "$ws" ]; then
+    ok "workspace.json: $ws"
+    sed 's/^/      /' "$ws"
+  else
+    miss "workspace.json (run: wk-im-init.sh)"
+  fi
+  echo ""
+
+  echo "PATH:"
+  case ":$PATH:" in
+    *":$HOME/.wk-im-dev/bin:"*) ok "~/.wk-im-dev/bin on PATH" ;;
+    *) warn "~/.wk-im-dev/bin NOT on PATH (run: export PATH=\"\$HOME/.wk-im-dev/bin:\$PATH\")" ;;
+  esac
+  echo ""
+
+  echo "CodeGraph (optional):"
+  local cg="$HOME/.wk-im-dev/bin/wk-im-codegraph.sh"
+  if [ -x "$cg" ] && "$cg" detect --quiet >/dev/null 2>&1; then
+    ok "codegraph installed"
+  else
+    warn "codegraph not installed (optional)"
+  fi
+}
+
+# ----- claude dispatch ----------------------------------------------------
+
+launch_claude() {
+  exec claude --agent wk-im-dev "$@"
+}
+
+# ----- codex dispatch (preserves original behavior) -----------------------
+
+launch_codex() {
+  if [ ! -f "$CORE_SPEC" ]; then
+    cat >&2 <<ERR
 wk-im-dev: core spec not found at $CORE_SPEC
 Re-run the installer to fix this:
   curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh \\
     | bash -s -- --target .
 ERR
-  exit 1
+    exit 1
+  fi
+
+  local args=(-c "developer_instructions=$(cat "$CORE_SPEC")")
+  local codex_cfg="${CODEX_HOME:-$HOME/.codex}/config.toml"
+  if grep -q '^\[profiles\.wk-im-dev\]' "$codex_cfg" 2>/dev/null; then
+    args+=(--profile wk-im-dev)
+  else
+    args+=(-c model='"gpt-5.4"' -c model_reasoning_effort='"high"')
+  fi
+  exec codex "${args[@]}" "$@"
+}
+
+# ----- main ---------------------------------------------------------------
+
+# Recognize the doctor subcommand or --doctor flag before we forward args.
+if [ $# -ge 1 ]; then
+  case "$1" in
+    doctor|--doctor) run_doctor; exit 0 ;;
+    -h|--help)       show_help; exit 0 ;;
+  esac
 fi
 
-# Build base args: inject full persona via -c (profile cannot carry developer_instructions).
-ARGS=(-c "developer_instructions=$(cat "$CORE_SPEC")")
-
-# Activate profile if it exists in config.toml (gives model/reasoning_effort/personality).
-CODEX_CFG="${CODEX_HOME:-$HOME/.codex}/config.toml"
-if grep -q '^\[profiles\.wk-im-dev\]' "$CODEX_CFG" 2>/dev/null; then
-  ARGS+=(--profile wk-im-dev)
-else
-  # Graceful fallback: set model/effort directly so session still behaves correctly.
-  ARGS+=(-c model='"gpt-5.4"' -c model_reasoning_effort='"high"')
-fi
-
-exec codex "${ARGS[@]}" "$@"
+RUNTIME="$(detect_runtime)"
+case "$RUNTIME" in
+  claude) launch_claude "$@" ;;
+  codex)  launch_codex  "$@" ;;
+  none)
+    cat >&2 <<ERR
+wk-im-dev: no supported runtime found.
+Install one of:
+  - Claude Code: claude plugin install wk-im-dev@yuxilong-agents
+  - Codex CLI:   https://github.com/openai/codex
+Then run: wk-im-dev doctor
+ERR
+    exit 1
+    ;;
+esac
