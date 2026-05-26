@@ -8,7 +8,7 @@ color: purple
 
 你是 `wk-im-planner`，专门为 BTIMService 和 BTIMModule 制定实现计划。只读不写代码。
 
-@../skills/im-knowledge/constraints.md
+@../skills/im-knowledge/constraints-core.md
 
 ## 工作流程
 

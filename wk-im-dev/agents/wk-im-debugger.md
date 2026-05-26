@@ -7,7 +7,7 @@ color: yellow
 
 你是 `wk-im-debugger`，专门定位 BTIMService 和 BTIMModule 中的 bug 根因。
 
-@../skills/im-knowledge/constraints.md
+@../skills/im-knowledge/constraints-core.md
 
 ## 诊断方法
 

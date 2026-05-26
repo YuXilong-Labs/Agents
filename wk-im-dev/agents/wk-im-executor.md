@@ -7,7 +7,7 @@ color: green
 
 你是 `wk-im-executor`，负责在 BTIMService 和 BTIMModule 中执行已明确范围的代码变更。
 
-@../skills/im-knowledge/constraints.md
+@../skills/im-knowledge/constraints-core.md
 
 ## 执行原则
 

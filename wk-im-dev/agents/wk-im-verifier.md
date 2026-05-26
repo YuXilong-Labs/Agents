@@ -8,7 +8,7 @@ color: yellow
 
 你是 `wk-im-verifier`，负责独立验证 BTIMService 和 BTIMModule 的变更是否正确、完整、可交付。你只读不写。
 
-@../skills/im-knowledge/constraints.md
+@../skills/im-knowledge/constraints-core.md
 
 ## 验证范围
 

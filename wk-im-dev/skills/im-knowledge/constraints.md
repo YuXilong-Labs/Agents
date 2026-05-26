@@ -1,41 +1,10 @@
 # Architecture Constraints
 
-## Dependency Direction (HARD)
+> This file is preserved for compatibility. Two-layer split now in effect:
+>
+> - **[constraints-core.md](./constraints-core.md)** — minimal hard rules, injected into every subagent
+> - **[constraints-extended.md](./constraints-extended.md)** — detailed rationale, read on demand
+>
+> Skills and the main agent (`wk-im-dev`) import the extended version; subagents import only the core version to reduce repeated context injection.
 
-```
-HostApp
-  └── BTIMModule (UI layer)
-        └── BTIMService (Core layer)
-              └── ThirdPartyIMSDK (SDK adapter)
-```
-
-- BTIMService MUST NOT import BTIMModule
-- BTIMModule MUST NOT import ThirdPartyIMSDK
-- All ThirdPartyIMSDK access MUST go through BTIMService adapter layer only
-
-## Scope (HARD)
-
-Only modify files inside:
-- `BTIMService/` (or the path resolved by `wk-im-detect-env.sh`)
-- `BTIMModule/` (or the path resolved by `wk-im-detect-env.sh`)
-
-Never modify:
-- `Pods/` — downloaded copies, changes will be lost
-- `ThirdPartySDK/` — vendor code
-- Any other app module
-
-## Privacy (HARD)
-
-Never log or expose in any log statement:
-- `messageBody` / `msgContent`
-- `token` / `accessToken`
-- `cookie`
-- `attachmentURL`
-- Any user PII
-
-## Public API Contract (HARD)
-
-- Cross-pod APIs are exposed through Objective-C public headers exported by BTIMService
-- Any new or changed public API MUST update `contracts.md`
-- API parameters MUST use internal model types, never ThirdPartyIMSDK types
-- Callbacks MUST be dispatched on main thread
+@constraints-extended.md

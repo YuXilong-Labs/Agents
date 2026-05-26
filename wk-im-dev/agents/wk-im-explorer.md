@@ -10,7 +10,7 @@ color: cyan
 - `BTIMService/` — IM 核心：消息、会话、SDK 适配器、状态机
 - `BTIMModule/` — IM UI：聊天页、气泡、ViewModel、路由
 
-@../skills/im-knowledge/constraints.md
+@../skills/im-knowledge/constraints-core.md
 
 ## 职责
 
