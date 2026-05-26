@@ -56,6 +56,27 @@ Rules:
 - Cross-component relevance signals: data flow between components, callbacks crossing the pod boundary, API contract questions, and any question mentioning both UI behavior and backend logic.
 - For cross-component questions, dispatch wk-im-explorer to both components in parallel.
 
+## CodeGraph Priority
+
+If the target component repo has a `.codegraph/` index and MCP `codegraph_*` tools are available, prefer them over grep/Read for structural queries:
+
+| Question | Tool |
+|---|---|
+| Symbol definition | `codegraph_search` |
+| Callers / callees | `codegraph_callers` / `codegraph_callees` |
+| Flow X → Y | `codegraph_trace` |
+| Change impact | `codegraph_impact` |
+| Focused area context | `codegraph_context` |
+| Bulk source survey | `codegraph_explore` |
+
+CodeGraph indexes Swift ↔ ObjC bridging, `@objc` selectors, and dynamic dispatch — grep cannot follow those links.
+
+Fallback order when codegraph is unavailable:
+1. Read `docs/agent-knowledge/index.md` and topic pages.
+2. Use `grep` / `Read` last.
+
+To check or install codegraph: `wk-im-codegraph.sh detect|install|init|status`.
+
 ## Subagent Roles
 
 - `wk-im-explorer`: read-only code map, file discovery, symbol search, call-chain tracing.

@@ -204,6 +204,31 @@ for scan_root in "${SCAN_ROOTS[@]}"; do
   "$SCRIPT_DIR/wk-im-kb-check.sh" --root "$scan_root"
 done
 
+# CodeGraph: detect + offer install + init per scan root.
+# Failure is non-fatal — agents fall back to knowledge base + grep.
+if [ -x "$SCRIPT_DIR/wk-im-codegraph.sh" ]; then
+  CG_ARGS=()
+  [ "$QUIET" -eq 1 ] && CG_ARGS+=("--quiet" "--yes")
+  if ! "$SCRIPT_DIR/wk-im-codegraph.sh" detect "${CG_ARGS[@]}" >/dev/null 2>&1; then
+    [ "$QUIET" -eq 1 ] || echo ""
+    [ "$QUIET" -eq 1 ] || echo "CodeGraph not installed. Recommended for ~35% cheaper agent queries."
+    if "$SCRIPT_DIR/wk-im-codegraph.sh" install "${CG_ARGS[@]}"; then
+      [ "$QUIET" -eq 1 ] || echo "codegraph installed."
+    else
+      [ "$QUIET" -eq 1 ] || echo "codegraph install skipped or failed — agents will fall back to grep."
+    fi
+  fi
+
+  for scan_root in "${SCAN_ROOTS[@]}"; do
+    if "$SCRIPT_DIR/wk-im-codegraph.sh" detect --quiet >/dev/null 2>&1; then
+      if [ ! -d "$scan_root/.codegraph" ]; then
+        [ "$QUIET" -eq 1 ] || echo "Initializing codegraph index: $scan_root"
+        "$SCRIPT_DIR/wk-im-codegraph.sh" init --root "$scan_root" "${CG_ARGS[@]}" || true
+      fi
+    fi
+  done
+fi
+
 if [ "$QUIET" -ne 1 ]; then
   echo ""
   echo "wk-im-dev initialization finished."

@@ -308,17 +308,9 @@ extract_objc_methods() {
     | sed 's/^/  - `/' | sed 's/$/`/'
 }
 
-# Helper: find callers of a method name in source root (up to 5 results)
-find_callers() {
-  local method_name="$1"
-  local search_dir="$2"
-  [ -d "$search_dir" ] || return
-  [ -n "$method_name" ] || return
-  rg -n "\b${method_name}\b" "$search_dir" 2>/dev/null \
-    | sed "s#^$ROOT/##" \
-    | head -5 \
-    | sed 's/^/  - `/' | sed 's/$/`/' || true
-}
+# NOTE: caller lookup moved to codegraph (codegraph_callers).
+# Grep-based heuristics missed dynamic dispatch / @selector / category swizzling
+# and produced false positives. See docs/codegraph-integration.md.
 
 # Helper: extract Swift public declarations (class/struct/protocol/func/var at top level)
 extract_swift_symbols() {
@@ -375,7 +367,10 @@ extract_swift_symbols() {
     extract_swift_symbols "$source_root"
   fi
   echo ""
-  echo "## Public Method Signatures & Callers (Key Headers)"
+  echo "## Public Method Signatures (Key Headers)"
+  echo ""
+  echo "> Caller relationships: query via codegraph (\`codegraph_callers\`, \`codegraph_impact\`)."
+  echo "> See \`docs/codegraph-integration.md\` for usage."
   echo ""
   if [ "$component" = "BTIMService" ]; then
     for hdr in \
@@ -387,19 +382,6 @@ extract_swift_symbols() {
         echo ""
         extract_objc_methods "$ROOT/$hdr"
         echo ""
-        # Emit callers for each method name extracted from this header
-        while IFS= read -r sig; do
-          # Extract bare method name: first word after (ReturnType) up to next : or ;
-          method_name="$(printf '%s\n' "$sig" | sed -nE 's/.*\([^)]+\)[[:space:]]*([a-zA-Z_][a-zA-Z0-9_]*).*/\1/p' | head -1)"
-          [ -n "$method_name" ] || continue
-          callers="$(find_callers "$method_name" "$source_root")"
-          if [ -n "$callers" ]; then
-            echo "#### Callers of \`$method_name\`"
-            echo ""
-            printf '%s\n' "$callers"
-            echo ""
-          fi
-        done < <(grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$ROOT/$hdr" 2>/dev/null || true)
       fi
     done
   elif [ "$component" = "BTIMModule" ]; then
@@ -411,17 +393,6 @@ extract_swift_symbols() {
         echo ""
         extract_objc_methods "$ROOT/$hdr"
         echo ""
-        while IFS= read -r sig; do
-          method_name="$(printf '%s\n' "$sig" | sed -nE 's/.*\([^)]+\)[[:space:]]*([a-zA-Z_][a-zA-Z0-9_]*).*/\1/p' | head -1)"
-          [ -n "$method_name" ] || continue
-          callers="$(find_callers "$method_name" "$source_root")"
-          if [ -n "$callers" ]; then
-            echo "#### Callers of \`$method_name\`"
-            echo ""
-            printf '%s\n' "$callers"
-            echo ""
-          fi
-        done < <(grep -E "^[[:space:]]*[-+][[:space:]]*\(" "$ROOT/$hdr" 2>/dev/null || true)
       fi
     done
   fi
