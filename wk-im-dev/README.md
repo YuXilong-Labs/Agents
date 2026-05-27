@@ -285,12 +285,20 @@ PLUGIN_DIR=/path/to/Agents/wk-im-dev PROJECT_DIR=/path/to/BTIMService python exa
 
 ---
 
-## 版本历史
+## 升级
 
-- **v3.4.0** — 安装/初始化体验大幅简化：installer 默认级联 init、bootstrap target 默认 pwd、`wk-im-init.sh` 自动定位仓库根、`wk-im-dev` launcher 多 runtime 自动派发并新增 `doctor` 子命令、agent 首次激活自检 workspace.json、README 精简到三步上手
-- **v3.3.0** — 集成 CodeGraph（AST 索引），subagent 命名统一为 `wk-im-*` 前缀；硬约束拆分为 core + extended 两层
-- **v3.2.0** — `plugin.json` name 统一为 `wk-im-dev`，Codex TOML 精简
-- **v3.1.0** — 知识库 LLM Wiki 系统
-- **v3.0.0** — 重大重构：聚焦 BTIMService/BTIMModule，6 子 Agent 分工
+| 运行时 | 升级命令 |
+|---|---|
+| Codex（curl） | 重跑 `curl ... bootstrap.sh \| bash -s -- --target . --ref <new-tag>` |
+| Claude Code | `claude plugin update wk-im-dev@yuxilong-agents` |
+
+`workspace.json` 在 v3.4.1+ 走增量合并，不会丢 `hostApps`；改动了 init / kb-scan 逻辑时推荐 `wk-im-init.sh` 再扫一次。详见 [CHANGELOG.md](CHANGELOG.md) 与 [docs/team-distribution.md](docs/team-distribution.md)。
+
+## 团队分发
+
+发布者打 tag、内网 mirror、私有 token、Claude plugin 内网过渡、onboarding checklist 详见：
+
+- [CHANGELOG.md](CHANGELOG.md)
+- [docs/team-distribution.md](docs/team-distribution.md)
 
 旧命名迁移见 [docs/rename-from-wk-im-developer.md](docs/rename-from-wk-im-developer.md)。
