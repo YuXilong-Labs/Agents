@@ -28,34 +28,44 @@ show_help() {
 # ----- version lookup ------------------------------------------------------
 # 从 plugin.json 读 version。优先级：
 #   1. $WK_IM_DEV_PLUGIN_JSON 环境变量
-#   2. Claude plugin 安装位置 (~/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json)
-#   3. 当前仓库源码位置（开发场景）
-#   4. 退而求其次：返回 unknown
+#   2. Codex 安装路径 (~/.wk-im-dev/.claude-plugin/plugin.json) — installer 顺手 copy
+#   3. Claude plugin 安装位置 (~/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json)
+#   4. 当前仓库源码位置（开发场景）
+#   5. 退而求其次：返回 unknown
 read_version() {
-  local candidates=()
-  [ -n "${WK_IM_DEV_PLUGIN_JSON:-}" ] && candidates+=("$WK_IM_DEV_PLUGIN_JSON")
-  # Claude Code 装好后的 plugin.json
-  for path in "$HOME"/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json \
-              "$HOME"/.claude/plugins/cache/*/wk-im-dev*/.claude-plugin/plugin.json; do
-    [ -f "$path" ] && candidates+=("$path")
-  done
-  # 开发场景：launcher 自身相对位置（当 launcher 在源码树中时）
-  local self_dir
-  self_dir="$(cd "$(dirname "$SELF")" 2>/dev/null && pwd)" || true
-  if [ -n "$self_dir" ] && [ -f "$self_dir/../.claude-plugin/plugin.json" ]; then
-    candidates+=("$self_dir/../.claude-plugin/plugin.json")
+  local file v
+
+  try_read() {
+    local f="$1"
+    [ -f "$f" ] || return 1
+    v="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$f" 2>/dev/null \
+         | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+    [ -n "$v" ] || return 1
+    printf '%s\t%s\n' "$v" "$f"
+    return 0
+  }
+
+  # 1. 环境变量
+  if [ -n "${WK_IM_DEV_PLUGIN_JSON:-}" ]; then
+    try_read "$WK_IM_DEV_PLUGIN_JSON" && return 0
   fi
 
-  local file v
-  for file in "${candidates[@]}"; do
-    [ -f "$file" ] || continue
-    v="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$file" \
-         | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
-    if [ -n "$v" ]; then
-      printf '%s\t%s\n' "$v" "$file"
-      return 0
-    fi
+  # 2. Codex 安装路径
+  try_read "$HOME/.wk-im-dev/.claude-plugin/plugin.json" && return 0
+
+  # 3. Claude plugin 安装路径（用 ls -1 避免空 glob 在 set -u 下出问题）
+  for f in $(ls -1 "$HOME"/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json 2>/dev/null) \
+           $(ls -1 "$HOME"/.claude/plugins/cache/*/wk-im-dev*/.claude-plugin/plugin.json 2>/dev/null); do
+    try_read "$f" && return 0
   done
+
+  # 4. 开发场景：launcher 自身相对位置
+  local self_dir
+  self_dir="$(cd "$(dirname "$SELF")" 2>/dev/null && pwd)" || true
+  if [ -n "$self_dir" ]; then
+    try_read "$self_dir/../.claude-plugin/plugin.json" && return 0
+  fi
+
   printf 'unknown\t<not found>\n'
 }
 

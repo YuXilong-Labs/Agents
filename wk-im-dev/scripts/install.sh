@@ -181,6 +181,10 @@ install_core_spec() {
   mkdir -p "$dest_dir"
   cp "$PLUGIN_ROOT/core/wk-im-dev-core.md" "$dest_dir/wk-im-dev-core.md"
   echo "  OK core spec installed: $dest_dir/wk-im-dev-core.md"
+
+  # 顺便 copy plugin.json，让 launcher 在 Codex-only 安装下也能读出版本号
+  mkdir -p "$dest_dir/.claude-plugin"
+  cp "$PLUGIN_ROOT/.claude-plugin/plugin.json" "$dest_dir/.claude-plugin/plugin.json"
 }
 
 install_helper_scripts() {

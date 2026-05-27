@@ -171,9 +171,9 @@ wk-im-init.sh   # 在 IM 仓库里跑
 | `curl` 返回 403 / 404 | 私有仓库未鉴权 → 改 SSH 或 netrc |
 | `claude plugin marketplace add` 找不到 | marketplace name 变了 → README "版本历史"里有迁移说明 |
 | `codex --profile wk-im-dev` 报 model 不存在 | 老版本 profile 写死了 `model = "gpt-5.4"` → 升级到 v3.4.0+ |
-| Pods/ 下写入没被拦截 | hooks.json 版本太老（PostToolUse 拦不住）→ 升级到 v3.4.2+ |
+| Pods/ 下写入没被拦截 | hooks.json 版本太老（PostToolUse 拦不住）→ 升级到 v3.4.3+ |
 | `wk-im-dev` 命令找不到 | `~/.wk-im-dev/bin` 没在 PATH → 看 doctor 输出，按提示 export |
-| workspace.json 里 hostApps 变少了 | 老版本会覆盖；v3.4.2+ 已改为合并去重 |
+| workspace.json 里 hostApps 变少了 | 老版本会覆盖；v3.4.3+ 已改为合并去重 |
 
 ---
 
@@ -185,7 +185,7 @@ wk-im-init.sh   # 在 IM 仓库里跑
 
 ```bash
 # 1. 下载到本地
-curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.2/wk-im-dev/scripts/bootstrap.sh \
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.3/wk-im-dev/scripts/bootstrap.sh \
   -o /tmp/wk-im-dev-bootstrap.sh
 
 # 2. 审计（人工 review 或交给团队安全工具）
@@ -195,7 +195,7 @@ less /tmp/wk-im-dev-bootstrap.sh
 shasum -a 256 /tmp/wk-im-dev-bootstrap.sh
 
 # 4. 运行
-bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.2
+bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.3
 ```
 
 ### 5.2 团队级集中安装（推荐）
@@ -205,7 +205,7 @@ bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.2
 1. CI/Release 流程在内网 mirror 上打 `v3.4.x` tag
 2. 团队基础镜像 / Mac 准备脚本里集成：
    ```bash
-   git clone --depth 1 --branch v3.4.2 https://gitlab.intra/team/Agents.git /opt/Agents
+   git clone --depth 1 --branch v3.4.3 https://gitlab.intra/team/Agents.git /opt/Agents
    bash /opt/Agents/wk-im-dev/scripts/install.sh --runtime both --target $HOME --skip-init
    ```
 3. 团队成员只跑入职脚本，不直接接触 bootstrap 命令

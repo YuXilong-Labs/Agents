@@ -18,18 +18,19 @@ case "$TARGET" in
   *) exit 0 ;;
 esac
 
-# Walk up to find a BTIMService or BTIMModule component root (has matching .podspec)
+# 从 target 文件向上查找 BTIMService/BTIMModule 组件根（含 .podspec）。
+# 用字符串解析避免依赖中间目录的实际存在（PostToolUse 触发时一般已存在，
+# 但某些工具/路径形态下可能出现父目录被消除/重命名，做防御）。
 find_component_root() {
-  local dir
-  dir="$(cd "$(dirname "$1")" 2>/dev/null && pwd)" || return 1
-  while [ "$dir" != "/" ]; do
-    if find "$dir" -maxdepth 1 \
-         \( -name "BTIMService.podspec" -o -name "BTIMModule.podspec" \) \
-         -print -quit 2>/dev/null | grep -q .; then
+  local dir="$1"
+  # 去掉文件名得到第一级父目录字符串
+  dir="${dir%/*}"
+  while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+    if [ -f "$dir/BTIMService.podspec" ] || [ -f "$dir/BTIMModule.podspec" ]; then
       echo "$dir"
       return 0
     fi
-    dir="$(dirname "$dir")"
+    dir="${dir%/*}"
   done
   return 1
 }

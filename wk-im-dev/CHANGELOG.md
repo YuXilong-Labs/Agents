@@ -12,6 +12,25 @@
 
 ---
 
+## v3.4.3 — 2026-05-27 (hotfix 2)
+
+### Fixed
+
+- `bin/wk-im-dev`：`read_version()` 在 Codex-only 安装下，`candidates=()` 数组为空时 `for file in "${candidates[@]}"` 在 `set -u` + bash 3.2/4.x 触发 `unbound variable: candidates[@]`。导致 `wk-im-dev --version` 和 `wk-im-dev doctor` 在新装机器上**几乎一定挂**。重写为顺序 try_read，不依赖空数组展开。
+- `scripts/install.sh`：`install_core_spec` 顺便把 `.claude-plugin/plugin.json` copy 到 `~/.wk-im-dev/.claude-plugin/`，让 Codex-only 安装也能正确报告版本号（之前 launcher 找不到任何 plugin.json）。
+- `hooks/kb-refresh.sh`：`find_component_root` 改为纯字符串向上解析，不再 `cd` 父目录。原实现在父目录已被消除/不存在的极端场景下会 silent skip 而错过 source-change 日志。
+- 测试侧发现：v3.4.2 的 bootstrap 一切正常，但安装完跑 `doctor` 立刻挂 — 这是 v3.4.1 + v3.4.2 都有的旧 bug，因为本地源码树有 `.claude-plugin/plugin.json` 直接被 path-4 命中所以从没暴露。
+
+### Migration
+
+- **从 v3.4.1 / v3.4.2 升级**：直接重跑 bootstrap 即可：
+  ```
+  curl ... bootstrap.sh | bash -s -- --target . --ref v3.4.3
+  ```
+  无需手动清理。`~/.wk-im-dev/.claude-plugin/plugin.json` 由本次 install 自动 copy。
+
+---
+
 ## v3.4.2 — 2026-05-27 (hotfix)
 
 ### Fixed
