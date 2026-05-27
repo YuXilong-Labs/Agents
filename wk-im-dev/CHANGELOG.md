@@ -8,12 +8,25 @@
 
 ## Unreleased
 
+（无）
+
+---
+
+## v3.4.1 — 2026-05-27
+
 ### Added
 
-- `scripts/bootstrap.sh` 新增 `--ref` / `--repo-url` 参数（同时支持 `WK_IM_DEV_REF` / `WK_IM_DEV_REPO_URL` 环境变量），允许团队成员钉死版本 tag、走内网 mirror。commit SHA 走 `git fetch` 兜底。
-- `bin/wk-im-dev` 新增 `--version` / `-V` 子命令，从 `plugin.json` 读出版本号 + 来源路径；`doctor` 顶部也打印版本号，方便排错。
-- `docs/team-distribution.md` 团队分发指南：tag 发布流程、内网 mirror、私有 token、Claude plugin 内网过渡方案、升级流程、排错速查、onboarding 模板。
+- `scripts/bootstrap.sh` 新增 `--ref` / `--repo-url` / `--marketplace` 参数（同时支持 `WK_IM_DEV_REF` / `WK_IM_DEV_REPO_URL` / `WK_IM_DEV_MARKETPLACE` 环境变量），允许团队成员钉死版本 tag、走内网 mirror、覆盖 Claude marketplace。commit SHA 走 `git fetch` 兜底。
+- `scripts/bootstrap.sh` 默认 `--runtime auto`：检测 `claude` CLI → 走 Claude plugin marketplace add + install；否则走 git clone + install.sh。支持 `--runtime both` 双装。
+- `scripts/install.sh` 新增 `--dry-run-shell-rc`：打印将要追加到 shell rc 的内容但不写入，方便自管 dotfiles 的团队成员。
+- `scripts/install.sh` 入口加 `check_prerequisites`：缺少 git/grep/sed/awk 立即 fail-fast，codex/claude CLI 缺失只 warn。
+- `bin/wk-im-dev` 新增 `--version` / `-V` 子命令，从 `plugin.json` 读出版本号 + 来源路径；`doctor` 顶部也打印版本号。
+- `bin/wk-im-dev` 新增 `doctor --fix`：检测出问题时输出可粘贴的修复命令（不主动执行），覆盖 Claude plugin 未启用 / Codex profile 缺失 / workspace.json 缺失 / PATH 未配置 / CodeGraph 未装等场景。
 - `bin/wk-im-init.sh` 写 `~/.wk-im-dev/workspace.json` 时合并旧 `hostApps` 数组：保留旧条目（失效目录自动剔除）、追加新条目并去重；service/module 路径变更时打印 `Note` 不再静默覆盖。
+- `docs/architecture.md` 纳入版本控制（13 节 Mermaid 架构图）。
+- `docs/team-distribution.md` 团队分发指南：tag 发布流程、内网 mirror、私有 token、Claude plugin 内网过渡方案、升级流程、排错速查、安全/审计建议、onboarding 模板。
+- `docs/feishu-bot.md` 飞书 bot 部署单独文档：场景适配、依赖、飞书侧准备、部署形态、安全合规、生产化清单。
+- `CHANGELOG.md`：本文件首次创建，按 Keep a Changelog 规范整理过往版本。
 
 ### Changed
 
@@ -21,12 +34,15 @@
 - `bin/wk-im-dev` launcher 在没有 profile 时的 fallback 同步去掉 `-c model`，只覆盖 `model_reasoning_effort`。
 - `hooks/hooks.json`：`scope-check.sh` 从 `PostToolUse` 移到 `PreToolUse`，写 `Pods/` / `ThirdPartySDK/` 现在真正被阻止（之前只是事后报警）。
 - `hooks/scope-check.sh` 阻断消息改为中文，明确"需用户在对话中显式授权"。
+- `codex/install.sh` 标记 DEPRECATED，转发时打印 warning，计划 v4 移除。
+- README 顶部加导航三连（架构 / 团队分发 / CHANGELOG）；新增"升级"和"团队分发"章节；目录结构补齐新文档。
 
 ### Migration
 
-- **从 v3.4.0 升级到 Unreleased**：直接重跑 bootstrap 或 `claude plugin update`。
+- **从 v3.4.0 升级到 v3.4.1**：直接重跑 bootstrap 或 `claude plugin update`。
   - `workspace.json` 自动 backward-compatible（读取旧格式 + 合并）。
-  - 旧的 `profile.toml` 中的 `model = "gpt-5.4"` 行会被新 installer 的 marker 块覆盖（无 `model` 字段），如果你的团队需要为本 profile 钉死模型，在 marker 块**外面**手写 `[profiles.wk-im-dev]` 之后的 `model = "..."` 一行即可（不会被 installer 覆盖）。
+  - 旧的 `profile.toml` 中的 `model = "gpt-5.4"` 行会被新 installer 的 marker 块覆盖（无 `model` 字段）。如果你的团队需要为本 profile 钉死模型，在 marker 块**外面**手写 `model = "..."` 一行即可（不会被 installer 覆盖）。
+  - 调用 `codex/install.sh` 的脚本会看到 deprecation warning，请改用 `scripts/install.sh --runtime codex` 或 `scripts/bootstrap.sh`。
 
 ---
 
