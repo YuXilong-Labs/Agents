@@ -5,6 +5,7 @@
 #   wk-im-dev                      # auto-detect: Claude Code (if plugin installed) else Codex
 #   wk-im-dev [codex/claude opts] [prompt]
 #   wk-im-dev doctor               # show install status
+#   wk-im-dev --version            # print version + source
 #   wk-im-dev --help               # this help
 #
 # Runtime selection precedence:
@@ -20,7 +21,50 @@ CORE_SPEC="${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-core.md}"
 SELF="$0"
 
 show_help() {
-  sed -n '2,16p' "$SELF" | sed 's/^# \{0,1\}//'
+  sed -n '2,17p' "$SELF" | sed 's/^# \{0,1\}//'
+}
+
+# ----- version lookup ------------------------------------------------------
+# 从 plugin.json 读 version。优先级：
+#   1. $WK_IM_DEV_PLUGIN_JSON 环境变量
+#   2. Claude plugin 安装位置 (~/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json)
+#   3. 当前仓库源码位置（开发场景）
+#   4. 退而求其次：返回 unknown
+read_version() {
+  local candidates=()
+  [ -n "${WK_IM_DEV_PLUGIN_JSON:-}" ] && candidates+=("$WK_IM_DEV_PLUGIN_JSON")
+  # Claude Code 装好后的 plugin.json
+  for path in "$HOME"/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json \
+              "$HOME"/.claude/plugins/cache/*/wk-im-dev*/.claude-plugin/plugin.json; do
+    [ -f "$path" ] && candidates+=("$path")
+  done
+  # 开发场景：launcher 自身相对位置（当 launcher 在源码树中时）
+  local self_dir
+  self_dir="$(cd "$(dirname "$SELF")" 2>/dev/null && pwd)" || true
+  if [ -n "$self_dir" ] && [ -f "$self_dir/../.claude-plugin/plugin.json" ]; then
+    candidates+=("$self_dir/../.claude-plugin/plugin.json")
+  fi
+
+  local file v
+  for file in "${candidates[@]}"; do
+    [ -f "$file" ] || continue
+    v="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$file" \
+         | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+    if [ -n "$v" ]; then
+      printf '%s\t%s\n' "$v" "$file"
+      return 0
+    fi
+  done
+  printf 'unknown\t<not found>\n'
+}
+
+show_version() {
+  local out version source
+  out="$(read_version)"
+  version="${out%%	*}"
+  source="${out#*	}"
+  echo "wk-im-dev $version"
+  echo "  source: $source"
 }
 
 # ----- runtime detection --------------------------------------------------
@@ -75,7 +119,12 @@ doctor_line_dir() {
 }
 
 run_doctor() {
+  local vout vversion vsource
+  vout="$(read_version)"
+  vversion="${vout%%	*}"
+  vsource="${vout#*	}"
   echo "wk-im-dev doctor"
+  echo "  version: $vversion ($vsource)"
   echo ""
   echo "Runtime detection:"
   echo "  WK_IM_DEV_RUNTIME=${WK_IM_DEV_RUNTIME:-<unset>}"
@@ -149,7 +198,8 @@ ERR
   if grep -q '^\[profiles\.wk-im-dev\]' "$codex_cfg" 2>/dev/null; then
     args+=(--profile wk-im-dev)
   else
-    args+=(-c model='"gpt-5.4"' -c model_reasoning_effort='"high"')
+    # 没装 profile 时只覆盖 reasoning_effort，model 走 Codex 默认，避免模型权限问题
+    args+=(-c model_reasoning_effort='"high"')
   fi
   exec codex "${args[@]}" "$@"
 }
@@ -159,8 +209,9 @@ ERR
 # Recognize the doctor subcommand or --doctor flag before we forward args.
 if [ $# -ge 1 ]; then
   case "$1" in
-    doctor|--doctor) run_doctor; exit 0 ;;
-    -h|--help)       show_help; exit 0 ;;
+    doctor|--doctor)       run_doctor; exit 0 ;;
+    version|--version|-V)  show_version; exit 0 ;;
+    -h|--help)             show_help; exit 0 ;;
   esac
 fi
 

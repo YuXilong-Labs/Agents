@@ -28,9 +28,23 @@ curl -fsSL <url>/bootstrap.sh | bash -s -- [options]
 
   --target <path>      目标仓库，默认当前目录
   --runtime <value>    codex（默认）
+  --ref <git-ref>      要拉取的 git tag/branch/commit，默认 main
+                       也可用 env WK_IM_DEV_REF
+  --repo-url <url>     覆盖默认仓库地址（团队内网镜像）
+                       也可用 env WK_IM_DEV_REPO_URL
   --no-shell-rc        不改 shell rc
   --skip-init          安装后不自动跑 wk-im-init.sh
   --with-codegraph     安装时一并安装 + 索引 CodeGraph
+```
+
+**版本固定建议**：CI/Release 流程打 tag 后，团队成员安装时显式 `--ref v3.4.0`，避免 `main` 引入未稳定提交时全员遭殃。
+
+**内网镜像**：把 Agents 仓库 mirror 到内网（如 `git@gitlab.intra/.../Agents.git`），安装时：
+
+```bash
+export WK_IM_DEV_REPO_URL="https://gitlab.intra/team/Agents.git"
+export WK_IM_DEV_REF="v3.4.0"
+curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target .
 ```
 
 ## 3. `wk-im-init.sh` 全部 flag

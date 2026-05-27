@@ -1,8 +1,11 @@
 # WK-IM-DEV-PROFILE:START
 # wk-im-dev Codex profile — injected into ~/.codex/config.toml by scripts/install.sh.
 # DO NOT edit between the markers; re-run the installer to update.
+#
+# 注：本 profile 故意不写 model 字段，避免团队成员账号没有特定模型权限时直接挂。
+# Codex 会回退到 ~/.codex/config.toml 的全局 model 配置或 Codex 默认值。
+# 如需为本 profile 钉死模型，请在 marker 块外另起 `model = "..."`（不会被 installer 覆盖）。
 [profiles.wk-im-dev]
-model = "gpt-5.4"
 model_reasoning_effort = "high"
 personality = "pragmatic"
 # WK-IM-DEV-PROFILE:END

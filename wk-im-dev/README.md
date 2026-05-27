@@ -98,11 +98,14 @@ installer 自动解析 Podfile 的本地路径，写入 `~/.wk-im-dev/workspace.
 | 操作 | 命令 |
 |---|---|
 | 安装（Codex / curl） | `curl ... bootstrap.sh \| bash -s -- --target <repo>` |
+| 安装指定版本（推荐） | `curl ... bootstrap.sh \| bash -s -- --target <repo> --ref v3.4.0` |
 | 安装（Claude Code） | `claude plugin install wk-im-dev@yuxilong-agents` |
 | 启动 | `wk-im-dev` |
+| 查看版本 | `wk-im-dev --version` |
 | 自检 | `wk-im-dev doctor` |
 | 重新初始化知识库 | `wk-im-init.sh`（在仓库里直接跑，自动定位） |
 | 强制选 runtime | `WK_IM_DEV_RUNTIME=claude wk-im-dev` |
+| 团队内网镜像源 | `WK_IM_DEV_REPO_URL=<your-mirror> curl ... \| bash` |
 | 启用 CodeGraph | `wk-im-codegraph.sh install && wk-im-codegraph.sh init --root <repo>` |
 | 卸载 | `bash scripts/uninstall.sh [--target <repo>]` |
 
