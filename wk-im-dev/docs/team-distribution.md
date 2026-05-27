@@ -177,7 +177,52 @@ wk-im-init.sh   # 在 IM 仓库里跑
 
 ---
 
-## 5. 团队 onboarding 模板
+## 5. 安全 / 审计建议
+
+团队 IT 不允许 `curl ... | bash` 的环境（怕中间人篡改、怕未审计代码进生产环境），有两种替代方案：
+
+### 5.1 先下载再审计后运行
+
+```bash
+# 1. 下载到本地
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.1/wk-im-dev/scripts/bootstrap.sh \
+  -o /tmp/wk-im-dev-bootstrap.sh
+
+# 2. 审计（人工 review 或交给团队安全工具）
+less /tmp/wk-im-dev-bootstrap.sh
+
+# 3.（可选）记录 sha256 入团队 manifest
+shasum -a 256 /tmp/wk-im-dev-bootstrap.sh
+
+# 4. 运行
+bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.1
+```
+
+### 5.2 团队级集中安装（推荐）
+
+不让每个团队成员各自 `curl | bash`，改成团队基础设施的一部分：
+
+1. CI/Release 流程在内网 mirror 上打 `v3.4.x` tag
+2. 团队基础镜像 / Mac 准备脚本里集成：
+   ```bash
+   git clone --depth 1 --branch v3.4.1 https://gitlab.intra/team/Agents.git /opt/Agents
+   bash /opt/Agents/wk-im-dev/scripts/install.sh --runtime both --target $HOME --skip-init
+   ```
+3. 团队成员只跑入职脚本，不直接接触 bootstrap 命令
+
+`install.sh` 里所有写动作都集中在 `~/.wk-im-dev/`、`~/.codex/`、可选 shell rc 和目标仓库的 `AGENTS.md` marker 块，没有 root 操作、没有网络下载（git clone 在 bootstrap 阶段完成）。审计点已经收敛得很小。
+
+### 5.3 已知不会清理的备份文件
+
+`install.sh` 每次修改 `~/.codex/config.toml` 或目标 `AGENTS.md` 时会留备份文件（`*.wk-im-dev-backup-<timestamp>`），不会自动清理。多次升级后会累积，定期手动清理即可：
+
+```bash
+find ~ -maxdepth 3 -name "*.wk-im-dev-backup-*" -mtime +30 -delete
+```
+
+---
+
+## 6. 团队 onboarding 模板
 
 放到团队 wiki 顶部：
 
