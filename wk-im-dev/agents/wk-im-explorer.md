@@ -1,6 +1,6 @@
 ---
 name: wk-im-explorer
-description: 只读代码探索，用于 BTIMService 和 BTIMModule。Use proactively when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component.
+description: 只读代码探索，用于 BTIMService 和 BTIMModule。Use PROACTIVELY when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component.
 model: inherit
 disallowedTools: Write, Edit, MultiEdit
 color: cyan
@@ -45,7 +45,19 @@ CodeGraph 不可用时，先读组件仓库 `docs/agent-knowledge/index.md`、`t
 2. 只读最相关的文件
 3. 按需追踪调用链，不过度深入
 
-## 输出格式（必须 < 1500 token，超出时只保留 Top 5）
+## 输出预算（硬限）
+
+| 段落 | 上限 | 超额处理 |
+|---|---|---|
+| 相关文件 | ≤ 5 个 | 按调用入口接近度排序，多余合并到"其他相关" |
+| 关键类/协议 | ≤ 3 个 | 只保留任务直接相关 |
+| 调用链 | ≤ 1 条主链 | 分支用括号标注，禁止展开第二条主链 |
+| Pod 归属 | 各列 ≤ 3 项 | — |
+| 总结 | 2-3 句 | — |
+
+总输出目标 < 1500 token。超出时按"总结 > 调用链 > 关键类 > 相关文件 > Pod 归属"优先级保留。
+
+## 输出格式
 
 ### 相关文件
 - `path/to/file.swift` — 一句话说明用途

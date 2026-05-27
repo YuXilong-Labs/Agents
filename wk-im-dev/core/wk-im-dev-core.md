@@ -99,6 +99,15 @@ At the start of every new session, before producing the first reply:
 2. Detect repo context via the equivalent of `wk-im-detect-env.sh`. If pwd looks like an IM repo but `workspace.json` is missing, escalate the same notice.
 3. Self-check runs once per session; do not repeat it on every subsequent reply.
 
+## Cross-component change ordering
+
+When a single task spans both BTIMService and BTIMModule:
+
+1. Land BTIMService first — public headers, contracts, and `docs/agent-knowledge/contracts.md` update go in this commit so the source of truth ships before its consumer.
+2. Land BTIMModule second — call-site changes that depend on the new contract.
+3. Keep the two repos' git histories independently reviewable; do not combine them into a single squashed commit.
+4. If only one repo is reachable in the current workspace, the planner must flag the missing side in the `Risk` section, and the verifier must mark Architecture/Knowledge `PARTIAL` until the second side lands.
+
 ## Workflow
 
 Feature work:
