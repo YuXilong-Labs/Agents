@@ -13,6 +13,7 @@ REPLACE_PROJECT_AGENTS=0
 INSTALL_CODEX_AGENT=1
 INSTALL_CODEX_PROFILE=1
 UPDATE_SHELL_RC=1
+DRY_RUN_SHELL_RC=0
 RUN_INIT=1
 WITH_CODEGRAPH=0
 
@@ -36,6 +37,7 @@ Options:
   --skip-codex-agent       Do not install ~/.codex/agents/wk-im-dev.toml.
   --skip-codex-profile     Do not write [profiles.wk-im-dev] to ~/.codex/config.toml.
   --no-shell-rc            Do not append ~/.wk-im-dev/bin to ~/.zshrc or ~/.bashrc.
+  --dry-run-shell-rc       Print what would be appended to shell rc (skip actual write).
   -h, --help               Show this help.
 USAGE
 }
@@ -260,21 +262,34 @@ update_shell_rc() {
     shell_rc="$HOME/.bashrc"
   fi
 
-  if [ -n "$shell_rc" ]; then
-    if ! grep -q 'wk-im-dev/bin' "$shell_rc" 2>/dev/null; then
-      {
-        echo ""
-        echo "# wk-im-dev"
-        echo 'export PATH="$HOME/.wk-im-dev/bin:$PATH"'
-      } >> "$shell_rc"
-      echo "  OK PATH updated in $shell_rc"
-      echo "  Next shell: source $shell_rc"
-    else
-      echo "  OK PATH already contains ~/.wk-im-dev/bin"
-    fi
-  else
+  if [ -z "$shell_rc" ]; then
     echo "  NOTE no shell rc file found; add ~/.wk-im-dev/bin to PATH manually if needed"
+    return
   fi
+
+  if grep -q 'wk-im-dev/bin' "$shell_rc" 2>/dev/null; then
+    echo "  OK PATH already contains ~/.wk-im-dev/bin"
+    return
+  fi
+
+  if [ "$DRY_RUN_SHELL_RC" -eq 1 ]; then
+    echo "  NOTE --dry-run-shell-rc: would append the following to $shell_rc"
+    echo "       ----------------------------------------"
+    echo "       "
+    echo "       # wk-im-dev"
+    echo '       export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+    echo "       ----------------------------------------"
+    echo "       手动追加完毕后：source $shell_rc"
+    return
+  fi
+
+  {
+    echo ""
+    echo "# wk-im-dev"
+    echo 'export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+  } >> "$shell_rc"
+  echo "  OK PATH updated in $shell_rc"
+  echo "  Next shell: source $shell_rc"
 }
 
 looks_like_im_repo() {
@@ -302,6 +317,36 @@ validate_source_layout() {
   [ -f "$PLUGIN_ROOT/core/wk-im-dev-core.md" ] || fail "Missing $PLUGIN_ROOT/core/wk-im-dev-core.md"
   [ -f "$PLUGIN_ROOT/.claude-plugin/plugin.json" ] || fail "Missing Claude plugin manifest"
   require_marked_template "$CODEX_DIR/AGENTS.md"
+}
+
+# 前置依赖检查 — 在做任何修改前 fail-fast，避免半截安装
+check_prerequisites() {
+  local missing=()
+  command -v git  >/dev/null 2>&1 || missing+=("git")
+  command -v grep >/dev/null 2>&1 || missing+=("grep")
+  command -v sed  >/dev/null 2>&1 || missing+=("sed")
+  command -v awk  >/dev/null 2>&1 || missing+=("awk")
+  if [ "${#missing[@]}" -gt 0 ]; then
+    fail "Missing required CLI tools: ${missing[*]}. Install them and retry."
+  fi
+
+  # bash 版本检查：脚本用了 array length / +=()，bash 3.2+ 足够
+  if [ -n "${BASH_VERSION:-}" ]; then
+    local major="${BASH_VERSION%%.*}"
+    if [ "$major" -lt 3 ]; then
+      fail "Bash $BASH_VERSION too old (need >= 3.2). Upgrade bash or run with: bash scripts/install.sh ..."
+    fi
+  fi
+
+  # runtime 对应的 CLI 检查（warn-only：装完才用上，安装本身不依赖）
+  if runtime_includes codex && ! command -v codex >/dev/null 2>&1; then
+    echo "  NOTE codex CLI 未在 PATH 中。安装后启动时会用到，可先继续安装。" >&2
+    echo "       安装 Codex CLI: https://github.com/openai/codex" >&2
+  fi
+  if runtime_includes claude && ! command -v claude >/dev/null 2>&1; then
+    echo "  NOTE claude CLI 未在 PATH 中。Claude Code plugin 需要 claude CLI。" >&2
+    echo "       安装 Claude Code: https://claude.com/claude-code" >&2
+  fi
 }
 
 while [ "$#" -gt 0 ]; do
@@ -334,6 +379,10 @@ while [ "$#" -gt 0 ]; do
       UPDATE_SHELL_RC=0
       shift
       ;;
+    --dry-run-shell-rc)
+      DRY_RUN_SHELL_RC=1
+      shift
+      ;;
     --skip-init)
       RUN_INIT=0
       shift
@@ -364,6 +413,7 @@ esac
 TARGET="$(cd "$TARGET" && pwd)"
 
 validate_source_layout
+check_prerequisites
 if [ -f "$SCRIPT_DIR/verify.sh" ]; then
   bash "$SCRIPT_DIR/verify.sh" --quiet
 fi
