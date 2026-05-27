@@ -124,7 +124,7 @@ install_codex_curl() {
   TMP_DIR=$(mktemp -d)
   trap 'rm -rf "$TMP_DIR"' EXIT
 
-  echo "▶ 下载 wk-im-dev（sparse clone ref=$REF, repo=$REPO_URL）..."
+  echo "▶ 下载 wk-im-dev（sparse clone ref=${REF}, repo=${REPO_URL}）..."
   # --branch 支持 tag 和 branch；不支持任意 commit。如果用 commit SHA，下面会回退到 fetch。
   if ! git clone --depth 1 --filter=blob:none --sparse \
         --branch "$REF" "$REPO_URL" "$TMP_DIR/Agents" --quiet 2>/dev/null; then

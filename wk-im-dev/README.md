@@ -303,7 +303,9 @@ FEISHU_APP_ID=xxx FEISHU_APP_SECRET=xxx \
 | Codex（curl） | 重跑 `curl ... bootstrap.sh \| bash -s -- --target . --ref <new-tag>` |
 | Claude Code | `claude plugin update wk-im-dev@yuxilong-agents` |
 
-`workspace.json` 在 v3.4.1+ 走增量合并，不会丢 `hostApps`；改动了 init / kb-scan 逻辑时推荐 `wk-im-init.sh` 再扫一次。详见 [CHANGELOG.md](CHANGELOG.md) 与 [docs/team-distribution.md](docs/team-distribution.md)。
+`workspace.json` 在 v3.4.2+ 走增量合并，不会丢 `hostApps`；改动了 init / kb-scan 逻辑时推荐 `wk-im-init.sh` 再扫一次。详见 [CHANGELOG.md](CHANGELOG.md) 与 [docs/team-distribution.md](docs/team-distribution.md)。
+
+> ⚠️ **v3.4.1 已知 bug**：bootstrap.sh 在 `set -u` 下解析中文括号时挂。请直接用 `--ref v3.4.2`。
 
 ## 团队分发
 

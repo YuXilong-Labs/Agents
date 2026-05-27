@@ -12,6 +12,20 @@
 
 ---
 
+## v3.4.2 — 2026-05-27 (hotfix)
+
+### Fixed
+
+- `scripts/bootstrap.sh`：line 127 的 `echo "...(...$REPO_URL）..."` 在 `set -u` 下因 bash 把中文全角括号 `）` 的 UTF-8 高位字节误当作变量名续 → `unbound variable: REPO_URL�`。改为 `${REPO_URL}` 显式定界。**所有 v3.4.1 安装命令实际会立即失败**，请改用 v3.4.2。
+- 影响：从 v3.4.1 tag `curl ... bootstrap.sh | bash ...` 无论传什么参数都会在下载阶段挂掉。issue 由 Docker/clean HOME 真实环境验证发现。
+
+### Migration
+
+- **已经从 v3.4.1 安装但失败的团队成员**：直接重跑 `... --ref v3.4.2`，无需手动清理。
+- **v3.4.1 tag 保留**（不移动），但 README/文档示例统一指向 v3.4.2。
+
+---
+
 ## v3.4.1 — 2026-05-27
 
 ### Added
