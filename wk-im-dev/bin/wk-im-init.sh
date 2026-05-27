@@ -104,6 +104,26 @@ read_workspace_fallback() {
   return 1
 }
 
+# 读取现有 workspace.json 的标量字段（service/module）和 hostApps 数组。
+# 仅支持本脚本生成的简单格式（"hostApps": ["...","..."])。
+read_workspace_field() {
+  local cfg="$1"; local key="$2"
+  [ -f "$cfg" ] || return 0
+  grep -oE "\"$key\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" "$cfg" | head -1 \
+    | sed -E 's/.*"([^"]*)"$/\1/'
+}
+
+# 输出现有 hostApps，每行一个路径（保留顺序）。
+read_workspace_hostapps() {
+  local cfg="$1"
+  [ -f "$cfg" ] || return 0
+  local arr
+  arr="$(grep -oE '"hostApps"[[:space:]]*:[[:space:]]*\[[^]]*\]' "$cfg" | head -1 \
+         | sed -E 's/.*\[(.*)\].*/\1/')"
+  [ -n "$arr" ] || return 0
+  printf '%s' "$arr" | grep -oE '"[^"]+"' | sed -E 's/^"(.*)"$/\1/'
+}
+
 add_scan_root() {
   local path="$1"
   local existing
@@ -259,12 +279,60 @@ if [ "$SHOULD_WRITE_CONFIG" -eq 1 ]; then
   GLOBAL_CONFIG_DIR="$HOME/.wk-im-dev"
   mkdir -p "$GLOBAL_CONFIG_DIR"
   GLOBAL_CONFIG="$GLOBAL_CONFIG_DIR/workspace.json"
+
+  # 合并策略：保留旧的 hostApps，追加新的并去重；service/module 以本次输入为准，
+  # 但旧值不同时打印一行提示，避免静默覆盖。
+  MERGED_HOST_APPS=()
+  if [ -f "$GLOBAL_CONFIG" ]; then
+    OLD_SVC="$(read_workspace_field "$GLOBAL_CONFIG" service || true)"
+    OLD_MOD="$(read_workspace_field "$GLOBAL_CONFIG" module || true)"
+    if [ -n "$OLD_SVC" ] && [ -n "$SERVICE_PATH" ] && [ "$OLD_SVC" != "$SERVICE_PATH" ]; then
+      [ "$QUIET" -eq 1 ] || echo "Note: BTIMService path changed: $OLD_SVC -> $SERVICE_PATH"
+    fi
+    if [ -n "$OLD_MOD" ] && [ -n "$MODULE_PATH" ] && [ "$OLD_MOD" != "$MODULE_PATH" ]; then
+      [ "$QUIET" -eq 1 ] || echo "Note: BTIMModule path changed: $OLD_MOD -> $MODULE_PATH"
+    fi
+    while IFS= read -r old_app; do
+      [ -n "$old_app" ] || continue
+      # 旧 host app 已不存在 → 静默丢弃（视为清理失效条目）
+      [ -d "$old_app" ] || continue
+      MERGED_HOST_APPS+=("$old_app")
+    done < <(read_workspace_hostapps "$GLOBAL_CONFIG")
+  fi
+  # 追加本次新增的 hostApps（去重），显式长度守卫规避 bash 3.2 空数组展开问题
   if [ "${#RESOLVED_HOST_APPS[@]}" -gt 0 ]; then
-    write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH" "${RESOLVED_HOST_APPS[@]}"
+    for new_app in "${RESOLVED_HOST_APPS[@]}"; do
+      [ -n "$new_app" ] || continue
+      dup=0
+      if [ "${#MERGED_HOST_APPS[@]}" -gt 0 ]; then
+        for existing in "${MERGED_HOST_APPS[@]}"; do
+          [ "$existing" = "$new_app" ] && { dup=1; break; }
+        done
+      fi
+      [ "$dup" -eq 0 ] && MERGED_HOST_APPS+=("$new_app")
+    done
+  fi
+
+  if [ "${#MERGED_HOST_APPS[@]}" -gt 0 ]; then
+    write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH" "${MERGED_HOST_APPS[@]}"
   else
     write_workspace_json "$GLOBAL_CONFIG" "$SERVICE_PATH" "$MODULE_PATH"
   fi
-  [ "$QUIET" -eq 1 ] || echo "Workspace config written: $GLOBAL_CONFIG"
+
+  if [ "$QUIET" -ne 1 ]; then
+    echo "Workspace config written: $GLOBAL_CONFIG"
+    if [ "${#MERGED_HOST_APPS[@]}" -gt 0 ]; then
+      echo "  hostApps (merged):"
+      for app in "${MERGED_HOST_APPS[@]}"; do
+        echo "    - $app"
+      done
+    fi
+  fi
+
+  # 用合并后的列表覆盖原变量（仅当非空），后续 SCAN_ROOTS / echo 输出一致
+  if [ "${#MERGED_HOST_APPS[@]}" -gt 0 ]; then
+    RESOLVED_HOST_APPS=("${MERGED_HOST_APPS[@]}")
+  fi
 fi
 
 if [ "$QUIET" -ne 1 ]; then
