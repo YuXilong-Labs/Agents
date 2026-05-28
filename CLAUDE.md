@@ -24,6 +24,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 按改动性质分三层：日常修改跑前两步即可；**打 tag 发版前必须额外跑第三步端到端验证**。
 
+> **发版 checklist（打 tag 前必做）**：① 更新 `CHANGELOG.md`（把 Unreleased 内容移到新版本节，补日期） ② 更新 `plugin.json` 版本号 ③ 提交 release commit ④ 打 tag ⑤ push tag ⑥ 跑步骤 3 端到端验证。
+
 ### 步骤 1 — 静态验证（结构、语法、约束）
 
 ```bash
