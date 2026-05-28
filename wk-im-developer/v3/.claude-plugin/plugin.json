@@ -1,8 +1,0 @@
-{
-  "name": "wk-im-developer",
-  "description": "iOS IM component developer for BTIMService and BTIMModule. Provides skills, hooks, and exploration tools for feature development, bug fixing, and architecture queries.",
-  "version": "3.0.0",
-  "author": {
-    "name": "YuXilong-Labs"
-  }
-}

@@ -1,5 +1,0 @@
-# setup 生成的工作区软链接（本地路径，不提交）
-workspace/
-
-# 记忆持久化（本地 session 数据，不提交）
-.wkim/

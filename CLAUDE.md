@@ -12,7 +12,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|------|------|
 | `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag） |
 | `wk-code-refactor/` | ✅ 当前主线 | 单模块/功能点重构 Agent |
-| `wk-im-developer/` | ⚠️ 已弃用（v2，计划近期删除） | 保留仅供迁移参考，**不要在此写新内容** |
 
 ## 安装模型（重要）
 

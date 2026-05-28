@@ -8,7 +8,6 @@
 | --- | --- | --- | --- |
 | `wk-im-dev/` | ✅ 主线 v3.3 | iOS IM 组件 Agent（BTIMService / BTIMModule）。集成 CodeGraph AST 索引，~35% 更便宜、~70% 更少工具调用。 | [wk-im-dev/README.md](wk-im-dev/README.md) |
 | `wk-code-refactor/` | ✅ 主线 | 单组件 / 子模块 / 单功能点重构 Agent，强调旧实现先读、功能点矩阵、TDD 和分阶段确认。 | [wk-code-refactor/README.md](wk-code-refactor/README.md) |
-| `wk-im-developer/` | ⚠️ 已弃用 | 旧版 IM Agent（v2），保留作迁移参考，**不要在此写新内容**。 | [wk-im-developer/README.md](wk-im-developer/README.md) |
 
 ## 快速开始
 
