@@ -19,6 +19,7 @@ if [ -d "$CLAUDE_SKILLS" ]; then
          "$CLAUDE_SKILLS"/wk-im-plan \
          "$CLAUDE_SKILLS"/wk-im-feature \
          "$CLAUDE_SKILLS"/wk-im-bugfix \
+         "$CLAUDE_SKILLS"/wk-im-developer \
          "$CLAUDE_SKILLS"/wk-im-review \
          "$CLAUDE_SKILLS"/wk-im-recall \
          "$CLAUDE_SKILLS"/wk-im-skillify \

@@ -35,7 +35,7 @@ grep -q '\.wkim/' .gitignore 2>/dev/null || echo -e '\n# wk-im memory\n.wkim/' >
 |------|-------|
 | 新功能 / 需求 / implement | `/wk-im-feature` |
 | bug / crash / 修复 / fix | `/wk-im-bugfix` |
-| review / 审查 / PR | `/wk-im-review` |
+| review / 审查 / PR | 直接执行代码审查流程 |
 | 架构 / 设计 / 如何实现 | `/wk-im-knowledge` |
 | 规划 / plan / 方案 | `/wk-im-plan` |
 | setup / 初始化 | `/wk-im-setup` |
@@ -43,7 +43,7 @@ grep -q '\.wkim/' .gitignore 2>/dev/null || echo -e '\n# wk-im memory\n.wkim/' >
 | recall / 记忆 / 历史 | `/wk-im-recall` |
 | skillify / 提取经验 | `/wk-im-skillify` |
 
-所有 skill 均以 `wk-im-` 为前缀，避免与其他 agent 的 skill 命名冲突。
+可调用的 skill 均以 `wk-im-` 为前缀，避免与其他 agent 的 skill 命名冲突。
 
 ## 模型路由
 

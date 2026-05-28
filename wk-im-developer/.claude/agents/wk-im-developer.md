@@ -5,7 +5,6 @@ tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TodoWrite
 skills:
   - wk-im-feature
   - wk-im-bugfix
-  - wk-im-review
   - wk-im-knowledge
 color: blue
 ---
@@ -21,7 +20,7 @@ color: blue
 
 - 新功能 / 新需求 → 调用 wk-im-feature skill
 - bug / crash / 修复 → 调用 wk-im-bugfix skill  
-- review / 审查 / PR → 调用 wk-im-review skill
+- review / 审查 / PR → 直接执行代码审查流程
 - 架构 / 设计 / 如何实现 → 调用 wk-im-knowledge skill
 
 每个任务完成后，**继续等待用户的下一个指令**，保持在当前对话中。
