@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 目录 | 状态 | 说明 |
 |------|------|------|
-| `wk-im-dev/` | ✅ 当前主线（v3） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex |
+| `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag） |
 | `wk-code-refactor/` | ✅ 当前主线 | 单模块/功能点重构 Agent |
 | `wk-im-developer/` | ⚠️ 已弃用（v2，计划近期删除） | 保留仅供迁移参考，**不要在此写新内容** |
 
@@ -20,19 +20,60 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 修改流程：**修改源文件 → verify → install**
 
-## 验证流程（两步）
+## 验证流程
 
-修改任意 Agent 后，必须完成两步验证才算完成：
+按改动性质分三层：日常修改跑前两步即可；**打 tag 发版前必须额外跑第三步端到端验证**。
+
+### 步骤 1 — 静态验证（结构、语法、约束）
 
 ```bash
-# 步骤 1：静态验证（结构、语法、约束）
 cd <agent目录>
 bash scripts/verify.sh
-
-# 步骤 2：安装到目标运行时并实际触发一次
-bash scripts/install.sh --runtime claude   # 或 codex 或 both
-# 然后在目标项目中实际运行 Agent，确认行为符合预期
 ```
+
+### 步骤 2 — 本地安装 + 触发
+
+```bash
+bash scripts/install.sh --runtime both   # 或 claude / codex
+~/.wk-im-dev/bin/wk-im-dev --version      # 应输出当前 plugin.json 的版本号
+~/.wk-im-dev/bin/wk-im-dev doctor         # 全 [ok]，特别确认 "Claude plugin wk-im-dev enabled"
+```
+
+### 步骤 3 — 端到端验证（**仅 wk-im-dev 发版前必跑**）
+
+> ⚠️ **背景**：v1.0.0 发布后立刻发现 launcher `claude_plugin_installed()` 的 grep 模式不匹配 Claude 实际写入的 settings key，导致装了 Claude plugin 的用户被静默回退到 codex 路径。本地 `install.sh` 不会暴露这个 bug，必须从远端 tag 走团队成员的真实安装路径才能发现。从此以后**任何 release commit + tag push 之前都必须跑完整端到端**。
+
+#### 3.1 Codex 路径端到端
+
+打完 tag、push 完远端后，立刻跑：
+
+```bash
+TAG=v<X.Y.Z>   # 替换为本次 release 的 tag
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/${TAG}/wk-im-dev/scripts/bootstrap.sh \
+  | bash -s -- --target /tmp --ref ${TAG} --no-shell-rc --skip-init --runtime codex
+~/.wk-im-dev/bin/wk-im-dev --version   # 应输出 ${TAG} 对应版本号
+rm -f /tmp/AGENTS.md                    # 清理 install 副产物
+```
+
+#### 3.2 Claude plugin 路径端到端
+
+```bash
+claude plugin marketplace update yuxilong-agents     # 强制刷新 marketplace 缓存
+claude plugin update wk-im-dev@yuxilong-agents       # 或首次:install
+claude plugin list | grep -A2 wk-im-dev              # 确认 Version 是新 tag
+~/.wk-im-dev/bin/wk-im-dev doctor | grep -E "version|Claude plugin|effective runtime"
+# 期望:
+#   version: <X.Y.Z>
+#   [ok]   Claude plugin wk-im-dev enabled
+#   effective runtime: claude
+```
+
+#### 3.3 任一项 FAIL 的处理
+
+- **不要**让 tag 留在远端"看起来发布了但有 bug"的状态
+- 立刻补 patch hotfix（vX.Y.Z+1），重跑步骤 1-3
+- v1.0.0 → v1.0.1 就是这套流程的产物，参考 commit `6255fbe`
+- 旧 tag 不删（保留 release 历史），但在 README banner + CHANGELOG 显式标注"不推荐使用"
 
 ## 分支命名约定
 
