@@ -12,6 +12,27 @@
 
 ---
 
+## v1.0.2 — 2026-05-28 (hotfix)
+
+### Fixed
+
+- 新版 Codex 不再支持 `[profiles.xxx]` 写在 `~/.codex/config.toml` 里，改用独立的 `~/.codex/<name>.config.toml`；旧格式会导致 `codex -p wk-im-dev` 启动时报错退出：`--profile wk-im-dev cannot be used while config.toml contains legacy [profiles.wk-im-dev]`。
+  - `codex/profile.toml`：移除 `[profiles.wk-im-dev]` 表头和 `WK-IM-DEV-PROFILE` markers，改为纯 flat key-value（文件名即 profile 名）。
+  - `scripts/install.sh`：`install_codex_profile()` 改写目标为 `~/.codex/wk-im-dev.config.toml`；保留 migration 逻辑，重新安装时自动清除旧 `config.toml` 中的 legacy block。
+  - `scripts/verify.sh`：移除旧格式断言，改验 `model_reasoning_effort` 存在 + `[profiles.wk-im-dev]` 不存在。
+
+### Migration
+
+- **从 v1.0.1 升级**：直接重跑 bootstrap（Codex 路径）：
+  ```
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v1.0.2/wk-im-dev/scripts/bootstrap.sh \
+    | bash -s -- --target . --ref v1.0.2
+  ```
+  Claude Code 用户：`claude plugin update wk-im-dev@yuxilong-agents`。
+- 装完跑 `codex -p wk-im-dev`，不应再出现 `Error loading config.toml` 报错。
+
+---
+
 ## v1.0.1 — 2026-05-28 (hotfix)
 
 ### Fixed
