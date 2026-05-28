@@ -10,8 +10,8 @@
 ```bash
 # 团队成员一行命令（钉死 tag + 走内网镜像）
 WK_IM_DEV_REPO_URL="https://gitlab.intra/team/Agents.git" \
-WK_IM_DEV_REF="v3.4.0" \
-  curl -fsSL https://gitlab.intra/team/Agents/-/raw/v3.4.0/wk-im-dev/scripts/bootstrap.sh \
+WK_IM_DEV_REF="v3.5.0" \
+  curl -fsSL https://gitlab.intra/team/Agents/-/raw/v3.5.0/wk-im-dev/scripts/bootstrap.sh \
   | bash -s -- --target .
 ```
 
@@ -28,11 +28,11 @@ wk-im-dev doctor
 ### 1.1 在公开仓库（GitHub）打 tag
 
 ```bash
-git tag v3.4.0
-git push origin v3.4.0
+git tag v3.5.0
+git push origin v3.5.0
 ```
 
-发布给团队的安装命令里**始终带 `--ref v3.4.0`**，避免某次 `main` 上的未稳定 commit 让全员安装挂掉。
+发布给团队的安装命令里**始终带 `--ref v3.5.0`**，避免某次 `main` 上的未稳定 commit 让全员安装挂掉。
 
 ### 1.2（可选）把 Agents 仓库 mirror 到团队内网
 
@@ -63,8 +63,8 @@ git push --mirror
 # 模拟团队成员从零安装
 docker run --rm -it -v $PWD:/work ubuntu:22.04 bash -c '
   apt-get update && apt-get install -y curl git bash
-  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.0/wk-im-dev/scripts/bootstrap.sh \
-    | bash -s -- --target /work --ref v3.4.0 --no-shell-rc --skip-init
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.5.0/wk-im-dev/scripts/bootstrap.sh \
+    | bash -s -- --target /work --ref v3.5.0 --no-shell-rc --skip-init
   ls ~/.wk-im-dev/bin
 '
 ```
@@ -78,8 +78,8 @@ docker run --rm -it -v $PWD:/work ubuntu:22.04 bash -c '
 ### 2.1 公开 GitHub + 公网
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.0/wk-im-dev/scripts/bootstrap.sh \
-  | bash -s -- --target /path/to/BTIMService --ref v3.4.0
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.5.0/wk-im-dev/scripts/bootstrap.sh \
+  | bash -s -- --target /path/to/BTIMService --ref v3.5.0
 ```
 
 ### 2.2 内网 mirror（推荐 GitLab）
@@ -88,7 +88,7 @@ curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.0/wk-im-d
 
 ```bash
 export WK_IM_DEV_REPO_URL="https://gitlab.intra/team/Agents.git"
-export WK_IM_DEV_REF="v3.4.0"
+export WK_IM_DEV_REF="v3.5.0"
 curl -fsSL \
   "https://gitlab.intra/team/Agents/-/raw/${WK_IM_DEV_REF}/wk-im-dev/scripts/bootstrap.sh" \
   | bash -s -- --target .
@@ -167,13 +167,13 @@ wk-im-init.sh   # 在 IM 仓库里跑
 
 | 症状 | 原因 / 修复 |
 |---|---|
-| `git clone --branch v3.4.0` 失败 | tag 没推到默认 remote → 发布者 `git push origin v3.4.0` |
+| `git clone --branch v3.5.0` 失败 | tag 没推到默认 remote → 发布者 `git push origin v3.5.0` |
 | `curl` 返回 403 / 404 | 私有仓库未鉴权 → 改 SSH 或 netrc |
 | `claude plugin marketplace add` 找不到 | marketplace name 变了 → README "版本历史"里有迁移说明 |
-| `codex --profile wk-im-dev` 报 model 不存在 | 老版本 profile 写死了 `model = "gpt-5.4"` → 升级到 v3.4.0+ |
-| Pods/ 下写入没被拦截 | hooks.json 版本太老（PostToolUse 拦不住）→ 升级到 v3.4.3+ |
+| `codex --profile wk-im-dev` 报 model 不存在 | 老版本 profile 写死了 `model = "gpt-5.4"` → 升级到 v3.4.1+ |
+| Pods/ 下写入没被拦截 | hooks.json 版本太老（PostToolUse 拦不住）→ 升级到 v3.4.1+ |
 | `wk-im-dev` 命令找不到 | `~/.wk-im-dev/bin` 没在 PATH → 看 doctor 输出，按提示 export |
-| workspace.json 里 hostApps 变少了 | 老版本会覆盖；v3.4.3+ 已改为合并去重 |
+| workspace.json 里 hostApps 变少了 | 老版本会覆盖；v3.4.1+ 已改为合并去重 |
 
 ---
 
@@ -185,7 +185,7 @@ wk-im-init.sh   # 在 IM 仓库里跑
 
 ```bash
 # 1. 下载到本地
-curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.4.3/wk-im-dev/scripts/bootstrap.sh \
+curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v3.5.0/wk-im-dev/scripts/bootstrap.sh \
   -o /tmp/wk-im-dev-bootstrap.sh
 
 # 2. 审计（人工 review 或交给团队安全工具）
@@ -195,7 +195,7 @@ less /tmp/wk-im-dev-bootstrap.sh
 shasum -a 256 /tmp/wk-im-dev-bootstrap.sh
 
 # 4. 运行
-bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.3
+bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.5.0
 ```
 
 ### 5.2 团队级集中安装（推荐）
@@ -205,7 +205,7 @@ bash /tmp/wk-im-dev-bootstrap.sh --target . --ref v3.4.3
 1. CI/Release 流程在内网 mirror 上打 `v3.4.x` tag
 2. 团队基础镜像 / Mac 准备脚本里集成：
    ```bash
-   git clone --depth 1 --branch v3.4.3 https://gitlab.intra/team/Agents.git /opt/Agents
+   git clone --depth 1 --branch v3.5.0 https://gitlab.intra/team/Agents.git /opt/Agents
    bash /opt/Agents/wk-im-dev/scripts/install.sh --runtime both --target $HOME --skip-init
    ```
 3. 团队成员只跑入职脚本，不直接接触 bootstrap 命令
@@ -232,7 +232,7 @@ find ~ -maxdepth 3 -name "*.wk-im-dev-backup-*" -mtime +30 -delete
 1. 安装 Codex CLI 或 Claude Code（任一即可）
 2. 安装 wk-im-dev：
    ```
-   WK_IM_DEV_REF=v3.4.0 curl -fsSL .../bootstrap.sh | bash -s -- --target .
+   WK_IM_DEV_REF=v3.5.0 curl -fsSL .../bootstrap.sh | bash -s -- --target .
    ```
 3. 验证：
    ```

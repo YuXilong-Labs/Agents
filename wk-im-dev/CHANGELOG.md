@@ -12,6 +12,36 @@
 
 ---
 
+## v3.5.0 — 2026-05-28
+
+主线主题：**多 agent 并行能力补完 + 主 agent 身份模板重写**。本版本仅改 prompt 文本，不涉及脚本/契约/工作流脚本变更，可放心从 v3.4.x 升级。
+
+### Added
+
+- **主 agent 身份介绍**改为"能力 + 示例 + 子 agent 协作"模板，workspace 缺失时自动追加 `/wk-im-dev:setup` 提示，帮助用户快速判断"找对人没"并降低首次 setup 遗漏率。`agents/wk-im-dev.md`、`core/wk-im-dev-core.md`、`codex/AGENTS.md` 三处同步。
+- **三处子 agent 并行能力补完**：
+  - `wk-im-explorer`：description 与正文新增 "单组件内 ≥3 个独立子系统并行" 语义，附拆分模板（"消息撤回 / 未读数统计 / 同类调用者"三类示例）。
+  - `wk-im-debugger`：新增"多假说并行模式"——bug 有 ≥2 个互不依赖的可疑根因时，主 agent 同时派出多个 debugger 各验一个假说，收敛阶段择证据最强项。
+  - `wk-im-verifier`：新增"并行执行规则"段 + A/B 组依赖关系表，独立维度（Build/Test、Guard、Knowledge、Diff Scope、Architecture、Privacy）在同条消息内并发启动 Bash，依赖维度（Tests-coverage、Impact）顺次执行。预期总耗时从 ~150s 降至 max(Build/Test) + ~10s。
+- `core/wk-im-dev-core.md` 新增 **Parallel dispatch heuristic** 通用判断标准（独立子任务 ≥3 + 无数据依赖 + 目标明确，三条全满足才并行），并在每个 Subagent Role 上注明可并行性。
+- `.claude/plans/2026-05-28_多agent并行优化_{计划,总结}.md` 沉淀本次发版的 plan 与总结文档。
+
+### Removed
+
+- wk-im-developer (v2) 模块的 `wk-im-review` skill 文件（`.claude/` 与 `claude/` 双 runtime 都删），agent 触发表"review → 调用 skill"改为"直接执行代码审查流程"。同时清理与 agent 同名冗余的 `wk-im-developer/SKILL.md`。v2 整体进入退场窗口（CLAUDE.md 已标注弃用）。
+- `wk-im-developer/uninstall.sh` 同步追加 `wk-im-developer` 子目录到清理列表，保证 v2 卸载干净。
+
+### Migration
+
+- **从 v3.4.3 升级到 v3.5.0**：纯 prompt 改动，无脚本/契约破坏性变化。直接：
+  ```
+  curl ... bootstrap.sh | bash -s -- --target . --ref v3.5.0
+  ```
+  或 `claude plugin update`。
+- **装过 v2 (`wk-im-developer`) 的用户**：`wk-im-review` skill 文件已下架，agent 内部已改为"直接执行 review 流程"，体验上等价但少了一层 skill 间接调度。v2 计划近期整体移除，建议迁移到 v3 (`wk-im-dev`)。
+
+---
+
 ## v3.4.3 — 2026-05-27 (hotfix 2)
 
 ### Fixed

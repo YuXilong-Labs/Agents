@@ -102,7 +102,7 @@ installer 自动解析 Podfile 的本地路径，写入 `~/.wk-im-dev/workspace.
 | 操作 | 命令 |
 |---|---|
 | 安装（Codex / curl） | `curl ... bootstrap.sh \| bash -s -- --target <repo>` |
-| 安装指定版本（推荐） | `curl ... bootstrap.sh \| bash -s -- --target <repo> --ref v3.4.0` |
+| 安装指定版本（推荐） | `curl ... bootstrap.sh \| bash -s -- --target <repo> --ref v3.5.0` |
 | 安装（Claude Code） | `claude plugin install wk-im-dev@yuxilong-agents` |
 | 启动 | `wk-im-dev` |
 | 查看版本 | `wk-im-dev --version` |
