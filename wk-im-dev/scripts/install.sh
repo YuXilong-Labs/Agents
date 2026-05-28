@@ -35,7 +35,7 @@ Options:
   --skip-project-agents    Do not create or merge target AGENTS.md.
   --replace-project-agents Backup and replace target AGENTS.md instead of marker merging.
   --skip-codex-agent       Do not install ~/.codex/agents/wk-im-dev.toml.
-  --skip-codex-profile     Do not write [profiles.wk-im-dev] to ~/.codex/config.toml.
+  --skip-codex-profile     Do not write ~/.codex/wk-im-dev.config.toml.
   --no-shell-rc            Do not append ~/.wk-im-dev/bin to ~/.zshrc or ~/.bashrc.
   --dry-run-shell-rc       Print what would be appended to shell rc (skip actual write).
   -h, --help               Show this help.
@@ -204,54 +204,41 @@ install_helper_scripts() {
 }
 
 install_codex_profile() {
-  local codex_cfg="${CODEX_HOME:-$HOME/.codex}/config.toml"
+  local codex_home="${CODEX_HOME:-$HOME/.codex}"
+  local codex_cfg="$codex_home/config.toml"
+  local profile_dest="$codex_home/wk-im-dev.config.toml"
   local profile_src="$CODEX_DIR/profile.toml"
 
-  if [ ! -f "$codex_cfg" ]; then
-    echo "  NOTE ~/.codex/config.toml not found; skipping profile install"
-    echo "       Run 'codex' once to create the config, then re-run install."
-    return
-  fi
-
-  local start_count end_count
-  start_count="$(grep -Fc "$PROFILE_MARKER_START" "$codex_cfg" || true)"
-  end_count="$(grep -Fc "$PROFILE_MARKER_END" "$codex_cfg" || true)"
-
-  if [ "$start_count" -ge 1 ] && [ "$end_count" -ge 1 ]; then
-    # Block already present — update it in-place with awk.
-    local tmp backup
+  # Migrate: remove legacy [profiles.wk-im-dev] block from config.toml if present.
+  # (Codex ≥ new-profile-format rejects --profile when [profiles.xxx] exists in config.toml)
+  if [ -f "$codex_cfg" ] && grep -qF "$PROFILE_MARKER_START" "$codex_cfg" 2>/dev/null; then
+    local backup tmp
+    backup="$(backup_file "$codex_cfg")"
     tmp="$(mktemp)"
-    awk -v start="$PROFILE_MARKER_START" -v end="$PROFILE_MARKER_END" \
-        -v replacement="$profile_src" '
-      index($0, start) {
-        while ((getline line < replacement) > 0) { print line }
-        close(replacement)
-        in_block = 1
-        next
-      }
+    awk -v start="$PROFILE_MARKER_START" -v end="$PROFILE_MARKER_END" '
+      index($0, start) { in_block = 1; next }
       in_block && index($0, end) { in_block = 0; next }
       !in_block { print }
     ' "$codex_cfg" > "$tmp"
-
-    if cmp -s "$tmp" "$codex_cfg"; then
-      rm -f "$tmp"
-      echo "  OK [profiles.wk-im-dev] already up to date in config.toml"
-      return
-    fi
-    backup="$(backup_file "$codex_cfg")"
     mv "$tmp" "$codex_cfg"
-    echo "  OK [profiles.wk-im-dev] updated in config.toml (backup: $backup)"
+    echo "  OK migrated: removed legacy [profiles.wk-im-dev] from config.toml (backup: $backup)"
+  fi
+
+  # Write profile to standalone file (new Codex profile format).
+  if [ -f "$profile_dest" ] && cmp -s "$profile_src" "$profile_dest"; then
+    echo "  OK wk-im-dev.config.toml already up to date"
     return
   fi
 
-  # Append the profile block at the end of config.toml.
-  local backup
-  backup="$(backup_file "$codex_cfg")"
-  {
-    echo ""
-    cat "$profile_src"
-  } >> "$codex_cfg"
-  echo "  OK [profiles.wk-im-dev] appended to config.toml (backup: $backup)"
+  if [ -f "$profile_dest" ]; then
+    local backup
+    backup="$(backup_file "$profile_dest")"
+    cp "$profile_src" "$profile_dest"
+    echo "  OK wk-im-dev.config.toml updated (backup: $backup)"
+  else
+    cp "$profile_src" "$profile_dest"
+    echo "  OK wk-im-dev.config.toml written to $profile_dest"
+  fi
 }
 
 update_shell_rc() {
@@ -449,7 +436,7 @@ update_shell_rc
 if runtime_includes codex && [ "$INSTALL_CODEX_PROFILE" -eq 1 ]; then
   install_codex_profile
 elif runtime_includes codex; then
-  echo "  OK skipped [profiles.wk-im-dev] (--skip-codex-profile)"
+  echo "  OK skipped wk-im-dev.config.toml (--skip-codex-profile)"
 fi
 
 if runtime_includes claude; then

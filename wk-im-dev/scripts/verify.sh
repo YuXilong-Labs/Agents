@@ -154,9 +154,15 @@ require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMModule"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" 'name = "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "Core spec version: 1"
 require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "core/wk-im-dev-core.md"
-require_contains "$PLUGIN_ROOT/codex/profile.toml" "[profiles.wk-im-dev]"
-require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:START"
-require_contains "$PLUGIN_ROOT/codex/profile.toml" "WK-IM-DEV-PROFILE:END"
+require_contains "$PLUGIN_ROOT/codex/profile.toml" "model_reasoning_effort"
+require_not_contains() {
+  local file="$1" pattern="$2"
+  if grep -qF "$pattern" "$file" 2>/dev/null; then
+    echo "FAIL $file must not contain: $pattern (legacy format)"
+    ERRORS=$((ERRORS + 1))
+  fi
+}
+require_not_contains "$PLUGIN_ROOT/codex/profile.toml" "[profiles.wk-im-dev]"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "Version: 1"
 require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "ThirdPartyIMSDK"
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk-im-dev"'
