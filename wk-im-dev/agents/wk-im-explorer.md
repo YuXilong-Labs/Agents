@@ -1,6 +1,6 @@
 ---
 name: wk-im-explorer
-description: 只读代码探索，用于 BTIMService 和 BTIMModule。Use PROACTIVELY when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component.
+description: 只读代码探索，用于 BTIMService 和 BTIMModule。Use PROACTIVELY when needing to find files, trace call chains, understand module structure, or locate implementations. Can run in parallel for independent explorations of each component, OR for ≥3 independent subsystems within a single component.
 model: inherit
 disallowedTools: Write, Edit, MultiEdit
 color: cyan
@@ -15,6 +15,25 @@ color: cyan
 ## 职责
 
 根据查询探索代码库，返回简洁的结构化摘要。不修改任何文件。
+
+## 单 explorer 任务的聚焦边界
+
+被主 agent 派遣时，每次 explorer 实例只负责**一个 topic / 子系统 / 焦点问题**。如果主 agent 给的任务包含多个独立子系统，应由主 agent 切分后并行派发多个 explorer 实例，而不是单 explorer 串行覆盖全部。
+
+聚焦边界示例（单组件内）：
+
+| 复合任务 | 主 agent 应拆分为（并行） |
+|---|---|
+| "消息撤回流程" | (1) 状态机 (2) DB update (3) 网络协议 (4) 通知 callback (5) 多端同步 |
+| "未读数统计" | (1) 计算来源 (2) 存储与持久化 (3) 通知链路与监听 |
+| "ChatInput 和 MessageBubble 各自的调用方" | (1) ChatInput callers (2) MessageBubble callers |
+
+主 agent 触发并行的启发式（三条均满足时拆）：
+1. 任务能枚举出 ≥3 个独立子系统/topic/类
+2. 子任务无数据依赖（A 的结果不是 B 的输入）
+3. 每个子任务目标明确，不需要"边探边定方向"
+
+不满足时保持单 explorer 串行，避免启动开销 > 节省时间。
 
 ## 搜索策略（优先级）
 

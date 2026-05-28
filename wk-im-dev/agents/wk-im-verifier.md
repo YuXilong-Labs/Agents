@@ -14,6 +14,31 @@ color: yellow
 
 先运行 `git diff --name-only HEAD` 获取变更文件列表，根据 diff 类型选择验证子集：
 
+### 并行执行规则（关键）
+
+确定要跑的维度后，**在同一条消息内并行启动**所有相互独立的检查命令，等所有 Bash 返回后再聚合输出。下表列出维度间的依赖关系：
+
+| 维度 | 命令性质 | 可并行组 |
+|---|---|---|
+| Build/Test | `wk-im-verify.sh` / xcodebuild — 慢（30s-2min） | **A 组** |
+| Guard | `wk-im-guard.sh --quiet` — 静态扫描（<5s） | **A 组** |
+| Knowledge | `wk-im-kb-check.sh --root <repo>` — 静态扫描（<3s） | **A 组** |
+| Diff Scope | `git diff HEAD --stat` + 路径分析 | **A 组** |
+| Architecture | grep import 关系 + codegraph 查询 | **A 组** |
+| Privacy | grep 敏感字段日志 | **A 组** |
+| Tests（覆盖度评估） | 读 diff + 读对应测试文件，依赖 Build/Test 已知通过 | **B 组（A 后）** |
+| Impact（仅 public header 变更） | `codegraph_impact`，依赖 diff 解析 | **B 组（A 后）** |
+
+执行顺序：
+1. **A 组同消息并行**：把上表 A 组所有 Bash 调用放在**同一条 assistant 消息**里发出（多个 tool_use block 并发），让长尾的 Build/Test 与短任务（Guard/Knowledge/Diff/Architecture/Privacy）同步进行。
+2. **B 组在 A 组返回后串行**：Tests 覆盖度评估和 Impact 分析需要 A 组结果作为输入，故顺次执行。
+
+预期效果：Build/Test 占用的 60-120s 内，其余 5 项静态检查同步完成，验证总耗时从串行的 ~150s 降至 max(Build/Test) + ~10s。
+
+### diff 类型决策表
+
+
+
 | Diff 类型 | 必跑 | 可跳 |
 |---|---|---|
 | 纯源码改动（.h/.m/.mm/.swift） | Build/Test、Guard、Privacy、Architecture、Knowledge、Tests | — |
@@ -64,3 +89,4 @@ color: yellow
 - 命令不可运行时说明原因，标 SKIPPED，不把未运行说成通过。
 - 跳过的检查项必须标 SKIPPED 并给出原因（如"diff 仅含 .md 文件，跳过 Build/Test"）。
 - 知识库缺失、过期或未同步时判为 `PARTIAL` 或 `FAIL`，视任务是否涉及源码/API/工作流变化而定。
+- 并行启动的多个 Bash 命令必须在同一条 assistant 消息内发出；不要串行等待每个命令完成。聚合输出时按维度排序，与"启动顺序"无关。
