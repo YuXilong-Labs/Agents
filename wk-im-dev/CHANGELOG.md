@@ -12,9 +12,11 @@
 
 ---
 
-## v3.5.0 — 2026-05-28
+## v1.0.0 — 2026-05-28（首个正式版本）
 
-主线主题：**多 agent 并行能力补完 + 主 agent 身份模板重写**。本版本仅改 prompt 文本，不涉及脚本/契约/工作流脚本变更，可放心从 v3.4.x 升级。
+主线主题：**多 agent 并行能力补完 + 主 agent 身份模板重写 + 版本号体系重置**。
+
+> ⚠️ **版本号体系重置**：本版同步把 plugin 版本号体系从历史 v3.x（开发期内部编号）重置为 v1.0.0，作为对外首个正式 v1 release。历史 v3.x git tag 已从 GitHub 删除，所有团队成员请重新从 `--ref v1.0.0` 安装。`wk-im-dev --version` 现在输出 `1.0.0`。详见下方"版本号体系说明"段。
 
 ### Added
 
@@ -30,19 +32,46 @@
 
 - wk-im-developer (v2) 模块的 `wk-im-review` skill 文件（`.claude/` 与 `claude/` 双 runtime 都删），agent 触发表"review → 调用 skill"改为"直接执行代码审查流程"。同时清理与 agent 同名冗余的 `wk-im-developer/SKILL.md`。v2 整体进入退场窗口（CLAUDE.md 已标注弃用）。
 - `wk-im-developer/uninstall.sh` 同步追加 `wk-im-developer` 子目录到清理列表，保证 v2 卸载干净。
+- **历史 v3.4.1 / v3.4.2 / v3.4.3 / v3.5.0 git tag 从 GitHub 删除**（v3.0.0 → v3.4.0 从未打过 tag），所有 pre-1.0 版本仅在本 CHANGELOG 中保留为可追溯证据。
 
 ### Migration
 
-- **从 v3.4.3 升级到 v3.5.0**：纯 prompt 改动，无脚本/契约破坏性变化。直接：
+- **首次安装或从历史 v3.x 升级**：
   ```
-  curl ... bootstrap.sh | bash -s -- --target . --ref v3.5.0
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v1.0.0/wk-im-dev/scripts/bootstrap.sh \
+    | bash -s -- --target . --ref v1.0.0
   ```
-  或 `claude plugin update`。
-- **装过 v2 (`wk-im-developer`) 的用户**：`wk-im-review` skill 文件已下架，agent 内部已改为"直接执行 review 流程"，体验上等价但少了一层 skill 间接调度。v2 计划近期整体移除，建议迁移到 v3 (`wk-im-dev`)。
+  Claude Code 用户：`claude plugin update wk-im-dev@yuxilong-agents`。
+- **本地仍残留旧 v3.x tag 的开发者**：
+  ```
+  git fetch --prune --prune-tags origin
+  # 或手动:
+  for t in v3.0.0 v3.1.0 v3.2.0 v3.3.0 v3.4.0 v3.4.1 v3.4.2 v3.4.3 v3.5.0; do
+    git tag -d "$t" 2>/dev/null
+  done
+  ```
+- **装过 v2 (`wk-im-developer`) 的用户**：`wk-im-review` skill 文件已下架，agent 内部已改为"直接执行 review 流程"，体验上等价。v2 计划近期整体移除，建议迁移到 v1 (`wk-im-dev`)。
 
 ---
 
-## v3.4.3 — 2026-05-27 (hotfix 2)
+## 版本号体系说明
+
+`wk-im-dev` 在 2026-05-28 之前使用了 v3.0.0 → v3.5.0 的内部开发版本号。这套版本号没有对外发布稳定承诺（属于工具自迭代期），但在 git tag 中留下了痕迹。
+
+**v1.0.0 重置后**：
+
+- 历史 v3.x git tag 全部从 GitHub 删除，避免命名空间长期占用 + 避免新人误以为有 v2.x 跳过
+- 历史 v3.x CHANGELOG 段保留并标注 `(pre-1.0 开发期版本号)`，作为变更可追溯证据
+- 未来按标准 SemVer 演进：
+  - bugfix → `v1.0.x`
+  - 行为增强（向后兼容）→ `v1.x.0`
+  - 破坏性变更 → `v2.0.0`
+
+下方所有 `v3.x.x` 段均为 **pre-1.0 开发期版本号**，仅供历史参考，不再有对应 git tag。
+
+---
+
+## v3.4.3 — 2026-05-27 (pre-1.0 hotfix 2)
 
 ### Fixed
 
@@ -61,7 +90,7 @@
 
 ---
 
-## v3.4.2 — 2026-05-27 (hotfix)
+## v3.4.2 — 2026-05-27 (pre-1.0 hotfix)
 
 ### Fixed
 
@@ -75,7 +104,7 @@
 
 ---
 
-## v3.4.1 — 2026-05-27
+## v3.4.1 — 2026-05-27 (pre-1.0)
 
 ### Added
 
@@ -109,7 +138,7 @@
 
 ---
 
-## v3.4.0 — 2026-05-26
+## v3.4.0 — 2026-05-26 (pre-1.0)
 
 ### Added
 
@@ -125,7 +154,7 @@
 
 ---
 
-## v3.3.0
+## v3.3.0 (pre-1.0)
 
 ### Added
 
@@ -139,7 +168,7 @@
 
 ---
 
-## v3.2.0
+## v3.2.0 (pre-1.0)
 
 ### Changed
 
@@ -148,7 +177,7 @@
 
 ---
 
-## v3.1.0
+## v3.1.0 (pre-1.0)
 
 ### Added
 
@@ -156,7 +185,7 @@
 
 ---
 
-## v3.0.0
+## v3.0.0 (pre-1.0)
 
 ### Changed
 
