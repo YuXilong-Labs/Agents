@@ -22,7 +22,25 @@ CORE_SPEC="${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-core.md}"
 SELF="$0"
 
 show_help() {
-  sed -n '2,18p' "$SELF" | sed 's/^# \{0,1\}//'
+  cat <<'HELP'
+wk-im-dev - Unified launcher for the wk-im-dev IM component agent.
+
+Usage:
+  wk-im-dev                      # auto-detect: Claude Code (if plugin installed) else Codex
+  wk-im-dev [codex/claude opts] [prompt]
+  wk-im-dev doctor               # show install status
+  wk-im-dev doctor --fix         # also print copy-paste fix commands
+  wk-im-dev fix-plugin           # restore plugin disabled by cc-switch (< v3.11)
+  wk-im-dev --version            # print version + source
+  wk-im-dev --help               # this help
+
+Runtime selection precedence:
+  1. $WK_IM_DEV_RUNTIME=claude|codex (env override)
+  2. claude CLI present AND wk-im-dev plugin enabled in ~/.claude/settings.json
+  3. Otherwise Codex
+
+Created by yuxilong on 2026-05-26
+HELP
 }
 
 # ----- version lookup ------------------------------------------------------
@@ -80,22 +98,36 @@ show_version() {
 
 # ----- runtime detection --------------------------------------------------
 
-claude_plugin_installed() {
-  command -v claude >/dev/null 2>&1 || return 1
+# Returns: enabled | installed-but-disabled | not-installed
+# "installed-but-disabled" = plugin registered in installed_plugins.json but key absent from
+# enabledPlugins in settings.json — typical symptom when cc-switch < v3.11 overwrites the
+# entire settings.json and clears all plugin entries.
+plugin_status() {
+  command -v claude >/dev/null 2>&1 || { printf 'not-installed\n'; return; }
   local settings="$HOME/.claude/settings.json"
-  # Claude writes the plugin key as either:
-  #   "wk-im-dev": true                       (older / scoped form)
-  #   "wk-im-dev@<marketplace>": true         (current form, e.g. wk-im-dev@yuxilong-agents)
-  # Accept both via an extended regex.
+  # Enabled: key present in settings.json enabledPlugins
   if [ -f "$settings" ] && grep -qE '"wk-im-dev(@[A-Za-z0-9._-]+)?"' "$settings" 2>/dev/null; then
-    return 0
+    printf 'enabled\n'; return
   fi
-  # Also accept a local --plugin-dir style: a plugin source directory under PWD
+  # Enabled: local --plugin-dir style (dev/test scenario)
   if [ -d "./.claude-plugin" ] && [ -f "./.claude-plugin/plugin.json" ] \
      && grep -q '"wk-im-dev"' "./.claude-plugin/plugin.json" 2>/dev/null; then
-    return 0
+    printf 'enabled\n'; return
   fi
-  return 1
+  # Installed-but-disabled: registered in installed_plugins.json with a valid cache directory.
+  # cc-switch < v3.11 clears the entire enabledPlugins object on every provider switch.
+  local installed_json="$HOME/.claude/plugins/installed_plugins.json"
+  if [ -f "$installed_json" ] && grep -q '"wk-im-dev@yuxilong-agents"' "$installed_json" 2>/dev/null; then
+    if ls -d "$HOME/.claude/plugins/cache/yuxilong-agents/wk-im-dev/"* 2>/dev/null \
+       | head -1 | grep -q .; then
+      printf 'installed-but-disabled\n'; return
+    fi
+  fi
+  printf 'not-installed\n'
+}
+
+claude_plugin_installed() {
+  [ "$(plugin_status)" = "enabled" ]
 }
 
 codex_available() {
@@ -115,6 +147,65 @@ detect_runtime() {
   else
     printf 'none\n'
   fi
+}
+
+# ----- fix-plugin (restore enabledPlugins after cc-switch overwrite) ----------
+
+fix_plugin() {
+  command -v claude >/dev/null 2>&1 || {
+    printf 'wk-im-dev fix-plugin: claude CLI not found. Install Claude Code first.\n' >&2
+    exit 1
+  }
+
+  local settings="$HOME/.claude/settings.json"
+  local key="wk-im-dev@yuxilong-agents"
+  local pstatus
+  pstatus="$(plugin_status)"
+
+  if [ "$pstatus" = "enabled" ]; then
+    echo "Plugin already enabled in $settings — nothing to do."
+    return 0
+  fi
+
+  if [ "$pstatus" = "not-installed" ]; then
+    printf 'wk-im-dev fix-plugin: plugin not installed. Run:\n  claude plugin install %s\n' "$key" >&2
+    exit 1
+  fi
+
+  # pstatus = installed-but-disabled
+  if [ ! -f "$settings" ]; then
+    printf 'wk-im-dev fix-plugin: %s not found.\n  Run: claude plugin install %s\n' "$settings" "$key" >&2
+    exit 1
+  fi
+
+  local backup
+  backup="${settings}.wk-im-dev-backup-$(date '+%Y%m%d%H%M%S')"
+  cp "$settings" "$backup"
+  echo "  backup: $backup"
+
+  if command -v jq >/dev/null 2>&1; then
+    local tmp
+    tmp="$(mktemp)"
+    jq --arg k "$key" '.enabledPlugins[$k] = true' "$settings" > "$tmp" && mv "$tmp" "$settings"
+    echo "  [ok]   Plugin re-enabled (jq): $settings"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c '
+import json, sys
+path, key = sys.argv[1], sys.argv[2]
+with open(path) as f: d = json.load(f)
+d.setdefault("enabledPlugins", {})[key] = True
+with open(path, "w") as f: json.dump(d, f, indent=2)
+print("  [ok]   Plugin re-enabled (python3): " + path)
+' "$settings" "$key"
+  else
+    printf '  [err]  Neither jq nor python3 found. Edit manually:\n' >&2
+    printf '         Add "%s": true to enabledPlugins in %s\n' "$key" "$settings" >&2
+    rm -f "$backup"
+    exit 1
+  fi
+
+  echo ""
+  echo "Done. Run: wk-im-dev doctor && claude --agent wk-im-dev"
 }
 
 # ----- doctor -------------------------------------------------------------
@@ -161,15 +252,26 @@ run_doctor() {
     miss "codex CLI not on PATH"
     add_fix "# 安装 Codex CLI: https://github.com/openai/codex"
   fi
-  if claude_plugin_installed; then
-    ok "Claude plugin wk-im-dev enabled"
-  else
-    miss "Claude plugin wk-im-dev not enabled"
-    if command -v claude >/dev/null 2>&1; then
-      add_fix "claude plugin marketplace add YuXilong-Labs/Agents"
-      add_fix "claude plugin install wk-im-dev@yuxilong-agents"
-    fi
-  fi
+  local pstatus
+  pstatus="$(plugin_status)"
+  case "$pstatus" in
+    enabled)
+      ok "Claude plugin wk-im-dev enabled"
+      ;;
+    installed-but-disabled)
+      warn "Claude plugin wk-im-dev installed but disabled"
+      warn "  (cc-switch < v3.11 likely overwrote enabledPlugins in settings.json)"
+      add_fix "# Plugin disabled — one-command fix:"
+      add_fix "wk-im-dev fix-plugin"
+      ;;
+    not-installed)
+      miss "Claude plugin wk-im-dev not installed"
+      if command -v claude >/dev/null 2>&1; then
+        add_fix "claude plugin marketplace add YuXilong-Labs/Agents"
+        add_fix "claude plugin install wk-im-dev@yuxilong-agents"
+      fi
+      ;;
+  esac
   echo "  effective runtime: $(detect_runtime)"
   echo ""
 
@@ -285,9 +387,10 @@ ERR
 # Recognize the doctor subcommand or --doctor flag before we forward args.
 if [ $# -ge 1 ]; then
   case "$1" in
-    doctor|--doctor)       shift; run_doctor "$@"; exit 0 ;;
-    version|--version|-V)  show_version; exit 0 ;;
-    -h|--help)             show_help; exit 0 ;;
+    doctor|--doctor)         shift; run_doctor "$@"; exit 0 ;;
+    fix-plugin|--fix-plugin) fix_plugin; exit 0 ;;
+    version|--version|-V)    show_version; exit 0 ;;
+    -h|--help)               show_help; exit 0 ;;
   esac
 fi
 
@@ -296,13 +399,22 @@ case "$RUNTIME" in
   claude) launch_claude "$@" ;;
   codex)  launch_codex  "$@" ;;
   none)
-    cat >&2 <<ERR
+    if [ "$(plugin_status)" = "installed-but-disabled" ]; then
+      cat >&2 <<ERR
+wk-im-dev: Claude plugin installed but disabled.
+  Likely cause: cc-switch < v3.11 overwrote settings.json and cleared enabledPlugins.
+  Fix with:     wk-im-dev fix-plugin
+  Upgrade tip:  update cc-switch to >= v3.11 to prevent recurrence.
+ERR
+    else
+      cat >&2 <<ERR
 wk-im-dev: no supported runtime found.
 Install one of:
   - Claude Code: claude plugin install wk-im-dev@yuxilong-agents
   - Codex CLI:   https://github.com/openai/codex
 Then run: wk-im-dev doctor
 ERR
+    fi
     exit 1
     ;;
 esac

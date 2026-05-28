@@ -283,6 +283,48 @@ update_shell_rc() {
   echo "  Next shell: source $shell_rc"
 }
 
+install_symlink() {
+  local launcher="$HOME/.wk-im-dev/bin/wk-im-dev"
+  [ -f "$launcher" ] || return 0
+
+  local candidates=("$HOME/.local/bin" "/usr/local/bin" "/opt/homebrew/bin")
+  local chosen=""
+
+  for dir in "${candidates[@]}"; do
+    [ -d "$dir" ] || continue
+    # Must already be in the current shell's PATH so the symlink works immediately
+    case ":$PATH:" in *":$dir:"*) ;; *) continue ;; esac
+    [ -w "$dir" ] || continue
+    chosen="$dir"
+    break
+  done
+
+  if [ -z "$chosen" ]; then
+    echo "  NOTE no writable PATH directory found; run 'export PATH=\"\$HOME/.wk-im-dev/bin:\$PATH\"' to activate"
+    return 0
+  fi
+
+  local link="$chosen/wk-im-dev"
+
+  if [ -L "$link" ]; then
+    if [ "$(readlink "$link")" = "$launcher" ]; then
+      echo "  OK symlink up to date: $link"
+      SYMLINK_PATH="$link"
+      return 0
+    fi
+    local bk="${link}.wk-im-dev-backup-$(date '+%Y%m%d%H%M%S')"
+    mv "$link" "$bk"
+    echo "  OK old symlink backed up: $bk"
+  elif [ -e "$link" ]; then
+    echo "  SKIP $link exists and is not a symlink — skipping"
+    return 0
+  fi
+
+  ln -s "$launcher" "$link"
+  echo "  OK symlink: $link -> $launcher"
+  SYMLINK_PATH="$link"
+}
+
 looks_like_im_repo() {
   local dir="$1"
   [ -d "$dir" ] || return 1
@@ -431,6 +473,8 @@ if runtime_includes codex; then
 fi
 
 install_helper_scripts
+SYMLINK_PATH=""
+install_symlink
 update_shell_rc
 
 if runtime_includes codex && [ "$INSTALL_CODEX_PROFILE" -eq 1 ]; then
@@ -478,22 +522,29 @@ fi
 LAUNCHER="$HOME/.wk-im-dev/bin/wk-im-dev"
 
 echo ""
+echo "================================================================"
 echo "wk-im-dev install finished."
 echo ""
-if [ "$UPDATE_SHELL_RC" -eq 1 ]; then
-  echo "Current shell — activate PATH now (one-time, copy & paste):"
-  echo "    export PATH=\"\$HOME/.wk-im-dev/bin:\$PATH\""
-  echo "  (new terminals: already wired via shell rc)"
-  echo ""
+if [ -n "${SYMLINK_PATH:-}" ]; then
+  echo "  ✓ 立即可用（当前终端无需 source）："
+  echo "      wk-im-dev --version"
+  echo "      wk-im-dev doctor"
+  if [ "$UPDATE_SHELL_RC" -eq 1 ]; then
+    echo "  ✓ 新终端：已写入 shell rc，自动生效"
+  fi
+elif [ "$UPDATE_SHELL_RC" -eq 1 ]; then
+  echo "  当前终端 — 激活 PATH（一次性）："
+  echo '      export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+  echo "  新终端：已写入 shell rc，自动生效"
 fi
-echo "Start (works regardless of PATH):"
-echo "    $LAUNCHER                # auto-detect Claude Code or Codex"
-echo "    $LAUNCHER doctor         # status check"
 echo ""
-echo "Manual launch:"
+echo "  诊断：$LAUNCHER doctor"
+echo ""
+echo "手动启动："
 if runtime_includes claude; then
   echo "    claude --agent wk-im-dev"
 fi
 if runtime_includes codex; then
   echo "    codex -p wk-im-dev       # profile only"
 fi
+echo "================================================================"

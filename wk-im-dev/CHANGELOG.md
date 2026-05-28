@@ -12,6 +12,33 @@
 
 ---
 
+## v1.0.3 — 2026-05-28 (patch)
+
+### Fixed
+
+- **ccswitch 兼容**：cc-switch < v3.11 切换供应商时会用模板完全覆写 `~/.claude/settings.json`，清空 `enabledPlugins` 对象，导致 wk-im-dev plugin 被静默禁用（表现：`claude --agent wk-im-dev` 进入普通对话，或 launcher 回退到 codex 路径）。
+  - `bin/wk-im-dev`：`claude_plugin_installed()` 拆分为 `plugin_status()` + wrapper，新增 `installed-but-disabled` 状态检测（从 `installed_plugins.json` + cache 目录双重确认 plugin 已安装但 key 被清除）。
+  - 新增 `fix-plugin` 子命令：自动把 `"wk-im-dev@yuxilong-agents": true` 写回 `enabledPlugins`，优先用 jq，退回 python3，写入前备份 settings.json。
+  - `doctor` 新增 `installed-but-disabled` 诊断分支，明确提示 cc-switch 根因 + `wk-im-dev fix-plugin` 一键修复命令。
+  - 主调度 `none` case 检测 `installed-but-disabled` 时给出专属错误提示而非通用"runtime not found"。
+
+- **install 后立即可用**：`scripts/install.sh` 跑完后，当前终端不执行 `source` 也能直接使用 `wk-im-dev`。
+  - 新增 `install_symlink()`：在第一个已存在、在 PATH 中、可写的候选目录（`~/.local/bin` → `/usr/local/bin` → `/opt/homebrew/bin`）创建 `wk-im-dev` symlink 指向 launcher，当前 shell 立即可用。
+  - install 输出末尾 banner 明确区分"立即可用"与"需要 source"两种状态并突出提示。
+
+### Migration
+
+- **从 v1.0.2 升级**：
+  ```
+  bash scripts/install.sh --runtime both
+  wk-im-dev --version   # 应输出 1.0.3
+  ```
+  Claude Code 用户：`claude plugin update wk-im-dev@yuxilong-agents`（发版后）。
+- 如果已遭遇 ccswitch 禁用问题，运行一次 `wk-im-dev fix-plugin` 恢复。
+- 建议将 cc-switch 升级到 >= v3.11.0 防止复发。
+
+---
+
 ## v1.0.2 — 2026-05-28 (hotfix)
 
 ### Fixed
