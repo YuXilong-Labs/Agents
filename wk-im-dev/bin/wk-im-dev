@@ -285,13 +285,13 @@ run_doctor() {
     add_fix "# 重装 launcher（命中本机源码时）："
     add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target ."
   fi
-  if [ -f "${CODEX_HOME:-$HOME/.codex}/config.toml" ] \
-     && grep -q '^\[profiles\.wk-im-dev\]' "${CODEX_HOME:-$HOME/.codex}/config.toml" 2>/dev/null; then
-    ok "codex profile [profiles.wk-im-dev] present"
+  local profile_toml="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
+  if [ -f "$profile_toml" ]; then
+    ok "codex profile: $profile_toml"
   else
-    miss "codex profile [profiles.wk-im-dev] missing"
+    miss "codex profile missing: $profile_toml"
     if command -v codex >/dev/null 2>&1; then
-      add_fix "# Codex profile 未写入。先确保 ~/.codex/config.toml 存在（codex 启动过一次会自动创建），然后重跑 install.sh："
+      add_fix "# Codex profile 未写入，重跑 bootstrap："
       add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target . --runtime codex"
     fi
   fi
@@ -372,9 +372,9 @@ ERR
   fi
 
   local args=(-c "developer_instructions=$(cat "$CORE_SPEC")")
-  local codex_cfg="${CODEX_HOME:-$HOME/.codex}/config.toml"
-  if grep -q '^\[profiles\.wk-im-dev\]' "$codex_cfg" 2>/dev/null; then
-    args+=(--profile wk-im-dev)
+  local profile_file="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
+  if [ -f "$profile_file" ]; then
+    args+=(-p wk-im-dev)
   else
     # 没装 profile 时只覆盖 reasoning_effort，model 走 Codex 默认，避免模型权限问题
     args+=(-c model_reasoning_effort='"high"')

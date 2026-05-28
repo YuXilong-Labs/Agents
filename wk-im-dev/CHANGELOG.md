@@ -12,6 +12,30 @@
 
 ---
 
+## v1.0.5 — 2026-05-28 (hotfix)
+
+### Fixed
+
+- **`codex -p wk-im-dev` 无法激活 agent**：`codex/profile.toml`（→ `~/.codex/wk-im-dev.config.toml`）只有 settings（`model_reasoning_effort`、`personality`），缺少 `developer_instructions`，导致 `codex -p wk-im-dev` 启动后 Codex 不知道自己是 wk-im-dev，无 agent 身份。现在 profile 加入了 `developer_instructions` 字段，包含 agent 身份、职责和工作语言的紧凑描述，完整规范仍由 AGENTS.md 提供。
+
+- **launcher `launch_codex()` 永远不用 profile**：`-p wk-im-dev` 触发条件是 `grep '[profiles.wk-im-dev]' config.toml`（v1.0.1 旧格式），v1.0.2 已改为独立文件但 launcher 未同步，导致每次都走 else 分支（只传 `-c model_reasoning_effort`，不带 profile 名），profile 里的 `personality`、`developer_instructions` 从未被加载。现在改为检测 `~/.codex/wk-im-dev.config.toml` 是否存在，存在则传 `-p wk-im-dev`。
+
+- **doctor codex profile 检查误报 miss**：与上同源，doctor 也在检查旧格式，始终报 `[miss] codex profile [profiles.wk-im-dev] missing`。现在改为检查新文件 `~/.codex/wk-im-dev.config.toml`。
+
+- **`uninstall.sh` 漏删两项**：① 未删 `~/.codex/wk-im-dev.config.toml`（v1.0.2+ 写入的独立 profile 文件）；② 未删 `~/.local/bin/wk-im-dev` symlink（v1.0.3+ 写入）。现在补全清理，卸载后 4 项产物（`~/.wk-im-dev/`、`codex agent`、`profile`、`symlink`）全部清除。
+
+### Migration
+
+- 已安装用户重跑 bootstrap 即可获得修复后的 profile：
+  ```
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v1.0.5/wk-im-dev/scripts/bootstrap.sh \
+    | bash -s -- --target /path/to/im-repo --ref v1.0.5 --runtime codex
+  ```
+  Claude Code 用户：`claude plugin update wk-im-dev@yuxilong-agents`（发版后）。
+- 运行 `wk-im-dev doctor` 验证：`[ok] codex profile: ~/.codex/wk-im-dev.config.toml` 即为修复后状态。
+
+---
+
 ## v1.0.4 — 2026-05-28 (hotfix)
 
 ### Fixed

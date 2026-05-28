@@ -40,7 +40,25 @@ else
   echo "⏭️  ~/.codex/agents/wk-im-dev.toml not found, skipped"
 fi
 
-# 3. ~/.codex/config.toml — remove WK-IM-DEV-PROFILE block
+# 3. ~/.codex/wk-im-dev.config.toml — standalone profile (v1.0.2+)
+PROFILE_FILE="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
+if [ -f "$PROFILE_FILE" ]; then
+  rm -f "$PROFILE_FILE"
+  echo "✅ Removed $PROFILE_FILE"
+else
+  echo "⏭️  $PROFILE_FILE not found, skipped"
+fi
+
+# 4. ~/.local/bin/wk-im-dev (and other PATH symlinks)
+for _dir in "$HOME/.local/bin" "/usr/local/bin" "/opt/homebrew/bin"; do
+  _link="$_dir/wk-im-dev"
+  if [ -L "$_link" ]; then
+    rm -f "$_link"
+    echo "✅ Removed symlink: $_link"
+  fi
+done
+
+# 5. ~/.codex/config.toml — remove WK-IM-DEV-PROFILE block (legacy v1.0.1)
 CODEX_CFG="${CODEX_HOME:-$HOME/.codex}/config.toml"
 if [ -f "$CODEX_CFG" ] && grep -qF "# WK-IM-DEV-PROFILE:START" "$CODEX_CFG"; then
   tmp="$(mktemp)"
@@ -55,7 +73,7 @@ else
   echo "⏭️  No wk-im-dev profile block in config.toml, skipped"
 fi
 
-# 4. Shell rc — remove "# wk-im-dev" comment + export PATH line
+# 6. Shell rc — remove "# wk-im-dev" comment + export PATH line
 remove_from_rc() {
   local rc="$1"
   [ -f "$rc" ] || return 0
@@ -72,7 +90,7 @@ remove_from_rc() {
 remove_from_rc "$HOME/.zshrc"
 remove_from_rc "$HOME/.bashrc"
 
-# 5. Target AGENTS.md — remove WK-IM-DEV marker block
+# 7. Target AGENTS.md — remove WK-IM-DEV marker block
 if [ -n "$TARGET" ]; then
   TARGET="$(cd "$TARGET" && pwd)"
   AGENTS_MD="$TARGET/AGENTS.md"
