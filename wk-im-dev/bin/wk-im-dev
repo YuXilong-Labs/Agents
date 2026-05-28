@@ -83,7 +83,11 @@ show_version() {
 claude_plugin_installed() {
   command -v claude >/dev/null 2>&1 || return 1
   local settings="$HOME/.claude/settings.json"
-  if [ -f "$settings" ] && grep -q '"wk-im-dev"' "$settings" 2>/dev/null; then
+  # Claude writes the plugin key as either:
+  #   "wk-im-dev": true                       (older / scoped form)
+  #   "wk-im-dev@<marketplace>": true         (current form, e.g. wk-im-dev@yuxilong-agents)
+  # Accept both via an extended regex.
+  if [ -f "$settings" ] && grep -qE '"wk-im-dev(@[A-Za-z0-9._-]+)?"' "$settings" 2>/dev/null; then
     return 0
   fi
   # Also accept a local --plugin-dir style: a plugin source directory under PWD

@@ -12,6 +12,25 @@
 
 ---
 
+## v1.0.1 — 2026-05-28 (hotfix)
+
+### Fixed
+
+- `bin/wk-im-dev` 的 `claude_plugin_installed()` 用 `grep -q '"wk-im-dev"'` 检测 `~/.claude/settings.json`，但 Claude Code 实际写入的 key 是 `"wk-im-dev@yuxilong-agents"`（带 marketplace 后缀），字面字符串不匹配 → `wk-im-dev doctor` 误报 `[miss] Claude plugin wk-im-dev not enabled`，并连带 `detect_runtime()` 把"有 Claude plugin 已启用"判为否，**装了 Claude plugin 的用户被静默回退到 codex 路径**。grep 改为 extended regex `'"wk-im-dev(@[A-Za-z0-9._-]+)?"'`，同时兼容带/不带 marketplace 后缀两种写法。
+- 影响：仅装 Codex 的用户不受影响；同时装 Claude plugin 的用户在 v1.0.0 实际走的是 codex 路径而非 claude plugin。launcher 行为本身可用，但 runtime detection 不准。
+
+### Migration
+
+- **从 v1.0.0 升级**：直接重跑 bootstrap：
+  ```
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v1.0.1/wk-im-dev/scripts/bootstrap.sh \
+    | bash -s -- --target . --ref v1.0.1
+  ```
+  Claude Code 用户：`claude plugin update wk-im-dev@yuxilong-agents`。
+- 装完跑 `wk-im-dev doctor`，本次应能看到 `[ok] Claude plugin wk-im-dev enabled`。
+
+---
+
 ## v1.0.0 — 2026-05-28（首个正式版本）
 
 主线主题：**多 agent 并行能力补完 + 主 agent 身份模板重写 + 版本号体系重置**。
