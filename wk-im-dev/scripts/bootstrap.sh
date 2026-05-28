@@ -105,22 +105,10 @@ case "$RUNTIME" in
     ;;
 esac
 
-# Claude plugin 安装路径 — 不需要 git clone，直接调 claude CLI
-install_claude_plugin() {
-  if ! command -v claude >/dev/null 2>&1; then
-    echo "错误：--runtime claude 需要 claude CLI，但未在 PATH 中。" >&2
-    echo "     安装 Claude Code: https://claude.com/claude-code" >&2
-    return 1
-  fi
-  echo "▶ Claude Code plugin 安装：marketplace=$MARKETPLACE, plugin=$DEFAULT_PLUGIN_SLUG"
-  # marketplace add 已存在时 claude 会幂等处理；忽略其退出码以兼容
-  claude plugin marketplace add "$MARKETPLACE" 2>&1 | sed 's/^/  /' || true
-  claude plugin install "$DEFAULT_PLUGIN_SLUG" 2>&1 | sed 's/^/  /'
-  echo "▶ Claude plugin 安装完成。target=$TARGET 用于后续 wk-im-init.sh 自动初始化。"
-}
-
-# Codex curl 安装路径 — sparse clone + install.sh
-install_codex_curl() {
+# Sparse clone + install.sh — 安装 helper scripts、launcher、symlink 及 runtime 对应产物
+# Usage: clone_and_install_sh <runtime>   (codex | claude | both)
+clone_and_install_sh() {
+  local rt="$1"
   TMP_DIR=$(mktemp -d)
   trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -138,19 +126,40 @@ install_codex_curl() {
   fi
   git sparse-checkout set wk-im-dev 2>/dev/null
 
-  echo "▶ 安装到: $TARGET"
+  echo "▶ 安装到: $TARGET (runtime=$rt)"
   bash "$TMP_DIR/Agents/wk-im-dev/scripts/install.sh" \
-    --runtime codex \
+    --runtime "$rt" \
     --target "$TARGET" \
     ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}
 }
 
+# 仅负责 claude plugin install（不含 clone；由 clone_and_install_sh 先装好 helpers）
+add_claude_plugin() {
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "错误：--runtime claude 需要 claude CLI，但未在 PATH 中。" >&2
+    echo "     安装 Claude Code: https://claude.com/claude-code" >&2
+    return 1
+  fi
+  echo "▶ Claude Code plugin 安装：marketplace=$MARKETPLACE, plugin=$DEFAULT_PLUGIN_SLUG"
+  claude plugin marketplace add "$MARKETPLACE" 2>&1 | sed 's/^/  /' || true
+  claude plugin install "$DEFAULT_PLUGIN_SLUG" 2>&1 | sed 's/^/  /'
+  echo "▶ Claude plugin 安装完成。"
+}
+
 case "$RUNTIME" in
-  codex)  install_codex_curl ;;
-  claude) install_claude_plugin ;;
-  both)
-    install_codex_curl
+  codex)
+    clone_and_install_sh codex
+    ;;
+  claude)
+    # install.sh --runtime claude 安装 helpers/launcher/symlink（跳过 codex agent/profile）
+    clone_and_install_sh claude
     echo ""
-    install_claude_plugin
+    add_claude_plugin
+    ;;
+  both)
+    # 单次 clone，install.sh --runtime both 安装全套；额外跑 claude plugin install
+    clone_and_install_sh both
+    echo ""
+    add_claude_plugin
     ;;
 esac

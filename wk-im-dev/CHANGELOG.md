@@ -12,6 +12,24 @@
 
 ---
 
+## v1.0.4 — 2026-05-28 (hotfix)
+
+### Fixed
+
+- **bootstrap.sh `--runtime claude`（含 `--runtime auto` 检测到 claude CLI）不安装 `wk-im-dev` 命令**：`install_claude_plugin()` 之前只调用 `claude plugin install`，完全跳过 sparse clone 和 `install.sh`，导致 `~/.wk-im-dev/bin/`、launcher、symlink 均未安装，用完 bootstrap 后 `wk-im-dev` 命令找不到。
+  - `install_claude_plugin()` 和 `install_codex_curl()` 合并重构为 `clone_and_install_sh(rt)` + `add_claude_plugin()`。
+  - `--runtime claude`：现在先跑 `install.sh --runtime claude`（安装 helpers/launcher/symlink，跳过 codex agent/profile），再调 `claude plugin install`。
+  - `--runtime both`：改为单次 clone，跑 `install.sh --runtime both`（全套），再调 `claude plugin install`，消除之前的 double clone。
+  - `--runtime codex`：行为不变。
+
+### Notes
+
+- 此 bug 只影响通过 `bootstrap.sh` 安装的用户（curl pipe bash）；`claude plugin update` 路径不受影响。
+- 已通过 `--runtime both` 安装的用户（helpers 来自 codex 路径）无需操作。
+- 受影响用户（用过 `--runtime auto`/`claude` 且 `wk-im-dev` 命令缺失）重跑 bootstrap 即可修复。
+
+---
+
 ## v1.0.3 — 2026-05-28 (patch)
 
 ### Fixed
