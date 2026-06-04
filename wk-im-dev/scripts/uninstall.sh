@@ -32,12 +32,13 @@ else
   echo "⏭️  ~/.wk-im-dev/ not found, skipped"
 fi
 
-# 2. ~/.codex/agents/wk-im-dev.toml
-if [ -f "$HOME/.codex/agents/wk-im-dev.toml" ]; then
-  rm -f "$HOME/.codex/agents/wk-im-dev.toml"
-  echo "✅ Removed ~/.codex/agents/wk-im-dev.toml"
+# 2. <codex-home>/agents/wk-im-dev.toml
+CODEX_AGENT_FILE="${CODEX_HOME:-$HOME/.codex}/agents/wk-im-dev.toml"
+if [ -f "$CODEX_AGENT_FILE" ]; then
+  rm -f "$CODEX_AGENT_FILE"
+  echo "✅ Removed $CODEX_AGENT_FILE"
 else
-  echo "⏭️  ~/.codex/agents/wk-im-dev.toml not found, skipped"
+  echo "⏭️  $CODEX_AGENT_FILE not found, skipped"
 fi
 
 # 3. ~/.codex/wk-im-dev.config.toml — standalone profile (v1.0.2+)
