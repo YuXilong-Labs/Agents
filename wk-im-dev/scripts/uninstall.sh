@@ -74,12 +74,15 @@ else
   echo "⏭️  No wk-im-dev profile block in config.toml, skipped"
 fi
 
-# 6. Shell rc — remove "# wk-im-dev" comment + export PATH line
+# 6. Shell rc — remove "# wk-im-dev" comment + the PATH line that follows it.
+# Matches on "wk-im-dev/bin" rather than "export PATH" so the fish form
+# (fish_add_path "$HOME/.wk-im-dev/bin") is removed too, otherwise fish users
+# keep a stale PATH entry pointing at the deleted ~/.wk-im-dev/bin.
 remove_from_rc() {
   local rc="$1"
   [ -f "$rc" ] || return 0
   if grep -qF "# wk-im-dev" "$rc"; then
-    sed -i.bak '/^# wk-im-dev$/{N;/export PATH.*wk-im-dev\/bin.*/d;}' "$rc"
+    sed -i.bak '/^# wk-im-dev$/{N;/wk-im-dev\/bin/d;}' "$rc"
     # Also remove standalone leftover comment if the N-pattern didn't match
     sed -i.bak '/^# wk-im-dev$/d' "$rc"
     rm -f "${rc}.bak"
@@ -88,8 +91,12 @@ remove_from_rc() {
     echo "⏭️  No wk-im-dev PATH entry in $rc, skipped"
   fi
 }
+# Cover every rc file install.sh may write to: zsh, bash (login + non-login), fish.
 remove_from_rc "$HOME/.zshrc"
 remove_from_rc "$HOME/.bashrc"
+remove_from_rc "$HOME/.bash_profile"
+remove_from_rc "$HOME/.profile"
+remove_from_rc "$HOME/.config/fish/config.fish"
 
 # 7. Target AGENTS.md — remove WK-IM-DEV marker block
 if [ -n "$TARGET" ]; then

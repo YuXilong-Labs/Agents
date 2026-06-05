@@ -259,10 +259,19 @@ resolve_shell_rc() {
       return
       ;;
     bash)
-      # macOS Terminal runs bash as a login shell → ~/.bash_profile / ~/.profile, not ~/.bashrc.
+      # macOS Terminal runs bash as a *login* shell → sources ~/.bash_profile / ~/.profile.
+      # Linux terminals run bash as an *interactive non-login* shell → sources ~/.bashrc.
+      # Preferring login files on Linux would write to ~/.profile, which new terminals
+      # never read, leaving wk-im-dev missing from PATH. So branch on the OS.
+      if [ "$(uname -s)" = "Darwin" ]; then
+        if [ -f "$HOME/.bash_profile" ]; then RESOLVED_RC="$HOME/.bash_profile"; return; fi
+        if [ -f "$HOME/.profile" ]; then RESOLVED_RC="$HOME/.profile"; return; fi
+        RESOLVED_RC="$HOME/.bashrc"
+        return
+      fi
+      if [ -f "$HOME/.bashrc" ]; then RESOLVED_RC="$HOME/.bashrc"; return; fi
       if [ -f "$HOME/.bash_profile" ]; then RESOLVED_RC="$HOME/.bash_profile"; return; fi
-      if [ -f "$HOME/.profile" ]; then RESOLVED_RC="$HOME/.profile"; return; fi
-      RESOLVED_RC="$HOME/.bashrc"
+      RESOLVED_RC="$HOME/.profile"
       return
       ;;
     zsh)
