@@ -8,7 +8,13 @@
 
 ## Unreleased
 
-主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化**。
+（暂无）
+
+---
+
+## v1.1.0 — 2026-06-15
+
+主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化 + 模板化生成器**。
 
 ### Added (组件数泛化 / Phase 4)
 

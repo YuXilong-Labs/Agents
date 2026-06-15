@@ -25,7 +25,11 @@ Options:
 curl -fsSL <url>/bootstrap.sh | bash -s -- [options]
 
   --target <path>      目标仓库，默认当前目录
-  --runtime <value>    codex（默认）
+  --runtime <value>    auto（默认）/ codex / claude / both
+                       auto：装了 claude CLI → claude，否则 codex
+                       codex：git clone + install.sh（Codex 主路径）
+                       claude：claude plugin marketplace add + install
+                       both：先 codex 流程，再附加 claude plugin（双装）
   --ref <git-ref>      要拉取的 git tag/branch/commit，默认 main
                        也可用 env WK_IM_DEV_REF
   --repo-url <url>     覆盖默认仓库地址（团队内网镜像）
@@ -35,13 +39,13 @@ curl -fsSL <url>/bootstrap.sh | bash -s -- [options]
   --with-codegraph     安装时一并安装 + 索引 CodeGraph
 ```
 
-**版本固定建议**：CI/Release 流程打 tag 后，团队成员安装时显式 `--ref v1.0.1`，避免 `main` 引入未稳定提交时全员遭殃。
+**版本固定建议**：CI/Release 流程打 tag 后，团队成员安装时显式 `--ref v1.1.0`（当前最新 tag），避免 `main` 引入未稳定提交时全员遭殃。
 
 **内网镜像**：把 Agents 仓库 mirror 到内网（如 `git@gitlab.intra/.../Agents.git`），安装时：
 
 ```bash
 export WK_IM_DEV_REPO_URL="https://gitlab.intra/team/Agents.git"
-export WK_IM_DEV_REF="v1.0.1"
+export WK_IM_DEV_REF="v1.1.0"
 curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target .
 ```
 
@@ -51,12 +55,15 @@ curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-im-dev/scripts/bootstr
 ~/.wk-im-dev/bin/wk-im-init.sh [options]
 
   --root <repo>           手动指定 IM 仓库或 HostApp（默认自动定位）
-  --service <path>        手动指定 BTIMService 路径
-  --module <path>         手动指定 BTIMModule 路径
+  --component <Name>=<path>  手动指定某组件路径（可重复，组件名取自 components.conf）
+  --service <path>        BTIMService 路径（IM 实例的 --component BTIMService= 别名）
+  --module <path>         BTIMModule 路径（IM 实例的 --component BTIMModule= 别名）
   --host-app <path>       添加 HostApp（可重复多次）
   --with-codegraph        安装并索引 CodeGraph（默认不装）
   --quiet                 静默输出
 ```
+
+> 组件名不再硬编码，来自 `components.conf`。`--service` / `--module` 仅是 IM 实例的 back-compat 别名；生成的其他组件 agent 用 `--component <Name>=<path>` 指定任意组件。
 
 自动定位顺序：
 
@@ -83,16 +90,11 @@ curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-im-dev/scripts/bootstr
 - 显式 `--replace-project-agents` → 备份后整体替换。
 - `--skip-project-agents` → 完全不动目标 `AGENTS.md`。
 
-### `~/.codex/config.toml` profile 区块
+### `~/.codex/config.toml` profile 区块（已废弃）
 
-```text
-# WK-IM-DEV-PROFILE:START
-[profiles.wk-im-dev]
-... model / reasoning_effort 等 ...
-# WK-IM-DEV-PROFILE:END
-```
-
-`install.sh` 走 marker 幂等更新；`uninstall.sh` 按同样的 marker 删除。`--skip-codex-profile` 完全跳过。
+> 2026-06-15 起 Codex 转为 plugin-native，**不再写入** `~/.codex/config.toml` 的 `[profiles.wk-im-dev]`、`~/.codex/agents/wk-im-dev.toml` 或 `~/.codex/wk-im-dev.config.toml`。激活改走 plugin `agents/` + `SessionStart` hook + `/wk-im-dev` 命令；离线 fallback 由 launcher 注入 `~/.wk-im-dev/wk-im-dev-agent.md`。
+>
+> 旧版安装残留的 `# WK-IM-DEV-PROFILE` 区块与 toml 文件，`uninstall.sh` / `doctor` 仍会识别并清理（见第 5 节）。
 
 ## 5. 卸载
 

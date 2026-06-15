@@ -1,7 +1,7 @@
 {
   "name": "wk-im-dev",
   "description": "iOS IM 组件开发 Agent（BTIMService + BTIMModule）。在 IM 仓库中自动激活开发助手，提供功能开发、Bug 修复、代码审查、架构查询能力。",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "author": {
     "name": "YuXilong-Labs"
   },
