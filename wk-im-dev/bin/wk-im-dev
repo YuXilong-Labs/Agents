@@ -24,6 +24,13 @@ set -euo pipefail
 AGENT_SPEC="${WK_IM_DEV_AGENT:-${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-agent.md}}"
 SELF="$0"
 
+# Runtime config dirs — honor relocation env vars so detection works regardless
+# of how claude/codex were installed (npm/brew/native) or where the user moved
+# their config. CLAUDE_CONFIG_DIR / CODEX_HOME are the runtimes' own overrides;
+# reading $HOME/.claude blindly is exactly what silently broke v1.0.0.
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+
 show_help() {
   cat <<'HELP'
 wk-im-dev - Unified launcher for the wk-im-dev IM component agent.
@@ -53,6 +60,21 @@ HELP
 #   3. Claude plugin 安装位置 (~/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json)
 #   4. 当前仓库源码位置（开发场景）
 #   5. 退而求其次：返回 unknown
+# Resolve the active Claude-plugin install from installed_plugins.json — the file Claude
+# itself maintains, with one live record (installPath + version) per plugin key. This is
+# immune to the stale multi-version cache dirs (e.g. leftover 3.x from the version reset)
+# that a raw cache glob would wrongly pick up. Prints "version<TAB>installPath"; empty when
+# the plugin is not installed.
+claude_plugin_install() {
+  local ij="$CLAUDE_DIR/plugins/installed_plugins.json"
+  [ -f "$ij" ] || return 0
+  awk '
+    /"wk-im-dev@[^"]*"[[:space:]]*:[[:space:]]*\[/ { inblk=1 }
+    inblk && /"installPath"/ { ip=$0; sub(/.*"installPath"[^"]*"/,"",ip); sub(/".*/,"",ip) }
+    inblk && /"version"/ { v=$0; sub(/.*"version"[^"]*"/,"",v); sub(/".*/,"",v); print v "\t" ip; exit }
+  ' "$ij" 2>/dev/null
+}
+
 read_version() {
   local file v
 
@@ -74,9 +96,20 @@ read_version() {
   # 2. Codex 安装路径
   try_read "$HOME/.wk-im-dev/.claude-plugin/plugin.json" && return 0
 
-  # 3. Claude plugin 安装路径（用 ls -1 避免空 glob 在 set -u 下出问题）
-  for f in $(ls -1 "$HOME"/.claude/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json 2>/dev/null) \
-           $(ls -1 "$HOME"/.claude/plugins/cache/*/wk-im-dev*/.claude-plugin/plugin.json 2>/dev/null); do
+  # 3. Claude plugin：先用 installed_plugins.json 事实源解析活跃版本
+  local cp_line cp_path
+  cp_line="$(claude_plugin_install)"
+  if [ -n "$cp_line" ]; then
+    v="${cp_line%%	*}"
+    cp_path="${cp_line#*	}"
+    if [ -n "$v" ]; then
+      printf '%s\t%s\n' "$v" "$cp_path/.claude-plugin/plugin.json"
+      return 0
+    fi
+  fi
+  # 3b. 兜底：直接 glob（cache 布局含 marketplace + 版本目录两层；用 ls -1 避免空 glob 在 set -u 下报错）
+  for f in $(ls -1 "$CLAUDE_DIR"/plugins/installed/wk-im-dev*/.claude-plugin/plugin.json 2>/dev/null) \
+           $(ls -1 "$CLAUDE_DIR"/plugins/cache/*/wk-im-dev*/*/.claude-plugin/plugin.json 2>/dev/null); do
     try_read "$f" && return 0
   done
 
@@ -99,6 +132,14 @@ show_version() {
   echo "  source: $source"
 }
 
+# Read just the version string from a single plugin.json (empty if absent).
+version_in_file() {
+  local f="$1"
+  [ -f "$f" ] || return 0
+  grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$f" 2>/dev/null \
+    | head -1 | sed -E 's/.*"([^"]+)"$/\1/'
+}
+
 # ----- runtime detection --------------------------------------------------
 
 # Returns: enabled | installed-but-disabled | not-installed
@@ -107,7 +148,7 @@ show_version() {
 # entire settings.json and clears all plugin entries.
 plugin_status() {
   command -v claude >/dev/null 2>&1 || { printf 'not-installed\n'; return; }
-  local settings="$HOME/.claude/settings.json"
+  local settings="$CLAUDE_DIR/settings.json"
   # Enabled: key present in settings.json enabledPlugins
   if [ -f "$settings" ] && grep -qE '"wk-im-dev(@[A-Za-z0-9._-]+)?"' "$settings" 2>/dev/null; then
     printf 'enabled\n'; return
@@ -119,9 +160,9 @@ plugin_status() {
   fi
   # Installed-but-disabled: registered in installed_plugins.json with a valid cache directory.
   # cc-switch < v3.11 clears the entire enabledPlugins object on every provider switch.
-  local installed_json="$HOME/.claude/plugins/installed_plugins.json"
+  local installed_json="$CLAUDE_DIR/plugins/installed_plugins.json"
   if [ -f "$installed_json" ] && grep -q '"wk-im-dev@yuxilong-agents"' "$installed_json" 2>/dev/null; then
-    if ls -d "$HOME/.claude/plugins/cache/yuxilong-agents/wk-im-dev/"* 2>/dev/null \
+    if ls -d "$CLAUDE_DIR/plugins/cache/yuxilong-agents/wk-im-dev/"* 2>/dev/null \
        | head -1 | grep -q .; then
       printf 'installed-but-disabled\n'; return
     fi
@@ -160,7 +201,7 @@ fix_plugin() {
     exit 1
   }
 
-  local settings="$HOME/.claude/settings.json"
+  local settings="$CLAUDE_DIR/settings.json"
   local key="wk-im-dev@yuxilong-agents"
   local pstatus
   pstatus="$(plugin_status)"
@@ -240,6 +281,21 @@ run_doctor() {
   vsource="${vout#*	}"
   echo "wk-im-dev doctor"
   echo "  version: $vversion ($vsource)"
+
+  # Drift check: codex-side copy (~/.wk-im-dev) vs the active Claude plugin. read_version
+  # reports the codex copy first by priority, so a stale codex install can mask a newer
+  # plugin. Resolve the plugin version from installed_plugins.json (not the cache glob) so
+  # leftover 3.x cache dirs can't trigger a false positive.
+  local codex_copy claude_copy cp_line
+  codex_copy="$(version_in_file "$HOME/.wk-im-dev/.claude-plugin/plugin.json")"
+  cp_line="$(claude_plugin_install)"
+  claude_copy="${cp_line%%	*}"
+  if [ -n "$codex_copy" ] && [ -n "$claude_copy" ] && [ "$codex_copy" != "$claude_copy" ]; then
+    warn "version drift: codex-side $codex_copy vs Claude plugin $claude_copy"
+    add_fix "# codex 侧脚本与 Claude plugin 版本不一致，重跑 bootstrap 同步 ~/.wk-im-dev/bin："
+    add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target . --ref v$claude_copy"
+  fi
+
   echo ""
   echo "Runtime detection:"
   echo "  WK_IM_DEV_RUNTIME=${WK_IM_DEV_RUNTIME:-<unset>}"
@@ -292,8 +348,8 @@ run_doctor() {
     add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target . --runtime codex"
   fi
   # Legacy artifacts (plugin-native 后不再需要)：检测到就提示清理。
-  local legacy_toml="$HOME/.codex/agents/wk-im-dev.toml"
-  local legacy_profile="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
+  local legacy_toml="$CODEX_DIR/agents/wk-im-dev.toml"
+  local legacy_profile="$CODEX_DIR/wk-im-dev.config.toml"
   if [ -f "$legacy_toml" ] || [ -f "$legacy_profile" ]; then
     warn "检测到旧版 Codex 产物（plugin-native 后已弃用，可清理）"
     [ -f "$legacy_toml" ]    && warn "  legacy: $legacy_toml"

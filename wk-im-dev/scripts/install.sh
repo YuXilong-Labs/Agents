@@ -196,24 +196,66 @@ install_helper_scripts() {
   echo "  OK component manifest installed: $HOME/.wk-im-dev/components.conf"
 }
 
+# Pick the rc file for the user's login shell. Sets two globals: RESOLVED_RC (rc path)
+# and PATH_LINE (correct export syntax for that shell). Returned via globals rather than
+# stdout because update_shell_rc needs PATH_LINE too, and command substitution would run
+# this in a subshell and drop the variable. Honors the macOS gotcha that a bash login
+# shell (Terminal.app default) sources ~/.bash_profile, not ~/.bashrc, plus fish's syntax.
+resolve_shell_rc() {
+  local shell_name
+  shell_name="$(basename "${SHELL:-}")"
+  RESOLVED_RC=""
+  PATH_LINE='export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+
+  case "$shell_name" in
+    fish)
+      PATH_LINE='fish_add_path "$HOME/.wk-im-dev/bin"'
+      RESOLVED_RC="$HOME/.config/fish/config.fish"
+      return
+      ;;
+    bash)
+      # macOS Terminal runs bash as a *login* shell → sources ~/.bash_profile / ~/.profile.
+      # Linux terminals run bash as an *interactive non-login* shell → sources ~/.bashrc.
+      # Preferring login files on Linux would write to ~/.profile, which new terminals
+      # never read, leaving wk-im-dev missing from PATH. So branch on the OS.
+      if [ "$(uname -s)" = "Darwin" ]; then
+        if [ -f "$HOME/.bash_profile" ]; then RESOLVED_RC="$HOME/.bash_profile"; return; fi
+        if [ -f "$HOME/.profile" ]; then RESOLVED_RC="$HOME/.profile"; return; fi
+        RESOLVED_RC="$HOME/.bashrc"
+        return
+      fi
+      if [ -f "$HOME/.bashrc" ]; then RESOLVED_RC="$HOME/.bashrc"; return; fi
+      if [ -f "$HOME/.bash_profile" ]; then RESOLVED_RC="$HOME/.bash_profile"; return; fi
+      RESOLVED_RC="$HOME/.profile"
+      return
+      ;;
+    zsh)
+      RESOLVED_RC="$HOME/.zshrc"
+      return
+      ;;
+  esac
+
+  # Unknown/unset $SHELL: fall back to whichever rc file already exists.
+  if [ -f "$HOME/.zshrc" ]; then RESOLVED_RC="$HOME/.zshrc"; return; fi
+  if [ -f "$HOME/.bashrc" ]; then RESOLVED_RC="$HOME/.bashrc"; return; fi
+}
+
 update_shell_rc() {
-  local shell_rc=""
   if [ "$UPDATE_SHELL_RC" -ne 1 ]; then
     return
   fi
 
-  if [ -f "$HOME/.zshrc" ]; then
-    shell_rc="$HOME/.zshrc"
-  elif [ -f "$HOME/.bashrc" ]; then
-    shell_rc="$HOME/.bashrc"
-  fi
+  RESOLVED_RC=""
+  PATH_LINE=""
+  resolve_shell_rc
+  local shell_rc="$RESOLVED_RC"
 
   if [ -z "$shell_rc" ]; then
     echo "  NOTE no shell rc file found; add ~/.wk-im-dev/bin to PATH manually if needed"
     return
   fi
 
-  if grep -q 'wk-im-dev/bin' "$shell_rc" 2>/dev/null; then
+  if [ -f "$shell_rc" ] && grep -q 'wk-im-dev/bin' "$shell_rc" 2>/dev/null; then
     echo "  OK PATH already contains ~/.wk-im-dev/bin"
     return
   fi
@@ -223,16 +265,17 @@ update_shell_rc() {
     echo "       ----------------------------------------"
     echo "       "
     echo "       # wk-im-dev"
-    echo '       export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+    echo "       $PATH_LINE"
     echo "       ----------------------------------------"
     echo "       手动追加完毕后：source $shell_rc"
     return
   fi
 
+  mkdir -p "$(dirname "$shell_rc")"
   {
     echo ""
     echo "# wk-im-dev"
-    echo 'export PATH="$HOME/.wk-im-dev/bin:$PATH"'
+    echo "$PATH_LINE"
   } >> "$shell_rc"
   echo "  OK PATH updated in $shell_rc"
   echo "  Next shell: source $shell_rc"

@@ -14,7 +14,7 @@
 
 ## v1.1.0 — 2026-06-15
 
-主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化 + 模板化生成器**。
+主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化 + 模板化生成器 + 配置目录/shell rc 兼容**。
 
 ### Added (组件数泛化 / Phase 4)
 
@@ -34,6 +34,8 @@
 - **`.claude-plugin/plugin.json`** 补充 `commands` / `skills` / `hooks` 字段声明。
 - **`SessionStart` hook**（`hooks/session-init.sh`）：在 IM 仓库启动会话时自动 init workspace 并注入**精炼的 wk-im-dev 激活摘要**；非 IM 仓库静默 `exit 0`。
 - **`/wk-im-dev` 命令**（`commands/wk-im-dev.md`）：非 IM 仓库下的手动激活入口。
+- **`update_shell_rc` 覆盖 fish 与 macOS bash 登录 shell**：原逻辑只认 `~/.zshrc` / `~/.bashrc`。现按 `$SHELL` 选 rc 文件——zsh→`.zshrc`、bash→优先 `.bash_profile`（macOS Terminal 登录 shell 读这个而非 `.bashrc`）→`.profile`→`.bashrc`、fish→`config.fish` 且用 `fish_add_path` 语法；自动 `mkdir -p` 父目录。
+- **`doctor` 版本漂移检测**：codex 侧 `~/.wk-im-dev` 拷贝与活跃 Claude plugin 版本不一致时给出 `[warn] version drift` 并附重新同步命令，避免 codex 路径升级后 bin 脚本 stale 而无人察觉。
 
 ### Changed
 
@@ -41,6 +43,14 @@
 - **launcher 离线 Codex 路径**：改为注入 `~/.wk-im-dev/wk-im-dev-agent.md`（自动剥离 YAML frontmatter），不再依赖 profile 的 `-p`。
 - **`scripts/install.sh`**：安装 agent spec 取代 core spec；移除 `--skip-codex-agent` / `--skip-codex-profile` flag 及 `~/.codex/agents/*.toml`、`~/.codex/wk-im-dev.config.toml` 写入。
 - **`doctor`**：检查 `agent spec` 取代 `core spec`；检测到旧版 Codex 产物时提示清理。
+
+### Fixed
+
+- **不同安装方式 / 配置目录搬迁兼容**：launcher 与 install/uninstall 之前把 `~/.claude`、`~/.codex` 写死，忽略运行时自身的配置目录覆盖变量。现在全程改用 `${CLAUDE_CONFIG_DIR:-~/.claude}` 与 `${CODEX_HOME:-~/.codex}`：
+  - launcher 的 plugin 探测（`plugin_status` / `read_version` / drift）、doctor 的 codex agent 路径统一走 `CLAUDE_DIR` / `CODEX_DIR`。此前设了 `CLAUDE_CONFIG_DIR`（多账号 / cc-switch / 企业环境常见）的用户，plugin 实际已装好却被探测漏判，**静默回退到 codex 路径**——与 v1.0.0 同类故障。
+  - `install.sh` 的 `install_codex_agent` 之前写死 `~/.codex/agents`，与已尊重 `CODEX_HOME` 的 `install_codex_profile` 不一致；现已对齐。`uninstall.sh` 的 codex agent 清理同步修正。
+  - 说明：npm / brew / native 安装的二进制位置本就通过 `command -v` 探测，不受影响；本次只修配置目录被搬迁的场景。
+- **`read_version` 对纯 Claude-plugin 用户报 `unknown`**：原 cache glob `cache/*/wk-im-dev*/.claude-plugin/...` 少了一层版本目录（真实布局是 `cache/<marketplace>/wk-im-dev/<version>/.claude-plugin/...`），永不匹配。改为优先读 `installed_plugins.json`（Claude 自己维护的事实源，含活跃 `version` + `installPath`），免受版本重置遗留的 3.x stale cache 干扰；glob 作兜底并补上版本目录层级。
 
 ### Removed
 
