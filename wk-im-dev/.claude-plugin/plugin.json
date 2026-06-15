@@ -7,5 +7,8 @@
   },
   "homepage": "https://github.com/YuXilong-Labs/Agents",
   "license": "MIT",
-  "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"]
+  "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"],
+  "commands": "./commands/",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json"
 }

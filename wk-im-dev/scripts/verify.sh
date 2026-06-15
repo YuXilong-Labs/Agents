@@ -115,6 +115,9 @@ require_dir "$PLUGIN_ROOT/skills"
 
 required_files=(
   "$PLUGIN_ROOT/.claude-plugin/plugin.json"
+  "$PLUGIN_ROOT/.codex-plugin/plugin.json"
+  "$PLUGIN_ROOT/commands/wk-im-dev.md"
+  "$PLUGIN_ROOT/hooks/session-init.sh"
   "$PLUGIN_ROOT/README.md"
   "$PLUGIN_ROOT/agents/wk-im-dev.md"
   "$PLUGIN_ROOT/bin/wk-im-dev"
@@ -186,7 +189,14 @@ if [ -f "$PLUGIN_ROOT/bin/wk-im-dev" ]; then
 fi
 
 check_json "$PLUGIN_ROOT/.claude-plugin/plugin.json"
+check_json "$PLUGIN_ROOT/.codex-plugin/plugin.json"
 check_json "$PLUGIN_ROOT/hooks/hooks.json"
+
+require_contains "$PLUGIN_ROOT/.codex-plugin/plugin.json" '"name": "wk-im-dev"'
+require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"skills"'
+require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"hooks"'
+require_contains "$PLUGIN_ROOT/hooks/hooks.json" "SessionStart"
+require_contains "$PLUGIN_ROOT/hooks/session-init.sh" "is_im_repo"
 
 if [ "${#failures[@]}" -gt 0 ]; then
   echo "wk-im-dev verification failed:" >&2
