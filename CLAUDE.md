@@ -10,8 +10,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 目录 | 状态 | 说明 |
 |------|------|------|
-| `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag） |
+| `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag）。**行为契约单一事实源 = `agents/wk-im-dev.md`**（`core/` 已删除）；组件名/规则/隐私词/只读路径数据源 = `components.conf`（detect-env/guard/scope-check/init 读它，非硬编码） |
 | `wk-code-refactor/` | ✅ 当前主线 | 单模块/功能点重构 Agent |
+| `tools/create-wk-agent.sh` | ✅ 生成器 | 从 `manifests/*.json` 生成 per-component agent。**wk-im-dev 即模板**：克隆 + slug 改名 + 组件名替换 + 依 manifest 重生成 `components.conf`。dogfood：`im.json` 重生成 ≈ 现 wk-im-dev。用法见 `tools/README.md` |
+| `manifests/` | ✅ | 生成器输入。`im.json`=当前 IM 实例；`example-pay.json`=新组件 agent 示例 |
 
 ## 安装模型（重要）
 
