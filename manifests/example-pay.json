@@ -1,0 +1,16 @@
+{
+  "slug": "wk-pay-dev",
+  "description": "iOS 支付组件开发 Agent（PayCore + PayUI）。功能开发、Bug 修复、代码审查、架构查询。",
+  "keywords": ["ios", "pay", "paycore", "payui", "swift"],
+  "components": [
+    { "name": "PayCore", "role": "service", "scope_root": "PayCore" },
+    { "name": "PayUI",   "role": "module",  "scope_root": "PayUI" }
+  ],
+  "forbid_import": [
+    { "component": "PayCore", "targets": ["PayUI"] },
+    { "component": "PayUI",   "targets": ["PaymentGatewaySDK"] }
+  ],
+  "privacy_keywords": ["cardNumber", "cvv", "token", "accessToken", "cookie"],
+  "readonly_paths": ["Pods/", "ThirdPartySDK/"],
+  "sdk_literal": "PaymentGatewaySDK"
+}

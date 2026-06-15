@@ -1,0 +1,16 @@
+{
+  "slug": "wk-im-dev",
+  "description": "iOS IM component developer for BTIMService and BTIMModule. Feature development, bug fixing, code review, and architecture queries.",
+  "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"],
+  "components": [
+    { "name": "BTIMService", "role": "service", "scope_root": "BTIMService" },
+    { "name": "BTIMModule",  "role": "module",  "scope_root": "BTIMModule" }
+  ],
+  "forbid_import": [
+    { "component": "BTIMService", "targets": ["BTIMModule"] },
+    { "component": "BTIMModule",  "targets": ["ThirdPartyIMSDK", "IMSDK", "TencentIMSDK"] }
+  ],
+  "privacy_keywords": ["messageBody", "msgContent", "token", "accessToken", "cookie", "attachmentURL"],
+  "readonly_paths": ["Pods/", "ThirdPartySDK/"],
+  "sdk_literal": "ThirdPartyIMSDK"
+}

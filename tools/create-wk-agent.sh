@@ -1,0 +1,206 @@
+#!/bin/bash
+# create-wk-agent.sh — 从 manifest 生成一个新的 per-component 开发 agent。
+#
+# 设计：wk-im-dev/ 本身即模板（single template, no drift）。生成器克隆它，
+# 然后做 slug 改名 + 组件名替换 + 依据 manifest 重生成 components.conf。
+# 组件名替换会顺带把 identity / 约束 / 文档里的旧组件名改掉，无需单独模板化散文。
+#
+# 用法：
+#   tools/create-wk-agent.sh --manifest manifests/example-pay.json --out /tmp/wk-pay-dev
+#   tools/create-wk-agent.sh --manifest manifests/im.json --out /tmp/regen   # dogfood
+#
+# Created by yuxilong on 2026/06/15
+
+set -uo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TEMPLATE="$REPO_ROOT/wk-im-dev"
+MANIFEST=""
+OUT=""
+FORCE=0
+
+usage() {
+  cat <<'USAGE'
+Usage: create-wk-agent.sh --manifest <file> --out <dir> [--template <dir>] [--force]
+
+  --manifest <file>   组件 agent manifest（JSON）。
+  --out <dir>         输出目录（生成的 agent 根目录）。
+  --template <dir>    模板源（默认 <repo>/wk-im-dev）。
+  --force             输出目录已存在时先清空。
+USAGE
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --manifest) MANIFEST="${2:-}"; shift 2 ;;
+    --out)      OUT="${2:-}"; shift 2 ;;
+    --template) TEMPLATE="${2:-}"; shift 2 ;;
+    --force)    FORCE=1; shift ;;
+    -h|--help)  usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[ -n "$MANIFEST" ] || { echo "ERROR: --manifest required" >&2; usage >&2; exit 2; }
+[ -n "$OUT" ]      || { echo "ERROR: --out required" >&2; usage >&2; exit 2; }
+[ -f "$MANIFEST" ] || { echo "ERROR: manifest not found: $MANIFEST" >&2; exit 1; }
+[ -d "$TEMPLATE" ] || { echo "ERROR: template not found: $TEMPLATE" >&2; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 required" >&2; exit 1; }
+
+if [ -e "$OUT" ]; then
+  if [ "$FORCE" -eq 1 ]; then rm -rf "$OUT"; else
+    echo "ERROR: output exists: $OUT (use --force to overwrite)" >&2; exit 1
+  fi
+fi
+
+python3 - "$MANIFEST" "$TEMPLATE" "$OUT" <<'PY'
+import json, os, re, shutil, sys
+
+manifest_path, template, out = sys.argv[1], sys.argv[2], sys.argv[3]
+m = json.load(open(manifest_path))
+
+# --- source (template) identity, fixed ---
+SRC_SLUG = "wk-im-dev"
+SRC_CORE = "wk-im"            # slug without trailing "-dev"
+SRC_COMPONENTS = ["BTIMService", "BTIMModule"]
+SRC_SDK = "ThirdPartyIMSDK"
+
+# --- target identity, derived from manifest ---
+slug = m["slug"]
+core = slug[:-4] if slug.endswith("-dev") else slug          # wk-pay
+tgt_components = [c["name"] for c in m["components"]]
+tgt_sdk = m.get("sdk_literal", SRC_SDK)
+version = m.get("version", "1.0.0")
+
+file_prefix_src, file_prefix_tgt = SRC_CORE + "-", core + "-"
+marker_src, marker_tgt = SRC_CORE.upper().replace("_", "-") + "-", core.upper().replace("_", "-") + "-"
+env_src,    env_tgt    = SRC_CORE.upper().replace("-", "_") + "_", core.upper().replace("-", "_") + "_"
+
+if len(tgt_components) != len(SRC_COMPONENTS):
+    sys.stderr.write(
+        f"WARN: template has {len(SRC_COMPONENTS)} components, manifest has "
+        f"{len(tgt_components)}. Component-name substitution maps positionally for "
+        f"the first {min(len(SRC_COMPONENTS), len(tgt_components))}; review prose/diagrams.\n")
+
+# Ordered substitutions. Component names + SDK first (whole tokens), then prefixes.
+subs = []
+for s, t in zip(SRC_COMPONENTS, tgt_components):
+    subs.append((s, t))
+subs.append((SRC_SDK, tgt_sdk))
+subs += [(file_prefix_src, file_prefix_tgt), (marker_src, marker_tgt), (env_src, env_tgt)]
+
+def rewrite(text):
+    for s, t in subs:
+        text = text.replace(s, t)
+    return text
+
+TEXT_EXT = {".md", ".sh", ".json", ".toml", ".conf", ".py", ".txt", ""}
+SKIP_NAMES = {".git", ".DS_Store"}
+
+# --- copy tree ---
+def ignore(d, names):
+    return [n for n in names if n in SKIP_NAMES]
+# symlinks=True keeps e.g. agents/constraints.md -> ../skills/... as a relative
+# symlink (still valid in the output tree) instead of flattening it to a file.
+shutil.copytree(template, out, ignore=ignore, symlinks=True)
+
+# --- rewrite contents + rename files (skip symlinks: rewrite the real file once) ---
+for root, dirs, files in os.walk(out):
+    for fn in files:
+        p = os.path.join(root, fn)
+        if os.path.islink(p):
+            continue
+        ext = os.path.splitext(fn)[1]
+        is_launcher = (fn == SRC_SLUG)  # extensionless launcher
+        if ext in TEXT_EXT or is_launcher:
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    data = f.read()
+                with open(p, "w", encoding="utf-8") as f:
+                    f.write(rewrite(data))
+            except (UnicodeDecodeError, IsADirectoryError):
+                pass
+    # rename files containing the source file prefix or the launcher name
+    for fn in files:
+        new = fn.replace(file_prefix_src, file_prefix_tgt)
+        if fn == SRC_SLUG:
+            new = slug
+        if new != fn:
+            os.rename(os.path.join(root, fn), os.path.join(root, new))
+
+# --- regenerate components.conf authoritatively from manifest ---
+lines = ["# Generated by create-wk-agent from " + os.path.basename(manifest_path),
+         "agent\t" + slug]
+for c in m["components"]:
+    sr = c.get("scope_root", c["name"])
+    lines.append("component\t%s\t%s\t%s" % (c["name"], c.get("role", ""), sr))
+for fr in m.get("forbid_import", []):
+    for tgt in fr["targets"]:
+        lines.append("forbid_import\t%s\t%s" % (fr["component"], tgt))
+for kw in m.get("privacy_keywords", []):
+    lines.append("privacy\t" + kw)
+for rp in m.get("readonly_paths", []):
+    lines.append("readonly\t" + rp)
+with open(os.path.join(out, "components.conf"), "w", encoding="utf-8") as f:
+    f.write("\n".join(lines) + "\n")
+
+# --- rewrite plugin manifests from manifest fields ---
+for rel in [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]:
+    p = os.path.join(out, rel)
+    if not os.path.exists(p):
+        continue
+    pj = json.load(open(p))
+    pj["name"] = slug
+    pj["version"] = version
+    pj["description"] = m.get("description", pj.get("description", ""))
+    if "keywords" in m:
+        pj["keywords"] = m["keywords"]
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(pj, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+# --- reset CHANGELOG to a stub ---
+cl = os.path.join(out, "CHANGELOG.md")
+if os.path.exists(cl):
+    with open(cl, "w", encoding="utf-8") as f:
+        f.write("# %s Changelog\n\n## v%s\n\n- 由 create-wk-agent 从 %s 生成。\n"
+                % (slug, version, os.path.basename(manifest_path)))
+
+# --- residual scan ---
+# Only flag a source token if its target differs (else it's a dogfood self-regen
+# where the "source" literal is legitimately the intended output).
+candidates = [
+    (SRC_SLUG, slug),
+    (SRC_CORE, core),
+    (SRC_CORE.upper().replace("_", "-"), core.upper().replace("_", "-")),
+    (SRC_CORE.upper().replace("-", "_"), core.upper().replace("-", "_")),
+    (SRC_SDK, tgt_sdk),
+]
+candidates += list(zip(SRC_COMPONENTS, tgt_components))
+residual_tokens = [s for s, t in candidates if s != t]
+hits = {}
+for root, dirs, files in os.walk(out):
+    dirs[:] = [d for d in dirs if d not in SKIP_NAMES]
+    for fn in files:
+        p = os.path.join(root, fn)
+        if os.path.splitext(fn)[1] not in TEXT_EXT and fn != slug:
+            continue
+        if os.path.islink(p):
+            continue
+        try:
+            data = open(p, encoding="utf-8").read()
+        except (UnicodeDecodeError, OSError):
+            continue
+        for tok in residual_tokens:
+            if tok in data:
+                hits.setdefault(os.path.relpath(p, out), set()).add(tok)
+
+print("✅ generated agent: %s" % out)
+print("   slug=%s  components=%s  version=%s" % (slug, ",".join(tgt_components), version))
+if hits:
+    print("\n⚠️  residual source references (review — usually domain prose in docs):")
+    for f in sorted(hits):
+        print("   %s: %s" % (f, ", ".join(sorted(hits[f]))))
+else:
+    print("   no residual source references.")
+PY
