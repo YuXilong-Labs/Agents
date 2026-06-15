@@ -10,8 +10,6 @@ TARGET="$(pwd)"
 RUNTIME="both"
 INSTALL_PROJECT_AGENTS=1
 REPLACE_PROJECT_AGENTS=0
-INSTALL_CODEX_AGENT=1
-INSTALL_CODEX_PROFILE=1
 UPDATE_SHELL_RC=1
 DRY_RUN_SHELL_RC=0
 RUN_INIT=1
@@ -19,8 +17,6 @@ WITH_CODEGRAPH=0
 
 MARKER_START="<!-- WK-IM-DEV:START -->"
 MARKER_END="<!-- WK-IM-DEV:END -->"
-PROFILE_MARKER_START="# WK-IM-DEV-PROFILE:START"
-PROFILE_MARKER_END="# WK-IM-DEV-PROFILE:END"
 
 usage() {
   cat <<'USAGE'
@@ -34,8 +30,6 @@ Options:
   --with-codegraph         Auto install + index CodeGraph during init (default: off).
   --skip-project-agents    Do not create or merge target AGENTS.md.
   --replace-project-agents Backup and replace target AGENTS.md instead of marker merging.
-  --skip-codex-agent       Do not install ~/.codex/agents/wk-im-dev.toml.
-  --skip-codex-profile     Do not write ~/.codex/wk-im-dev.config.toml.
   --no-shell-rc            Do not append ~/.wk-im-dev/bin to ~/.zshrc or ~/.bashrc.
   --dry-run-shell-rc       Print what would be appended to shell rc (skip actual write).
   -h, --help               Show this help.
@@ -169,18 +163,14 @@ merge_project_agents() {
   echo "  OK AGENTS.md wk-im-dev block updated, previous file backed up to: $backup"
 }
 
-install_codex_agent() {
-  local codex_agent_dir="$HOME/.codex/agents"
-  mkdir -p "$codex_agent_dir"
-  cp "$CODEX_DIR/wk-im-dev.toml" "$codex_agent_dir/wk-im-dev.toml"
-  echo "  OK Codex agent wrapper installed: $codex_agent_dir/wk-im-dev.toml"
-}
-
-install_core_spec() {
+install_agent_spec() {
   local dest_dir="$HOME/.wk-im-dev"
   mkdir -p "$dest_dir"
-  cp "$PLUGIN_ROOT/core/wk-im-dev-core.md" "$dest_dir/wk-im-dev-core.md"
-  echo "  OK core spec installed: $dest_dir/wk-im-dev-core.md"
+  # 单一事实源 agents/wk-im-dev.md 安装为 launcher 注入的 agent spec（离线 Codex fallback 用）。
+  cp "$PLUGIN_ROOT/agents/wk-im-dev.md" "$dest_dir/wk-im-dev-agent.md"
+  echo "  OK agent spec installed: $dest_dir/wk-im-dev-agent.md"
+  # 清理旧版 core spec（内容已合并进 agent spec）
+  rm -f "$dest_dir/wk-im-dev-core.md"
 
   # 顺便 copy plugin.json，让 launcher 在 Codex-only 安装下也能读出版本号
   mkdir -p "$dest_dir/.claude-plugin"
@@ -201,44 +191,6 @@ install_helper_scripts() {
     chmod +x "$bin_dir/wk-im-dev"
   fi
   echo "  OK helper scripts installed: $bin_dir"
-}
-
-install_codex_profile() {
-  local codex_home="${CODEX_HOME:-$HOME/.codex}"
-  local codex_cfg="$codex_home/config.toml"
-  local profile_dest="$codex_home/wk-im-dev.config.toml"
-  local profile_src="$CODEX_DIR/profile.toml"
-
-  # Migrate: remove legacy [profiles.wk-im-dev] block from config.toml if present.
-  # (Codex ≥ new-profile-format rejects --profile when [profiles.xxx] exists in config.toml)
-  if [ -f "$codex_cfg" ] && grep -qF "$PROFILE_MARKER_START" "$codex_cfg" 2>/dev/null; then
-    local backup tmp
-    backup="$(backup_file "$codex_cfg")"
-    tmp="$(mktemp)"
-    awk -v start="$PROFILE_MARKER_START" -v end="$PROFILE_MARKER_END" '
-      index($0, start) { in_block = 1; next }
-      in_block && index($0, end) { in_block = 0; next }
-      !in_block { print }
-    ' "$codex_cfg" > "$tmp"
-    mv "$tmp" "$codex_cfg"
-    echo "  OK migrated: removed legacy [profiles.wk-im-dev] from config.toml (backup: $backup)"
-  fi
-
-  # Write profile to standalone file (new Codex profile format).
-  if [ -f "$profile_dest" ] && cmp -s "$profile_src" "$profile_dest"; then
-    echo "  OK wk-im-dev.config.toml already up to date"
-    return
-  fi
-
-  if [ -f "$profile_dest" ]; then
-    local backup
-    backup="$(backup_file "$profile_dest")"
-    cp "$profile_src" "$profile_dest"
-    echo "  OK wk-im-dev.config.toml updated (backup: $backup)"
-  else
-    cp "$profile_src" "$profile_dest"
-    echo "  OK wk-im-dev.config.toml written to $profile_dest"
-  fi
 }
 
 update_shell_rc() {
@@ -343,11 +295,9 @@ looks_like_im_repo() {
 
 validate_source_layout() {
   [ -f "$CODEX_DIR/AGENTS.md" ] || fail "Missing $CODEX_DIR/AGENTS.md"
-  [ -f "$CODEX_DIR/wk-im-dev.toml" ] || fail "Missing $CODEX_DIR/wk-im-dev.toml"
-  [ -f "$CODEX_DIR/profile.toml" ] || fail "Missing $CODEX_DIR/profile.toml"
   [ -d "$PLUGIN_ROOT/bin" ] || fail "Missing $PLUGIN_ROOT/bin"
   [ -f "$PLUGIN_ROOT/bin/wk-im-dev" ] || fail "Missing $PLUGIN_ROOT/bin/wk-im-dev"
-  [ -f "$PLUGIN_ROOT/core/wk-im-dev-core.md" ] || fail "Missing $PLUGIN_ROOT/core/wk-im-dev-core.md"
+  [ -f "$PLUGIN_ROOT/agents/wk-im-dev.md" ] || fail "Missing $PLUGIN_ROOT/agents/wk-im-dev.md"
   [ -f "$PLUGIN_ROOT/.claude-plugin/plugin.json" ] || fail "Missing Claude plugin manifest"
   require_marked_template "$CODEX_DIR/AGENTS.md"
 }
@@ -398,14 +348,6 @@ while [ "$#" -gt 0 ]; do
       ;;
     --replace-project-agents)
       REPLACE_PROJECT_AGENTS=1
-      shift
-      ;;
-    --skip-codex-agent)
-      INSTALL_CODEX_AGENT=0
-      shift
-      ;;
-    --skip-codex-profile)
-      INSTALL_CODEX_PROFILE=0
       shift
       ;;
     --no-shell-rc)
@@ -462,26 +404,14 @@ elif runtime_includes codex; then
   echo "  OK skipped target AGENTS.md"
 fi
 
-if runtime_includes codex && [ "$INSTALL_CODEX_AGENT" -eq 1 ]; then
-  install_codex_agent
-elif runtime_includes codex; then
-  echo "  OK skipped Codex agent wrapper"
-fi
-
 if runtime_includes codex; then
-  install_core_spec
+  install_agent_spec
 fi
 
 install_helper_scripts
 SYMLINK_PATH=""
 install_symlink
 update_shell_rc
-
-if runtime_includes codex && [ "$INSTALL_CODEX_PROFILE" -eq 1 ]; then
-  install_codex_profile
-elif runtime_includes codex; then
-  echo "  OK skipped wk-im-dev.config.toml (--skip-codex-profile)"
-fi
 
 if runtime_includes claude; then
   echo "  OK Claude Code plugin source verified: $PLUGIN_ROOT"
@@ -545,6 +475,7 @@ if runtime_includes claude; then
   echo "    claude --agent wk-im-dev"
 fi
 if runtime_includes codex; then
-  echo "    codex -p wk-im-dev       # profile only"
+  echo "    wk-im-dev                # 统一 launcher（离线 Codex fallback）"
+  echo "    # 或装 Codex plugin 后在 IM 仓库直接 codex（SessionStart 自动激活）"
 fi
 echo "================================================================"

@@ -173,8 +173,8 @@ installer 自动解析 Podfile 的本地路径，写入 `~/.wk-im-dev/workspace.
 |---|---|---|
 | 安装 | `curl bootstrap.sh \| bash` | `claude plugin install wk-im-dev@yuxilong-agents` |
 | 启动 | `wk-im-dev`（统一 launcher） | `wk-im-dev`（同 launcher，自动派发） |
-| 备选启动 | `codex -p wk-im-dev` 或 `cd <repo> && codex` | `claude --agent wk-im-dev` 或 `claude --plugin-dir <path>` |
-| 主入口 | launcher + `~/.wk-im-dev/wk-im-dev-core.md` + `AGENTS.md` | plugin manifest + `agents/*.md` |
+| 备选启动 | `wk-im-dev`（launcher）或 `cd <repo> && codex`（plugin 装好后 SessionStart 自动激活） | `claude --agent wk-im-dev` 或 `claude --plugin-dir <path>` |
+| 主入口 | plugin `agents/` + SessionStart hook；离线 fallback 走 launcher 注入 `~/.wk-im-dev/wk-im-dev-agent.md` + `AGENTS.md` | plugin manifest + `agents/*.md` |
 | 命令脚本 | `~/.wk-im-dev/bin/*` | plugin 内 `${CLAUDE_PLUGIN_ROOT}/bin` |
 | 知识库 | 同一套 `docs/agent-knowledge/` Markdown | 同一套 `docs/agent-knowledge/` Markdown |
 
@@ -252,8 +252,10 @@ docs/agent-knowledge/
 
 ```text
 wk-im-dev/
-├── .claude-plugin/plugin.json
-├── agents/                            # Claude Code agent 文件
+├── .claude-plugin/plugin.json         # Claude plugin 清单
+├── .codex-plugin/plugin.json          # Codex plugin 清单
+├── agents/                            # agent 定义（wk-im-dev.md = 行为契约唯一事实源）
+├── commands/wk-im-dev.md              # /wk-im-dev 手动激活命令
 ├── bin/
 │   ├── wk-im-dev                      # 统一 launcher（含 doctor）
 │   ├── wk-im-init.sh                  # 知识库初始化（自动定位）
@@ -264,12 +266,10 @@ wk-im-dev/
 │   ├── wk-im-kb-scan.sh
 │   ├── wk-im-kb-check.sh
 │   └── wk-im-codegraph.sh
-├── codex/
-│   ├── AGENTS.md
-│   ├── wk-im-dev.toml
-│   ├── profile.toml
-│   └── install.sh                     # DEPRECATED：转发到 scripts/install.sh
-├── core/wk-im-dev-core.md             # Codex 人格注入
+├── codex/AGENTS.md                    # 离线 fallback（无 plugin 时的 Codex 入口）
+├── hooks/
+│   ├── hooks.json                     # SessionStart / PreToolUse / PostToolUse / Stop
+│   └── session-init.sh               # Codex SessionStart：IM 仓库自动激活 + auto-init
 ├── docs/
 │   ├── advanced-install.md            # 高级 flag / marker / 卸载
 │   ├── architecture.md                # 整体架构与运行原理（Mermaid 图）
@@ -278,7 +278,6 @@ wk-im-dev/
 │   ├── agent-knowledge.md
 │   ├── codegraph-integration.md
 │   └── rename-from-wk-im-developer.md
-├── hooks/
 ├── scripts/
 │   ├── bootstrap.sh                   # curl 一键安装入口
 │   ├── install.sh                     # 本地 install（含自动 init）

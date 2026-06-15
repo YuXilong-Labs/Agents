@@ -14,8 +14,6 @@ Options:
   --with-codegraph                安装时一并安装 + 索引 CodeGraph（默认不装）
   --skip-project-agents           不创建/合并 target AGENTS.md
   --replace-project-agents        备份后整体替换 target AGENTS.md（默认 marker 合并）
-  --skip-codex-agent              不安装 ~/.codex/agents/wk-im-dev.toml
-  --skip-codex-profile            不写入 [profiles.wk-im-dev] 到 ~/.codex/config.toml
   --no-shell-rc                   不向 ~/.zshrc / ~/.bashrc 追加 PATH
 ```
 
@@ -114,9 +112,8 @@ claude plugin marketplace remove YuXilong-Labs/Agents
 
 卸载会移除：
 
-- `~/.wk-im-dev/`
-- `~/.codex/agents/wk-im-dev.toml`
-- `~/.codex/config.toml` 中的 `# WK-IM-DEV-PROFILE` 区块
+- `~/.wk-im-dev/`（含 `wk-im-dev-agent.md`、helper 脚本、workspace.json）
+- 旧版残留：`~/.codex/agents/wk-im-dev.toml`、`~/.codex/wk-im-dev.config.toml`、`~/.codex/config.toml` 中的 `# WK-IM-DEV-PROFILE` 区块（plugin-native 后不再生成，卸载仍会清理）
 - shell rc 中 `# wk-im-dev` + `export PATH=...` 两行
 - （传 `--target` 时）目标仓库 `AGENTS.md` 中的 wk-im-dev 区块
 

@@ -2,6 +2,13 @@
 
 > 本文档面向「想理解或重画 wk-im-dev 架构图」的读者。所有 Mermaid 代码块可直接渲染。
 
+> ⚠️ **2026-06-15 起的变更（部分图待刷新）**：Codex 路径已转为 plugin-native——
+> 行为契约的**唯一事实源**是 `agents/wk-im-dev.md`（不再有 `core/wk-im-dev-core.md`）；
+> Codex 激活走 plugin `agents/` + `SessionStart` hook（`hooks/session-init.sh`）+ `/wk-im-dev` 命令，
+> 不再安装 `~/.codex/agents/wk-im-dev.toml` 与 `~/.codex/wk-im-dev.config.toml`（profile）。
+> launcher 离线 fallback 现注入 `~/.wk-im-dev/wk-im-dev-agent.md`。
+> 下方提到 `core spec 复制`、`wk-im-dev.toml → ~/.codex/agents/`、`profile.toml 合并 config.toml` 的图块属旧流程，待整体重绘。
+
 ---
 
 ## 0. 一句话定位

@@ -108,7 +108,6 @@ check_json() {
 require_dir "$PLUGIN_ROOT/agents"
 require_dir "$PLUGIN_ROOT/bin"
 require_dir "$PLUGIN_ROOT/codex"
-require_dir "$PLUGIN_ROOT/core"
 require_dir "$PLUGIN_ROOT/docs"
 require_dir "$PLUGIN_ROOT/hooks"
 require_dir "$PLUGIN_ROOT/skills"
@@ -129,10 +128,6 @@ required_files=(
   "$PLUGIN_ROOT/bin/wk-im-kb-scan.sh"
   "$PLUGIN_ROOT/bin/wk-im-verify.sh"
   "$PLUGIN_ROOT/codex/AGENTS.md"
-  "$PLUGIN_ROOT/codex/install.sh"
-  "$PLUGIN_ROOT/codex/profile.toml"
-  "$PLUGIN_ROOT/codex/wk-im-dev.toml"
-  "$PLUGIN_ROOT/core/wk-im-dev-core.md"
   "$PLUGIN_ROOT/hooks/hooks.json"
   "$PLUGIN_ROOT/hooks/kb-refresh.sh"
   "$PLUGIN_ROOT/hooks/scope-check.sh"
@@ -154,24 +149,13 @@ require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "docs/agent-knowledge/"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "wk-im-kb-scan.sh --root"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMService"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTIMModule"
-require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" 'name = "wk-im-dev"'
-require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "Core spec version: 1"
-require_contains "$PLUGIN_ROOT/codex/wk-im-dev.toml" "core/wk-im-dev-core.md"
-require_contains "$PLUGIN_ROOT/codex/profile.toml" "model_reasoning_effort"
-require_not_contains() {
-  local file="$1" pattern="$2"
-  if grep -qF "$pattern" "$file" 2>/dev/null; then
-    echo "FAIL $file must not contain: $pattern (legacy format)"
-    ERRORS=$((ERRORS + 1))
-  fi
-}
-require_not_contains "$PLUGIN_ROOT/codex/profile.toml" "[profiles.wk-im-dev]"
-require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "Version: 1"
-require_contains "$PLUGIN_ROOT/core/wk-im-dev-core.md" "ThirdPartyIMSDK"
+# 单一事实源：agents/wk-im-dev.md
+require_contains "$PLUGIN_ROOT/agents/wk-im-dev.md" "ThirdPartyIMSDK"
+require_contains "$PLUGIN_ROOT/agents/wk-im-dev.md" "single source of truth"
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/skills/setup/SKILL.md" "wk-im-init.sh"
 require_contains "$PLUGIN_ROOT/README.md" "WK-IM-DEV:START"
-require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev-core.md"
+require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev-agent.md"
 require_contains "$PLUGIN_ROOT/bin/wk-im-dev" "wk-im-dev"
 
 while IFS= read -r agent; do

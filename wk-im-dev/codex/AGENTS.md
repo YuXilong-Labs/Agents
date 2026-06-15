@@ -2,8 +2,10 @@
 # wk-im-dev
 
 You are `wk-im-dev`, an iOS IM component development agent for `BTIMService` and `BTIMModule`.
-This file is the Codex project entrypoint copied into a component repo.
-The shared source contract lives in the `wk-im-dev/core/wk-im-dev-core.md` source file in the Agents repo.
+This file is the **offline-fallback** Codex project entrypoint copied into a component repo
+(used when the Codex plugin is not installed).
+The single source of truth for behavior is `wk-im-dev/agents/wk-im-dev.md` in the Agents repo;
+this file mirrors its rules and must not redefine them.
 
 When greeted or asked identity questions, reply in Chinese using the template below. Keep it concise; do not add extra small talk.
 
@@ -46,12 +48,13 @@ There are three ways to run a wk-im-dev session in Codex:
 
 | Method | Command | When to use |
 |--------|---------|-------------|
-| **Launcher (recommended)** | `wk-im-dev` | Explicit, repo-independent — installs full persona + model config. Equivalent to `claude --agent wk-im-dev`. |
-| **Profile only** | `codex -p wk-im-dev` | Gets model/reasoning overrides; persona still comes from AGENTS.md. |
-| **Path isolation (this file)** | `codex` in this repo | AGENTS.md is auto-loaded; also enables subagent delegation via `/agent` or prompt naming. |
+| **Codex plugin (recommended)** | `codex` in an IM repo | Plugin installed → SessionStart hook auto-activates persona; `/wk-im-dev` for non-IM repos. |
+| **Launcher (offline fallback)** | `wk-im-dev` | No plugin — launcher injects the persona as developer_instructions. Equivalent to `claude --agent wk-im-dev`. |
+| **Path isolation (this file)** | `codex` in this repo | AGENTS.md is auto-loaded as an offline fallback. |
 
 The `wk-im-dev` launcher is installed to `~/.wk-im-dev/bin/wk-im-dev` by the installer.
-Codex does not have a native `--agent` flag; the launcher provides an equivalent single-command activation.
+Codex does not have a native `--agent` flag; the plugin (SessionStart hook + `/wk-im-dev` command)
+and the launcher each provide an equivalent single-command activation.
 
 ## Setup
 

@@ -137,7 +137,7 @@ claude plugin install wk-im-dev@yuxilong-agents
 curl -fsSL .../bootstrap.sh | bash -s -- --target . --ref v1.0.1
 ```
 
-bootstrap 会重新 install 全部脚本 + 更新 `~/.codex/agents/wk-im-dev.toml`、`~/.codex/config.toml` 的 marker 块、`AGENTS.md` 的 marker 块。**不会**重置 `~/.wk-im-dev/workspace.json`（hostApps 走增量合并）。
+bootstrap 会重新 install 全部脚本 + 更新 `~/.wk-im-dev/wk-im-dev-agent.md`（agent spec）、`AGENTS.md` 的 marker 块。**不会**重置 `~/.wk-im-dev/workspace.json`（hostApps 走增量合并）。
 
 ### 3.2 Claude Code 用户
 

@@ -8,7 +8,31 @@
 
 ## Unreleased
 
-（无）
+主题：**Codex plugin-native 兼容 + 行为契约单一事实源**。
+
+### Added
+
+- **Codex plugin 清单** `.codex-plugin/plugin.json`，声明 `skills` / `hooks` / `commands`，让 Codex 原生加载技能与钩子。
+- **`.claude-plugin/plugin.json`** 补充 `commands` / `skills` / `hooks` 字段声明。
+- **`SessionStart` hook**（`hooks/session-init.sh`）：在 IM 仓库启动会话时自动 init workspace 并注入**精炼的 wk-im-dev 激活摘要**；非 IM 仓库静默 `exit 0`。
+- **`/wk-im-dev` 命令**（`commands/wk-im-dev.md`）：非 IM 仓库下的手动激活入口。
+
+### Changed
+
+- **行为契约收敛为单一事实源**：`agents/wk-im-dev.md` 现为 identity / 约束 / 路由 / 工作流的唯一来源；`codex/AGENTS.md` 与 launcher 降级为离线 fallback，引用而不重定义规则。
+- **launcher 离线 Codex 路径**：改为注入 `~/.wk-im-dev/wk-im-dev-agent.md`（自动剥离 YAML frontmatter），不再依赖 profile 的 `-p`。
+- **`scripts/install.sh`**：安装 agent spec 取代 core spec；移除 `--skip-codex-agent` / `--skip-codex-profile` flag 及 `~/.codex/agents/*.toml`、`~/.codex/wk-im-dev.config.toml` 写入。
+- **`doctor`**：检查 `agent spec` 取代 `core spec`；检测到旧版 Codex 产物时提示清理。
+
+### Removed
+
+- `core/wk-im-dev-core.md`（合并进 `agents/wk-im-dev.md`）。
+- `codex/wk-im-dev.toml`、`codex/profile.toml`、`codex/install.sh`（plugin-native 后不再需要；`codex/install.sh` 早已 DEPRECATED）。
+
+### Migration
+
+- ⚠️ 对已安装旧版用户是 **breaking change**（launcher 改读 agent spec；旧 toml/profile 弃用）。已安装用户重跑 bootstrap 即可迁移；旧 toml/profile 由 `uninstall.sh` 或 `doctor` 提示清理，launcher 保留对旧 core spec 的 fallback 读取。
+- **发版前必须按 `CLAUDE.md` 步骤 3 跑完整端到端（3.1 Codex + 3.2 Claude plugin）**，本地 install.sh 不暴露 plugin 加载问题。
 
 ---
 

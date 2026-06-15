@@ -18,7 +18,10 @@
 
 set -euo pipefail
 
-CORE_SPEC="${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-core.md}"
+# Agent spec injected as developer_instructions on the Codex offline-fallback path.
+# Single source of truth = agents/wk-im-dev.md, installed here by scripts/install.sh.
+# WK_IM_DEV_CORE kept as a back-compat alias for installs predating the rename.
+AGENT_SPEC="${WK_IM_DEV_AGENT:-${WK_IM_DEV_CORE:-$HOME/.wk-im-dev/wk-im-dev-agent.md}}"
 SELF="$0"
 
 show_help() {
@@ -277,23 +280,26 @@ run_doctor() {
 
   echo "Install artifacts:"
   doctor_line_file "launcher"   "$HOME/.wk-im-dev/bin/wk-im-dev"
-  doctor_line_file "core spec"  "$CORE_SPEC"
+  doctor_line_file "agent spec" "$AGENT_SPEC"
   doctor_line_dir  "bin dir"    "$HOME/.wk-im-dev/bin"
   doctor_line_file "init.sh"    "$HOME/.wk-im-dev/bin/wk-im-init.sh"
-  doctor_line_file "codex agent" "$HOME/.codex/agents/wk-im-dev.toml"
   if [ ! -f "$HOME/.wk-im-dev/bin/wk-im-dev" ]; then
     add_fix "# 重装 launcher（命中本机源码时）："
     add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target ."
   fi
-  local profile_toml="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
-  if [ -f "$profile_toml" ]; then
-    ok "codex profile: $profile_toml"
-  else
-    miss "codex profile missing: $profile_toml"
-    if command -v codex >/dev/null 2>&1; then
-      add_fix "# Codex profile 未写入，重跑 bootstrap："
-      add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target . --runtime codex"
-    fi
+  if [ ! -f "$AGENT_SPEC" ]; then
+    add_fix "# agent spec 未安装，重跑 bootstrap："
+    add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target . --runtime codex"
+  fi
+  # Legacy artifacts (plugin-native 后不再需要)：检测到就提示清理。
+  local legacy_toml="$HOME/.codex/agents/wk-im-dev.toml"
+  local legacy_profile="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
+  if [ -f "$legacy_toml" ] || [ -f "$legacy_profile" ]; then
+    warn "检测到旧版 Codex 产物（plugin-native 后已弃用，可清理）"
+    [ -f "$legacy_toml" ]    && warn "  legacy: $legacy_toml"
+    [ -f "$legacy_profile" ] && warn "  legacy: $legacy_profile"
+    add_fix "# 清理旧版 Codex 产物（可选）："
+    add_fix "rm -f \"$legacy_toml\" \"$legacy_profile\""
   fi
   echo ""
 
@@ -361,9 +367,12 @@ launch_claude() {
 # ----- codex dispatch (preserves original behavior) -----------------------
 
 launch_codex() {
-  if [ ! -f "$CORE_SPEC" ]; then
+  local spec="$AGENT_SPEC"
+  # Back-compat: fall back to the legacy core spec if the new agent spec isn't installed yet.
+  [ -f "$spec" ] || spec="$HOME/.wk-im-dev/wk-im-dev-core.md"
+  if [ ! -f "$spec" ]; then
     cat >&2 <<ERR
-wk-im-dev: core spec not found at $CORE_SPEC
+wk-im-dev: agent spec not found at $AGENT_SPEC
 Re-run the installer to fix this:
   curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-im-dev/scripts/bootstrap.sh \\
     | bash -s -- --target .
@@ -371,15 +380,11 @@ ERR
     exit 1
   fi
 
-  local args=(-c "developer_instructions=$(cat "$CORE_SPEC")")
-  local profile_file="${CODEX_HOME:-$HOME/.codex}/wk-im-dev.config.toml"
-  if [ -f "$profile_file" ]; then
-    args+=(-p wk-im-dev)
-  else
-    # 没装 profile 时只覆盖 reasoning_effort，model 走 Codex 默认，避免模型权限问题
-    args+=(-c model_reasoning_effort='"high"')
-  fi
-  exec codex "${args[@]}" "$@"
+  # Strip YAML frontmatter (--- ... ---) before injecting as developer_instructions.
+  # model 故意不钉死：只覆盖 reasoning_effort，model 走 Codex 默认，避免账号无特定模型权限时挂掉。
+  local instructions
+  instructions="$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{f=0; next} !f' "$spec")"
+  exec codex -c "developer_instructions=$instructions" -c model_reasoning_effort='"high"' "$@"
 }
 
 # ----- main ---------------------------------------------------------------
