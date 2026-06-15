@@ -12,6 +12,19 @@
 
 ---
 
+## v1.1.1 — 2026-06-15 (hotfix)
+
+### Fixed
+
+- **Claude plugin 安装后 hook 加载失败**：v1.1.0 在 `.claude-plugin/plugin.json` 声明了 `"hooks": "./hooks/hooks.json"`，但 Claude Code 会**自动加载** standard `hooks/hooks.json`，manifest 再显式声明同一文件触发 `Duplicate hooks file detected`，导致整个 plugin 的 hooks 加载失败（SessionStart/PreToolUse/PostToolUse/Stop 全部失效）。移除该冗余字段，回归自动加载。`commands` / `skills` 字段保留（指向 standard 目录，未触发重复）。`.codex-plugin/plugin.json` 不受影响（Codex 加载机制不同），保留其 `hooks` 声明。
+- **教训复刻 v1.0.0**：本地 `install.sh` 不暴露此问题，必须按 `CLAUDE.md` 步骤 3.2 走真实 `claude plugin update` 才能发现。
+
+### Migration
+
+- v1.1.0 用户直接升级：`claude plugin update wk-im-dev@yuxilong-agents`（Claude）或重跑 bootstrap（Codex）。v1.1.0 tag 保留但**不推荐使用**。
+
+---
+
 ## v1.1.0 — 2026-06-15
 
 主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化 + 模板化生成器 + 配置目录/shell rc 兼容**。

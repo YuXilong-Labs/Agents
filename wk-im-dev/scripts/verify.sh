@@ -180,7 +180,12 @@ check_json "$PLUGIN_ROOT/hooks/hooks.json"
 
 require_contains "$PLUGIN_ROOT/.codex-plugin/plugin.json" '"name": "wk-im-dev"'
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"skills"'
-require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"hooks"'
+# hooks：Codex 侧需显式声明；Claude 侧 standard hooks/hooks.json 自动加载，
+# manifest 再声明会触发 "Duplicate hooks file detected"（v1.1.1 hotfix），故 Claude 侧禁止声明。
+require_contains "$PLUGIN_ROOT/.codex-plugin/plugin.json" '"hooks"'
+if grep -Fq '"hooks"' "$PLUGIN_ROOT/.claude-plugin/plugin.json"; then
+  add_failure ".claude-plugin/plugin.json 不得声明 \"hooks\"（standard hooks/hooks.json 自动加载，重复声明会导致加载失败）"
+fi
 require_contains "$PLUGIN_ROOT/hooks/hooks.json" "SessionStart"
 require_contains "$PLUGIN_ROOT/hooks/session-init.sh" "is_im_repo"
 # 组件清单驱动（Phase 4）

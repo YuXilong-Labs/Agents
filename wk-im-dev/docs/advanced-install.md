@@ -39,13 +39,13 @@ curl -fsSL <url>/bootstrap.sh | bash -s -- [options]
   --with-codegraph     安装时一并安装 + 索引 CodeGraph
 ```
 
-**版本固定建议**：CI/Release 流程打 tag 后，团队成员安装时显式 `--ref v1.1.0`（当前最新 tag），避免 `main` 引入未稳定提交时全员遭殃。
+**版本固定建议**：CI/Release 流程打 tag 后，团队成员安装时显式 `--ref v1.1.1`（当前最新 tag），避免 `main` 引入未稳定提交时全员遭殃。
 
 **内网镜像**：把 Agents 仓库 mirror 到内网（如 `git@gitlab.intra/.../Agents.git`），安装时：
 
 ```bash
 export WK_IM_DEV_REPO_URL="https://gitlab.intra/team/Agents.git"
-export WK_IM_DEV_REF="v1.1.0"
+export WK_IM_DEV_REF="v1.1.1"
 curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-im-dev/scripts/bootstrap.sh | bash -s -- --target .
 ```
 
