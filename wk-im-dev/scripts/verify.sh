@@ -116,6 +116,8 @@ required_files=(
   "$PLUGIN_ROOT/.claude-plugin/plugin.json"
   "$PLUGIN_ROOT/.codex-plugin/plugin.json"
   "$PLUGIN_ROOT/commands/wk-im-dev.md"
+  "$PLUGIN_ROOT/components.conf"
+  "$PLUGIN_ROOT/bin/wk-im-components.sh"
   "$PLUGIN_ROOT/hooks/session-init.sh"
   "$PLUGIN_ROOT/README.md"
   "$PLUGIN_ROOT/agents/wk-im-dev.md"
@@ -181,6 +183,11 @@ require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"skills"'
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"hooks"'
 require_contains "$PLUGIN_ROOT/hooks/hooks.json" "SessionStart"
 require_contains "$PLUGIN_ROOT/hooks/session-init.sh" "is_im_repo"
+# 组件清单驱动（Phase 4）
+require_contains "$PLUGIN_ROOT/components.conf" "BTIMService"
+require_contains "$PLUGIN_ROOT/components.conf" "BTIMModule"
+require_contains "$PLUGIN_ROOT/components.conf" "forbid_import"
+require_contains "$PLUGIN_ROOT/bin/wk-im-components.sh" "wk_component_names"
 
 if [ "${#failures[@]}" -gt 0 ]; then
   echo "wk-im-dev verification failed:" >&2

@@ -8,7 +8,19 @@
 
 ## Unreleased
 
-主题：**Codex plugin-native 兼容 + 行为契约单一事实源**。
+主题：**Codex plugin-native 兼容 + 行为契约单一事实源 + 组件数泛化**。
+
+### Added (组件数泛化 / Phase 4)
+
+- **运行时组件清单** `components.conf`（TAB 分隔，纯 bash 可解析）：组件名、角色、依赖规则（`forbid_import`）、隐私词、只读路径的唯一事实源。
+- **`bin/wk-im-components.sh`**：清单定位与解析库，被 detect-env / guard / scope-check / init 共用，hook 上下文不依赖 jq。
+- `wk-im-init.sh` 新增 `--component <Name>=<path>`（可重复），`--service` / `--module` 保留为 IM 实例的 back-compat 别名。
+
+### Changed (组件数泛化 / Phase 4)
+
+- **从「恰好 service+module 两个标量」泛化为「1..N 个组件」**：`detect-env` / `guard` / `scope-check` / `init` 不再硬编码 `BTIMService`/`BTIMModule`，改为读 `components.conf` 遍历。
+- **`workspace.json` schema v2**：`service`/`module` 标量 → `components: { <Name>: <path> }` 映射；保留 `hostApps`。init 自动把 v1 旧格式迁移到 v2，hostApps 增量合并不丢。
+- `detect-env` 输出从 `service_path`/`module_path` 改为 `components` 映射；env 值 `btim-service`/`btim-module` 归并为通用 `component`。
 
 ### Added
 

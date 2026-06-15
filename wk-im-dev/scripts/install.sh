@@ -190,7 +190,10 @@ install_helper_scripts() {
     cp "$PLUGIN_ROOT/bin/wk-im-dev" "$bin_dir/wk-im-dev"
     chmod +x "$bin_dir/wk-im-dev"
   fi
+  # Runtime component manifest (read by detect-env/guard/scope-check/init).
+  cp "$PLUGIN_ROOT/components.conf" "$HOME/.wk-im-dev/components.conf"
   echo "  OK helper scripts installed: $bin_dir"
+  echo "  OK component manifest installed: $HOME/.wk-im-dev/components.conf"
 }
 
 update_shell_rc() {
@@ -298,6 +301,8 @@ validate_source_layout() {
   [ -d "$PLUGIN_ROOT/bin" ] || fail "Missing $PLUGIN_ROOT/bin"
   [ -f "$PLUGIN_ROOT/bin/wk-im-dev" ] || fail "Missing $PLUGIN_ROOT/bin/wk-im-dev"
   [ -f "$PLUGIN_ROOT/agents/wk-im-dev.md" ] || fail "Missing $PLUGIN_ROOT/agents/wk-im-dev.md"
+  [ -f "$PLUGIN_ROOT/components.conf" ] || fail "Missing $PLUGIN_ROOT/components.conf"
+  [ -f "$PLUGIN_ROOT/bin/wk-im-components.sh" ] || fail "Missing $PLUGIN_ROOT/bin/wk-im-components.sh"
   [ -f "$PLUGIN_ROOT/.claude-plugin/plugin.json" ] || fail "Missing Claude plugin manifest"
   require_marked_template "$CODEX_DIR/AGENTS.md"
 }

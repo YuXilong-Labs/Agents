@@ -141,7 +141,7 @@ CodeGraph 索引 Swift ↔ ObjC bridging、`@objc` selector、动态分发——
 会话开始时（首次回复用户之前）静默执行一次：
 
 1. 检查 `~/.wk-im-dev/workspace.json` 是否存在
-   - **存在** → 读取 service/module/hostApps 路径，载入对应组件的 `docs/agent-knowledge/index.md`，进入正常工作流
+   - **存在** → 读取 `components` 映射（BTIMService/BTIMModule）与 `hostApps` 路径，载入对应组件的 `docs/agent-knowledge/index.md`，进入正常工作流
    - **不存在** → 用如下友好提示**先告诉用户**，再继续回答其本次请求：
      > 还没检测到 wk-im-dev 工作区配置。建议先执行 `/wk-im-dev:setup`（或 `$wk-im-dev:setup`）初始化，否则我每次都需要重新探索仓库。
 2. 同时检查当前 pwd 是否在 BTIMService/BTIMModule/HostApp 中（参考 `wk-im-detect-env.sh` 的判定逻辑）。如果在 IM 仓库中但 workspace.json 缺失，更要提示初始化。
