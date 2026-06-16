@@ -1,5 +1,5 @@
 ---
-description: 用于回答 VideoEditCore 或 VideoEditUI 的架构、编辑/导出流程、API 契约、状态机或实现细节问题。触发词：架构, 怎么设计, 状态机, 编辑流程, 导出流程, 渲染流程, API, 如何实现, how does, explain, 依赖关系, 能不能, 为什么.
+description: 用于回答 BTVideoRecorderKit 或 BTVideoRecorderUIKit 的架构、编辑/导出流程、API 契约、状态机或实现细节问题。触发词：架构, 怎么设计, 状态机, 编辑流程, 导出流程, 渲染流程, API, 如何实现, how does, explain, 依赖关系, 能不能, 为什么.
 ---
 
 # 知识查询：$ARGUMENTS

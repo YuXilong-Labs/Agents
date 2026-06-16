@@ -13,7 +13,7 @@
 
 ## 0. 一句话定位
 
-`wk-video-dev` = **一个跨 Codex / Claude Code 双运行时的 iOS 视频编辑组件开发 Agent**。它把"开发者人格 + 项目知识库 + 跨 Pod 边界约束 + 多 subagent 分工 + 工程化校验"打包成一个可一键安装、可在任意 VideoEditCore / VideoEditUI / HostApp 仓库激活的实体。
+`wk-video-dev` = **一个跨 Codex / Claude Code 双运行时的 iOS 视频录制组件开发 Agent**。它把"开发者人格 + 项目知识库 + 跨 Pod 边界约束 + 多 subagent 分工 + 工程化校验"打包成一个可一键安装、可在任意 BTVideoRecorderKit / BTVideoRecorderUIKit / HostApp 仓库激活的实体。
 
 ---
 
@@ -70,8 +70,8 @@ graph TB
   end
 
   subgraph Repos["目标仓库"]
-    SVC[(VideoEditCore/)]
-    MOD[(VideoEditUI/)]
+    SVC[(BTVideoRecorderKit/)]
+    MOD[(BTVideoRecorderUIKit/)]
     APP[(HostApp/)]
   end
 
@@ -131,7 +131,7 @@ graph TB
 **关键含义**：
 
 - 用户只看到一个命令 `wk-video-dev`，launcher 在背后选 runtime。
-- 主 agent + subagent + skill 三层路由共同实现"一个视频编辑任务怎么拆解"。
+- 主 agent + subagent + skill 三层路由共同实现"一个视频录制任务怎么拆解"。
 - 知识库 (`docs/agent-knowledge/`)、组件路径配置 (`~/.wk-video-dev/workspace.json`)、AST 索引 (`.codegraph/`) 是三类长期持久化的「外部记忆」。
 - Hooks 在每次文件写入和会话结束时静默执行检查，是非 LLM 路径的强约束。
 
@@ -184,8 +184,8 @@ flowchart TD
 
 **判断 `looks_like_im_repo` 的规则**：
 
-- `<target>/VideoEditCore.podspec` **或** `<target>/VideoEditUI.podspec` 存在 → 是
-- `<target>/Podfile` 同时引用 `VideoEditCore` 和 `VideoEditUI` → 是
+- `<target>/BTVideoRecorderKit.podspec` **或** `<target>/BTVideoRecorderUIKit.podspec` 存在 → 是
+- `<target>/Podfile` 同时引用 `BTVideoRecorderKit` 和 `BTVideoRecorderUIKit` → 是
 - 否则 → 否（install 完成但跳过 init，避免污染临时目录）
 
 ---
@@ -266,12 +266,12 @@ sequenceDiagram
   participant V as wk-video-verifier
   participant KB as docs/agent-knowledge/
   participant CG as CodeGraph MCP
-  participant SRC as 源码 (VideoEditCore/Module)
+  participant SRC as 源码 (BTVideoRecorderKit/Module)
   participant HK as Hooks
 
-  U->>MA: 帮我加一个画中画转场弹窗
+  U->>MA: 帮我加一个实时滤镜美颜弹窗
   MA->>KB: 读 index.md / common-flows.md
-  MA->>E: 派发探索(并行 VideoEditCore+VideoEditUI)
+  MA->>E: 派发探索(并行 BTVideoRecorderKit+BTVideoRecorderUIKit)
   E->>CG: codegraph_search "RecallMessage"
   E->>SRC: 读相关文件片段
   E-->>MA: 返回入口/调用链/相关 contracts
@@ -324,13 +324,13 @@ graph LR
   E["Edit/Write 工具"] --> H1
   H1 -->|路径含 Pods/ThirdPartySDK| BLOCK[阻断 + 报错]
   H1 -->|通过| H2
-  H2 -->|向上查 *.podspec| FOUND{视频编辑组件仓库?}
+  H2 -->|向上查 *.podspec| FOUND{视频录制组件仓库?}
   FOUND -- 否 --> NOP1[5ms 内退出 0]
   FOUND -- 是 --> RUN[触发 kb-scan 更新 generated block]
 
   SESS[会话结束] --> H3
   H3 -->|detect-env 返回 unknown| NOP2[快速退出 0]
-  H3 -->|视频编辑组件仓库| CHECK[检查隐私关键词/契约一致性]
+  H3 -->|视频录制组件仓库| CHECK[检查隐私关键词/契约一致性]
 
   style BLOCK fill:#ef9a9a,stroke:#b71c1c
   style NOP1 fill:#c8e6c9
@@ -345,7 +345,7 @@ graph LR
 
 ```mermaid
 graph TB
-  subgraph Repo["组件仓库 (VideoEditCore 或 VideoEditUI)"]
+  subgraph Repo["组件仓库 (BTVideoRecorderKit 或 BTVideoRecorderUIKit)"]
     subgraph KB["docs/agent-knowledge/"]
       IDX[index.md]
       LOG[log.md]
@@ -359,7 +359,7 @@ graph TB
         T4[chat-input.md]
       end
     end
-    PODSPEC[VideoEditCore.podspec / VideoEditUI.podspec]
+    PODSPEC[BTVideoRecorderKit.podspec / BTVideoRecorderUIKit.podspec]
     SRC[Classes/, Sources/]
   end
 
@@ -396,8 +396,8 @@ graph TB
 
 ```mermaid
 graph LR
-  APP[HostApp] --> MOD[VideoEditUI]
-  MOD --> SVC[VideoEditCore]
+  APP[HostApp] --> MOD[BTVideoRecorderUIKit]
+  MOD --> SVC[BTVideoRecorderKit]
   SVC --> SDK[VideoEngineSDK]
 
   MOD -. ❌ 禁止 .-> SDK
@@ -412,8 +412,8 @@ graph LR
   end
 
   subgraph 作用域["作用域保护"]
-    R1[默认只改 VideoEditCore/]
-    R2[默认只改 VideoEditUI/]
+    R1[默认只改 BTVideoRecorderKit/]
+    R2[默认只改 BTVideoRecorderUIKit/]
     R3[禁止改 Pods/]
     R4[禁止改 vendor SDK]
   end

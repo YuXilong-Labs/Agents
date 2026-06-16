@@ -17,7 +17,7 @@ Options:
   --no-shell-rc                   不向 ~/.zshrc / ~/.bashrc 追加 PATH
 ```
 
-默认行为：当 `--target` 看起来是 VideoEditCore/VideoEditUI/HostApp 时，安装末尾会自动调用 `wk-video-init.sh --root <target> --quiet` 完成知识库初始化。临时目录不会触发。
+默认行为：当 `--target` 看起来是 BTVideoRecorderKit/BTVideoRecorderUIKit/HostApp 时，安装末尾会自动调用 `wk-video-init.sh --root <target> --quiet` 完成知识库初始化。临时目录不会触发。
 
 ## 2. `scripts/bootstrap.sh` 全部 flag
 
@@ -54,10 +54,10 @@ curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-video-dev/scripts/boot
 ```text
 ~/.wk-video-dev/bin/wk-video-init.sh [options]
 
-  --root <repo>           手动指定视频编辑组件仓库或 HostApp（默认自动定位）
+  --root <repo>           手动指定视频录制组件仓库或 HostApp（默认自动定位）
   --component <Name>=<path>  手动指定某组件路径（可重复，组件名取自 components.conf）
-  --service <path>        VideoEditCore 路径（模板实例的 --component VideoEditCore= 别名）
-  --module <path>         VideoEditUI 路径（模板实例的 --component VideoEditUI= 别名）
+  --service <path>        BTVideoRecorderKit 路径（模板实例的 --component BTVideoRecorderKit= 别名）
+  --module <path>         BTVideoRecorderUIKit 路径（模板实例的 --component BTVideoRecorderUIKit= 别名）
   --host-app <path>       添加 HostApp（可重复多次）
   --with-codegraph        安装并索引 CodeGraph（默认不装）
   --quiet                 静默输出
@@ -68,7 +68,7 @@ curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-video-dev/scripts/boot
 自动定位顺序：
 
 1. 显式 `--root` 优先。
-2. 从 pwd 向上找最近的 `VideoEditCore.podspec` / `VideoEditUI.podspec`，或同时引用两个 pod 的 `Podfile`。
+2. 从 pwd 向上找最近的 `BTVideoRecorderKit.podspec` / `BTVideoRecorderUIKit.podspec`，或同时引用两个 pod 的 `Podfile`。
 3. 仍未命中时，读 `~/.wk-video-dev/workspace.json`，按 hostApps → service → module 顺序选第一个仍存在的目录。
 4. 都不行就用 pwd（`wk-video-detect-env.sh` 会返回 `unknown`，提示用户手动指定）。
 
@@ -127,7 +127,7 @@ claude plugin marketplace remove YuXilong-Labs/Agents
 
 ```bash
 # 不走 curl 时直接调用本地脚本
-bash /path/to/Agents/wk-video-dev/scripts/install.sh --runtime codex --target /path/to/VideoEditCore
+bash /path/to/Agents/wk-video-dev/scripts/install.sh --runtime codex --target /path/to/BTVideoRecorderKit
 
 # Claude Code 不安装到全局
 claude --plugin-dir /path/to/Agents/wk-video-dev

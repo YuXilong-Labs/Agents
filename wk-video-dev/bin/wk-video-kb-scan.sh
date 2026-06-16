@@ -35,10 +35,10 @@ TOPICS_DIR="$KB_DIR/topics"
 "$SCRIPT_DIR/wk-video-kb-bootstrap.sh" --root "$ROOT" --quiet
 
 detect_component() {
-  if [ -f "$ROOT/VideoEditCore.podspec" ]; then
-    echo "VideoEditCore"
-  elif [ -f "$ROOT/VideoEditUI.podspec" ]; then
-    echo "VideoEditUI"
+  if [ -f "$ROOT/BTVideoRecorderKit.podspec" ]; then
+    echo "BTVideoRecorderKit"
+  elif [ -f "$ROOT/BTVideoRecorderUIKit.podspec" ]; then
+    echo "BTVideoRecorderUIKit"
   else
     local spec
     spec=$(find "$ROOT" -maxdepth 1 -name "*.podspec" -print -quit)
@@ -61,10 +61,10 @@ relpath() {
 
 source_root_for_component() {
   local component="$1"
-  if [ "$component" = "VideoEditCore" ]; then
-    echo "$ROOT/VideoEditCore/Classes"
-  elif [ "$component" = "VideoEditUI" ]; then
-    echo "$ROOT/VideoEditUI/Classes"
+  if [ "$component" = "BTVideoRecorderKit" ]; then
+    echo "$ROOT/BTVideoRecorderKit/Classes"
+  elif [ "$component" = "BTVideoRecorderUIKit" ]; then
+    echo "$ROOT/BTVideoRecorderUIKit/Classes"
   else
     find "$ROOT" -maxdepth 3 -type d -name Classes -print -quit
   fi
@@ -132,7 +132,7 @@ write_generated_page() {
       echo ""
       echo "## Source Refs"
       echo ""
-      echo "- Add relative source paths that support curated notes, for example \`VideoEditCore/Classes/Base/VideoEditCoreTool.h\`."
+      echo "- Add relative source paths that support curated notes, for example \`BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h\`."
     } > "$tmp"
   fi
 
@@ -184,14 +184,14 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
   echo ""
   echo "## Fast Routing"
   echo ""
-  if [ "$component" = "VideoEditCore" ]; then
-    echo "- Message and session backend behavior: start at \`VideoEditCoreTool\`, then \`VideoEditCoreProtocol\` and the LibService/RYService adapters."
-    echo "- Message models and constants: start under \`VideoEditCore/Classes/Common/\`."
-    echo "- Message ID mapping: start under \`VideoEditCore/Classes/MsgIdMapDB/\`."
-  elif [ "$component" = "VideoEditUI" ]; then
-    echo "- Navigation and external calls: start under \`VideoEditUI/Classes/Router/\`."
+  if [ "$component" = "BTVideoRecorderKit" ]; then
+    echo "- Message and session backend behavior: start at \`BTVideoRecorderKitTool\`, then \`BTVideoRecorderKitProtocol\` and the LibService/RYService adapters."
+    echo "- Message models and constants: start under \`BTVideoRecorderKit/Classes/Common/\`."
+    echo "- Message ID mapping: start under \`BTVideoRecorderKit/Classes/MsgIdMapDB/\`."
+  elif [ "$component" = "BTVideoRecorderUIKit" ]; then
+    echo "- Navigation and external calls: start under \`BTVideoRecorderUIKit/Classes/Router/\`."
     echo "- Chat page behavior: start under \`IMConversationDetail/\`."
-    echo "- Shared module utilities and draft logic: start at \`VideoEditUITool\`."
+    echo "- Shared module utilities and draft logic: start at \`BTVideoRecorderUIKitTool\`."
   else
     echo "- Component type is unknown. Use source-map.md and podspecs to identify entry points."
   fi
@@ -261,17 +261,17 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
   echo "## Public Surface Inputs"
   echo ""
   [ -n "$podspec" ] && echo "- Podspec: \`$(relpath "$podspec")\`"
-  if [ "$component" = "VideoEditCore" ]; then
-    echo "- Service facade: \`VideoEditCore/Classes/Base/VideoEditCoreTool.h\`"
-    echo "- Core protocol: \`VideoEditCore/Classes/Common/VideoEditCoreProtocol.h\`"
-    echo "- Message ID map protocol: \`VideoEditCore/Classes/Common/BTIMMsgIdMapProtocol.h\`"
+  if [ "$component" = "BTVideoRecorderKit" ]; then
+    echo "- Service facade: \`BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h\`"
+    echo "- Core protocol: \`BTVideoRecorderKit/Classes/Common/BTVideoRecorderKitProtocol.h\`"
+    echo "- Message ID map protocol: \`BTVideoRecorderKit/Classes/Common/BTIMMsgIdMapProtocol.h\`"
     echo ""
     echo "## Public Header Method Seeds"
     echo ""
     for f in \
-      "$ROOT/VideoEditCore/Classes/Base/VideoEditCoreTool.h" \
-      "$ROOT/VideoEditCore/Classes/Common/VideoEditCoreProtocol.h" \
-      "$ROOT/VideoEditCore/Classes/Common/BTIMMsgIdMapProtocol.h"; do
+      "$ROOT/BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h" \
+      "$ROOT/BTVideoRecorderKit/Classes/Common/BTVideoRecorderKitProtocol.h" \
+      "$ROOT/BTVideoRecorderKit/Classes/Common/BTIMMsgIdMapProtocol.h"; do
       if [ -f "$f" ]; then
         echo "### \`$(relpath "$f")\`"
         echo ""
@@ -279,15 +279,15 @@ trap 'rm -f "$index_gen" "$source_map_gen" "$workflows_gen" "$contracts_gen" "$e
         echo ""
       fi
     done
-  elif [ "$component" = "VideoEditUI" ]; then
-    echo "- Router targets under \`VideoEditUI/Classes/Router/\`"
-    echo "- Module utility facade: \`VideoEditUI/Classes/Tool/VideoEditUITool.h\`"
-    echo "- Chat input surface: \`VideoEditUI/Classes/IMConversationDetail/Common/ChatInput/\`"
+  elif [ "$component" = "BTVideoRecorderUIKit" ]; then
+    echo "- Router targets under \`BTVideoRecorderUIKit/Classes/Router/\`"
+    echo "- Module utility facade: \`BTVideoRecorderUIKit/Classes/Tool/BTVideoRecorderUIKitTool.h\`"
+    echo "- Chat input surface: \`BTVideoRecorderUIKit/Classes/IMConversationDetail/Common/ChatInput/\`"
     echo ""
     echo "## Router Method Seeds"
     echo ""
-    if [ -d "$ROOT/VideoEditUI/Classes/Router" ]; then
-      find "$ROOT/VideoEditUI/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
+    if [ -d "$ROOT/BTVideoRecorderUIKit/Classes/Router" ]; then
+      find "$ROOT/BTVideoRecorderUIKit/Classes/Router" -type f \( -name '*.h' -o -name '*.m' \) 2>/dev/null | sort | while IFS= read -r f; do
         echo "### \`$(relpath "$f")\`"
         echo ""
         rg -n "^-|^\\+" "$f" | sed 's/^/- `/' | sed 's/$/`/' || true
@@ -330,29 +330,29 @@ extract_swift_symbols() {
   echo ""
   echo "## High-Signal Files"
   echo ""
-  if [ "$component" = "VideoEditCore" ]; then
+  if [ "$component" = "BTVideoRecorderKit" ]; then
     for pattern in \
-      "VideoEditCore/Classes/Base/VideoEditCoreTool.h" \
-      "VideoEditCore/Classes/Base/VideoEditCoreTool.m" \
-      "VideoEditCore/Classes/Common/VideoEditCoreProtocol.h" \
-      "VideoEditCore/Classes/Common/BTIMMsgIdMapProtocol.h" \
-      "VideoEditCore/Classes/Common/CommonModel/BTChatMessageModel.h" \
-      "VideoEditCore/Classes/Common/Tool/BTIMMessageConst.h" \
-      "VideoEditCore/Classes/Services/LibService/BTIMLibService.h" \
-      "VideoEditCore/Classes/Services/RYService/BTRYService.h"; do
+      "BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h" \
+      "BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.m" \
+      "BTVideoRecorderKit/Classes/Common/BTVideoRecorderKitProtocol.h" \
+      "BTVideoRecorderKit/Classes/Common/BTIMMsgIdMapProtocol.h" \
+      "BTVideoRecorderKit/Classes/Common/CommonModel/BTChatMessageModel.h" \
+      "BTVideoRecorderKit/Classes/Common/Tool/BTIMMessageConst.h" \
+      "BTVideoRecorderKit/Classes/Services/LibService/BTIMLibService.h" \
+      "BTVideoRecorderKit/Classes/Services/RYService/BTRYService.h"; do
       [ -f "$ROOT/$pattern" ] && echo "- \`$pattern\`"
     done
-  elif [ "$component" = "VideoEditUI" ]; then
+  elif [ "$component" = "BTVideoRecorderUIKit" ]; then
     for pattern in \
-      "VideoEditUI/Classes/Router/Target_BTMessage.h" \
-      "VideoEditUI/Classes/Router/Target_BTMessage.m" \
-      "VideoEditUI/Classes/Router/Target_BTGroupMessage.m" \
-      "VideoEditUI/Classes/Tool/VideoEditUITool.h" \
-      "VideoEditUI/Classes/Tool/VideoEditUITool.m" \
-      "VideoEditUI/Classes/IMConversationDetail/Common/ChatInput/VideoEditUIChatInputView.h" \
-      "VideoEditUI/Classes/IMConversationDetail/Common/ChatInput/VideoEditUIChatInputView.m" \
-      "VideoEditUI/Classes/IMConversationDetail/IMConversationPrivateDetail/Controller/VideoEditUIPrivateChatViewController.h" \
-      "VideoEditUI/Classes/IMConversationDetail/IMConversationGroupDetail/Controller/VideoEditUIGroupChatViewController.h"; do
+      "BTVideoRecorderUIKit/Classes/Router/Target_BTMessage.h" \
+      "BTVideoRecorderUIKit/Classes/Router/Target_BTMessage.m" \
+      "BTVideoRecorderUIKit/Classes/Router/Target_BTGroupMessage.m" \
+      "BTVideoRecorderUIKit/Classes/Tool/BTVideoRecorderUIKitTool.h" \
+      "BTVideoRecorderUIKit/Classes/Tool/BTVideoRecorderUIKitTool.m" \
+      "BTVideoRecorderUIKit/Classes/IMConversationDetail/Common/ChatInput/BTVideoRecorderUIKitChatInputView.h" \
+      "BTVideoRecorderUIKit/Classes/IMConversationDetail/Common/ChatInput/BTVideoRecorderUIKitChatInputView.m" \
+      "BTVideoRecorderUIKit/Classes/IMConversationDetail/IMConversationPrivateDetail/Controller/BTVideoRecorderUIKitPrivateChatViewController.h" \
+      "BTVideoRecorderUIKit/Classes/IMConversationDetail/IMConversationGroupDetail/Controller/BTVideoRecorderUIKitGroupChatViewController.h"; do
       [ -f "$ROOT/$pattern" ] && echo "- \`$pattern\`"
     done
   fi
@@ -374,11 +374,11 @@ extract_swift_symbols() {
   echo "> Caller relationships: query via codegraph (\`codegraph_callers\`, \`codegraph_impact\`)."
   echo "> See \`docs/codegraph-integration.md\` for usage."
   echo ""
-  if [ "$component" = "VideoEditCore" ]; then
+  if [ "$component" = "BTVideoRecorderKit" ]; then
     for hdr in \
-      "VideoEditCore/Classes/Base/VideoEditCoreTool.h" \
-      "VideoEditCore/Classes/Common/VideoEditCoreProtocol.h" \
-      "VideoEditCore/Classes/Common/BTIMMsgIdMapProtocol.h"; do
+      "BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h" \
+      "BTVideoRecorderKit/Classes/Common/BTVideoRecorderKitProtocol.h" \
+      "BTVideoRecorderKit/Classes/Common/BTIMMsgIdMapProtocol.h"; do
       if [ -f "$ROOT/$hdr" ]; then
         echo "### \`$hdr\`"
         echo ""
@@ -386,10 +386,10 @@ extract_swift_symbols() {
         echo ""
       fi
     done
-  elif [ "$component" = "VideoEditUI" ]; then
+  elif [ "$component" = "BTVideoRecorderUIKit" ]; then
     for hdr in \
-      "VideoEditUI/Classes/Tool/VideoEditUITool.h" \
-      "VideoEditUI/Classes/Router/Target_BTMessage.h"; do
+      "BTVideoRecorderUIKit/Classes/Tool/BTVideoRecorderUIKitTool.h" \
+      "BTVideoRecorderUIKit/Classes/Router/Target_BTMessage.h"; do
       if [ -f "$ROOT/$hdr" ]; then
         echo "### \`$hdr\`"
         echo ""
@@ -433,12 +433,12 @@ gen_keyword_topic() {
   } > "$out"
 }
 
-if [ "$component" = "VideoEditCore" ]; then
+if [ "$component" = "BTVideoRecorderKit" ]; then
   gen_keyword_topic "$topic1_gen" "Unread Count" "unread|UnreadCount"
   write_generated_page "$TOPICS_DIR/unread-count.md" "Unread Count" "topic" "$topic1_gen"
   gen_keyword_topic "$topic2_gen" "Session Management" "session|Session"
   write_generated_page "$TOPICS_DIR/session-management.md" "Session Management" "topic" "$topic2_gen"
-elif [ "$component" = "VideoEditUI" ]; then
+elif [ "$component" = "BTVideoRecorderUIKit" ]; then
   gen_keyword_topic "$topic1_gen" "Chat Input" "ChatInput|InputView"
   write_generated_page "$TOPICS_DIR/chat-input.md" "Chat Input" "topic" "$topic1_gen"
   gen_keyword_topic "$topic2_gen" "Conversation List" "ConversationList|SessionList"

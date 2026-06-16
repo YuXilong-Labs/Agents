@@ -1,6 +1,6 @@
 {
   "name": "wk-video-dev",
-  "description": "iOS 视频编辑组件开发 Agent（VideoEditCore + VideoEditUI）。功能开发、Bug 修复、代码审查、架构查询。",
+  "description": "iOS 视频录制组件开发 Agent（BTVideoRecorderKit + BTVideoRecorderUIKit）。功能开发、Bug 修复、代码审查、架构查询。",
   "version": "1.0.0",
   "author": {
     "name": "YuXilong-Labs"

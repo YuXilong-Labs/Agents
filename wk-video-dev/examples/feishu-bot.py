@@ -9,7 +9,7 @@ wk-video-dev plugin 提供主 agent 身份、skills、hooks 和约束，
   pip install claude-agent-sdk lark-oapi
 
 使用:
-  PLUGIN_DIR=/path/to/wk-video-dev PROJECT_DIR=/path/to/VideoEditCore python feishu-bot.py
+  PLUGIN_DIR=/path/to/wk-video-dev PROJECT_DIR=/path/to/BTVideoRecorderKit python feishu-bot.py
 """
 
 import asyncio

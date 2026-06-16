@@ -6,22 +6,22 @@
 
 ```
 HostApp
-  └── VideoEditUI (UI layer)
-        └── VideoEditCore (Core layer)
+  └── BTVideoRecorderUIKit (UI layer)
+        └── BTVideoRecorderKit (Core layer)
               └── VideoEngineSDK (SDK adapter)
 ```
 
-- VideoEditCore MUST NOT import VideoEditUI
-- VideoEditUI MUST NOT import VideoEngineSDK
-- All VideoEngineSDK access MUST go through VideoEditCore adapter layer only
+- BTVideoRecorderKit MUST NOT import BTVideoRecorderUIKit
+- BTVideoRecorderUIKit MUST NOT import VideoEngineSDK
+- All VideoEngineSDK access MUST go through BTVideoRecorderKit adapter layer only
 
-Rationale: VideoEditCore is reused across products; reverse dependency would couple the core video editing engine to specific UI shells. VideoEngineSDK swap requires adapter-layer isolation.
+Rationale: BTVideoRecorderKit is reused across products; reverse dependency would couple the core video recording engine to specific UI shells. VideoEngineSDK swap requires adapter-layer isolation.
 
 ## Scope (HARD)
 
 Only modify files inside:
-- `VideoEditCore/` (or the path resolved by `wk-video-detect-env.sh`)
-- `VideoEditUI/` (or the path resolved by `wk-video-detect-env.sh`)
+- `BTVideoRecorderKit/` (or the path resolved by `wk-video-detect-env.sh`)
+- `BTVideoRecorderUIKit/` (or the path resolved by `wk-video-detect-env.sh`)
 
 Never modify:
 - `Pods/` — downloaded copies, changes will be lost on `pod install`
@@ -41,9 +41,9 @@ Rationale: component payloads may contain user-generated content. App Store priv
 
 ## Public API Contract (HARD)
 
-- Cross-pod APIs are exposed through Objective-C public headers exported by VideoEditCore
+- Cross-pod APIs are exposed through Objective-C public headers exported by BTVideoRecorderKit
 - Any new or changed public API MUST update `contracts.md`
 - API parameters MUST use internal model types, never VideoEngineSDK types
 - Callbacks MUST be dispatched on main thread
 
-Rationale: callers in VideoEditUI and HostApp depend on stable surface and main-thread dispatch for UIKit safety.
+Rationale: callers in BTVideoRecorderUIKit and HostApp depend on stable surface and main-thread dispatch for UIKit safety.

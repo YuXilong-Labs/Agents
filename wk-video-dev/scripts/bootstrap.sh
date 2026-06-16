@@ -8,7 +8,7 @@
 #
 # 用法：
 #   curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-video-dev/scripts/bootstrap.sh \
-#     | bash -s -- --target /path/to/VideoEditCore
+#     | bash -s -- --target /path/to/BTVideoRecorderKit
 #
 # 可选参数：
 #   --target <path>    要初始化的组件仓库或 HostApp 目录（默认 pwd）

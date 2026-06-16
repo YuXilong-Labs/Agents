@@ -1,6 +1,6 @@
 # wk-video-dev 飞书 Bot 部署指南
 
-> 适用于：把 wk-video-dev 作为飞书机器人接入团队群，群里 @ 机器人即可触发视频编辑组件相关问答 / 代码定位 / 简单 review。
+> 适用于：把 wk-video-dev 作为飞书机器人接入团队群，群里 @ 机器人即可触发视频录制组件相关问答 / 代码定位 / 简单 review。
 > 这是**示例集成**，不是 wk-video-dev 的核心能力 — 维护成本归调用方。
 
 ---
@@ -8,7 +8,7 @@
 ## 适用场景
 
 - 团队群里随时问"导出流程怎么走"，机器人答出关键文件 + 调用链
-- PR 描述里贴 diff 摘要，机器人按视频编辑边界规则做轻量 review
+- PR 描述里贴 diff 摘要，机器人按视频录制边界规则做轻量 review
 - 新人入职在群里直接问，不必每次自己装 wk-video-dev
 
 不适用：
@@ -47,7 +47,7 @@ pip install claude-agent-sdk lark-oapi
 export FEISHU_APP_ID="cli_xxx"
 export FEISHU_APP_SECRET="xxx"
 export PLUGIN_DIR="/path/to/Agents/wk-video-dev"
-export PROJECT_DIR="/path/to/VideoEditCore"   # 机器人默认工作目录
+export PROJECT_DIR="/path/to/BTVideoRecorderKit"   # 机器人默认工作目录
 python examples/feishu-bot.py
 ```
 
@@ -61,7 +61,7 @@ python examples/feishu-bot.py
 |---|---|
 | 本机 / 跳板机长跑 | `nohup python feishu-bot.py &` 或 systemd unit；适合小团队 PoC |
 | Docker | 把 wk-video-dev 仓库 + `PROJECT_DIR` 挂进容器；注意 plugin 路径要对 |
-| K8s + Helm | 生产团队推荐；用 Secret 管 `FEISHU_APP_*`，PVC 挂 VideoEditCore/VideoEditUI 源码 |
+| K8s + Helm | 生产团队推荐；用 Secret 管 `FEISHU_APP_*`，PVC 挂 BTVideoRecorderKit/BTVideoRecorderUIKit 源码 |
 
 ---
 

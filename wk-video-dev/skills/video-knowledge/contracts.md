@@ -1,6 +1,6 @@
 # Cross-Pod API Contracts
 
-Public APIs are exposed through Objective-C headers exported by the VideoEditCore pod, especially `VideoEditCoreTool.h`, `VideoEditCoreProtocol.h`, and router-facing model headers.
+Public APIs are exposed through Objective-C headers exported by the BTVideoRecorderKit pod, especially `BTVideoRecorderKitTool.h`, `BTVideoRecorderKitProtocol.h`, and router-facing model headers.
 
 ## Message APIs
 
@@ -19,7 +19,7 @@ Public APIs are exposed through Objective-C headers exported by the VideoEditCor
 | `getMessages(conversationId:offset:limit:)` | Paginated message history |
 | `getUnreadCount(conversationId:)` | Unread message count |
 
-## Event Callbacks (VideoEditUI implements)
+## Event Callbacks (BTVideoRecorderUIKit implements)
 
 | Callback | Description |
 |----------|-------------|

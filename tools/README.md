@@ -19,13 +19,13 @@ dogfood 验证：`--manifest manifests/im.json` 重生成的结果与现有 `wk-
 
 ```bash
 # 生成进仓库（推荐）：--out 直接位于仓库根下 → 自动注册到 .claude-plugin/marketplace.json
-tools/create-wk-agent.sh --manifest manifests/video-edit.json --out wk-video-dev
+tools/create-wk-agent.sh --manifest manifests/video-recorder.json --out wk-video-dev
 
 # 生成到仓库外做预览/试验：--out 不在仓库根下 → 跳过 marketplace 注册
 tools/create-wk-agent.sh --manifest manifests/example-pay.json --out /tmp/wk-pay-dev --force
 
 # 不想自动注册时显式关闭
-tools/create-wk-agent.sh --manifest manifests/video-edit.json --out wk-video-dev --no-register
+tools/create-wk-agent.sh --manifest manifests/video-recorder.json --out wk-video-dev --no-register
 
 # dogfood：重生成 wk-im-dev 自身（应与现有目录等价）
 tools/create-wk-agent.sh --manifest manifests/im.json --out /tmp/regen --force

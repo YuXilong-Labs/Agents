@@ -366,7 +366,7 @@ run_doctor() {
     sed 's/^/      /' "$ws"
   else
     miss "workspace.json (run: wk-video-init.sh)"
-    add_fix "# 在 VideoEditCore/VideoEditUI/HostApp 任一仓库内运行："
+    add_fix "# 在 BTVideoRecorderKit/BTVideoRecorderUIKit/HostApp 任一仓库内运行："
     add_fix "$HOME/.wk-video-dev/bin/wk-video-init.sh"
   fi
   echo ""
@@ -390,7 +390,7 @@ run_doctor() {
     warn "codegraph not installed (optional)"
     if [ -x "$cg" ]; then
       add_fix "# 启用 CodeGraph（可选，提升符号检索效率）："
-      add_fix "$cg install && $cg init --root <VideoEditCore_or_VideoEditUI>"
+      add_fix "$cg install && $cg init --root <BTVideoRecorderKit_or_BTVideoRecorderUIKit>"
     fi
   fi
 

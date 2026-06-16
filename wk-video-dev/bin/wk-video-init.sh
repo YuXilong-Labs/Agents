@@ -37,7 +37,7 @@ config to ~/.wk-video-dev/workspace.json, then scans/checks docs/agent-knowledge
 
 --component <Name>=<path> sets one component path explicitly (repeatable).
 --service / --module are back-compat aliases for the template instance
-(VideoEditCore / VideoEditUI).
+(BTVideoRecorderKit / BTVideoRecorderUIKit).
 
 When --root is omitted, walks up from the current directory looking for a
 component .podspec or a Podfile referencing all components. Falls back to
@@ -202,8 +202,8 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --root)      ROOT="${2:-}"; shift 2 ;;
     --component) EXPLICIT="$(printf '%s\n%s' "$EXPLICIT" "${2:-}")"; shift 2 ;;
-    --service)   EXPLICIT="$(printf '%s\nVideoEditCore=%s' "$EXPLICIT" "${2:-}")"; shift 2 ;;
-    --module)    EXPLICIT="$(printf '%s\nVideoEditUI=%s' "$EXPLICIT" "${2:-}")"; shift 2 ;;
+    --service)   EXPLICIT="$(printf '%s\nBTVideoRecorderKit=%s' "$EXPLICIT" "${2:-}")"; shift 2 ;;
+    --module)    EXPLICIT="$(printf '%s\nBTVideoRecorderUIKit=%s' "$EXPLICIT" "${2:-}")"; shift 2 ;;
     --host-app)  HOST_APP_LIST+=("${2:-}"); shift 2 ;;
     --quiet)     QUIET=1; shift ;;
     --with-codegraph) WITH_CODEGRAPH=1; shift ;;
@@ -244,11 +244,11 @@ $KNOWN_NAMES
 EOF
 
 # legacy v1 migration: map service/module scalars onto the first service/module-role comps
-if [ -z "$(comp_get VideoEditCore)" ]; then
-  legacy="$(read_workspace_legacy "$GLOBAL_CONFIG" service)"; [ -n "$legacy" ] && comp_set VideoEditCore "$legacy"
+if [ -z "$(comp_get BTVideoRecorderKit)" ]; then
+  legacy="$(read_workspace_legacy "$GLOBAL_CONFIG" service)"; [ -n "$legacy" ] && comp_set BTVideoRecorderKit "$legacy"
 fi
-if [ -z "$(comp_get VideoEditUI)" ]; then
-  legacy="$(read_workspace_legacy "$GLOBAL_CONFIG" module)"; [ -n "$legacy" ] && comp_set VideoEditUI "$legacy"
+if [ -z "$(comp_get BTVideoRecorderUIKit)" ]; then
+  legacy="$(read_workspace_legacy "$GLOBAL_CONFIG" module)"; [ -n "$legacy" ] && comp_set BTVideoRecorderUIKit "$legacy"
 fi
 
 # explicit CLI overrides (name=path)

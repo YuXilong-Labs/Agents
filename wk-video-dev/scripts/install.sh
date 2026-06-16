@@ -326,14 +326,14 @@ install_symlink() {
 looks_like_im_repo() {
   local dir="$1"
   [ -d "$dir" ] || return 1
-  # Direct component repo: VideoEditCore.podspec or VideoEditUI.podspec at root
-  if [ -f "$dir/VideoEditCore.podspec" ] || [ -f "$dir/VideoEditUI.podspec" ]; then
+  # Direct component repo: BTVideoRecorderKit.podspec or BTVideoRecorderUIKit.podspec at root
+  if [ -f "$dir/BTVideoRecorderKit.podspec" ] || [ -f "$dir/BTVideoRecorderUIKit.podspec" ]; then
     return 0
   fi
   # HostApp: Podfile referencing both components
   if [ -f "$dir/Podfile" ] \
-     && grep -q "VideoEditCore" "$dir/Podfile" 2>/dev/null \
-     && grep -q "VideoEditUI" "$dir/Podfile" 2>/dev/null; then
+     && grep -q "BTVideoRecorderKit" "$dir/Podfile" 2>/dev/null \
+     && grep -q "BTVideoRecorderUIKit" "$dir/Podfile" 2>/dev/null; then
     return 0
   fi
   return 1
@@ -493,7 +493,7 @@ if [ "$RUN_INIT" -eq 1 ] && looks_like_im_repo "$TARGET"; then
   fi
 elif [ "$RUN_INIT" -eq 1 ]; then
   echo ""
-  echo "NOTE target is not a VideoEditCore/VideoEditUI/HostApp; skipping auto-init."
+  echo "NOTE target is not a BTVideoRecorderKit/BTVideoRecorderUIKit/HostApp; skipping auto-init."
   echo "     Run later inside a video repo: wk-video-init.sh"
 fi
 
@@ -524,6 +524,6 @@ if runtime_includes claude; then
 fi
 if runtime_includes codex; then
   echo "    wk-video-dev                # 统一 launcher（离线 Codex fallback）"
-  echo "    # 或装 Codex plugin 后在视频编辑组件仓库直接 codex（SessionStart 自动激活）"
+  echo "    # 或装 Codex plugin 后在视频录制组件仓库直接 codex（SessionStart 自动激活）"
 fi
 echo "================================================================"

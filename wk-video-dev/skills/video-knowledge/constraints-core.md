@@ -3,12 +3,12 @@
 > Minimal hard rules injected into every subagent. Detailed rationale lives in `constraints-extended.md` (read on demand).
 
 ## Dependency (HARD)
-- VideoEditCore MUST NOT import VideoEditUI
-- VideoEditUI MUST NOT import VideoEngineSDK
-- VideoEngineSDK access only via VideoEditCore adapter
+- BTVideoRecorderKit MUST NOT import BTVideoRecorderUIKit
+- BTVideoRecorderUIKit MUST NOT import VideoEngineSDK
+- VideoEngineSDK access only via BTVideoRecorderKit adapter
 
 ## Scope (HARD)
-- Only modify files under detected `VideoEditCore/` and `VideoEditUI/` roots
+- Only modify files under detected `BTVideoRecorderKit/` and `BTVideoRecorderUIKit/` roots
 - Never touch `Pods/`, `ThirdPartySDK/`, vendor copies, or unrelated app modules
 
 ## Privacy (HARD)

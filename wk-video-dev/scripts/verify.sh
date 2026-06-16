@@ -149,8 +149,8 @@ fi
 
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "docs/agent-knowledge/"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "wk-video-kb-scan.sh --root"
-require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "VideoEditCore"
-require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "VideoEditUI"
+require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTVideoRecorderKit"
+require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTVideoRecorderUIKit"
 # 单一事实源：agents/wk-video-dev.md
 require_contains "$PLUGIN_ROOT/agents/wk-video-dev.md" "VideoEngineSDK"
 require_contains "$PLUGIN_ROOT/agents/wk-video-dev.md" "single source of truth"
@@ -189,8 +189,8 @@ fi
 require_contains "$PLUGIN_ROOT/hooks/hooks.json" "SessionStart"
 require_contains "$PLUGIN_ROOT/hooks/session-init.sh" "is_video_repo"
 # 组件清单驱动（Phase 4）
-require_contains "$PLUGIN_ROOT/components.conf" "VideoEditCore"
-require_contains "$PLUGIN_ROOT/components.conf" "VideoEditUI"
+require_contains "$PLUGIN_ROOT/components.conf" "BTVideoRecorderKit"
+require_contains "$PLUGIN_ROOT/components.conf" "BTVideoRecorderUIKit"
 require_contains "$PLUGIN_ROOT/components.conf" "forbid_import"
 require_contains "$PLUGIN_ROOT/bin/wk-video-components.sh" "wk_component_names"
 

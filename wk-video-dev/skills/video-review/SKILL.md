@@ -1,5 +1,5 @@
 ---
-description: 用于审查 VideoEditCore 或 VideoEditUI 的代码变更、PR 或代码质量检查。触发词：review, 审查, 代码检查, PR, code review, 看一下这个改动.
+description: 用于审查 BTVideoRecorderKit 或 BTVideoRecorderUIKit 的代码变更、PR 或代码质量检查。触发词：review, 审查, 代码检查, PR, code review, 看一下这个改动.
 allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-guard.sh*)
 ---
 
@@ -17,9 +17,9 @@ allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(${CLAUDE_
 ## 审查维度
 
 ### 架构合规
-- VideoEditCore 未 import VideoEditUI
-- VideoEditUI 未 import VideoEngineSDK
-- 变更仅在 VideoEditCore/ 或 VideoEditUI/ 范围内
+- BTVideoRecorderKit 未 import BTVideoRecorderUIKit
+- BTVideoRecorderUIKit 未 import VideoEngineSDK
+- 变更仅在 BTVideoRecorderKit/ 或 BTVideoRecorderUIKit/ 范围内
 - Public API 变更已同步更新 contracts.md
 
 ### 隐私

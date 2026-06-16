@@ -79,7 +79,7 @@ docker run --rm -it -v $PWD:/work ubuntu:22.04 bash -c '
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/v1.0.1/wk-video-dev/scripts/bootstrap.sh \
-  | bash -s -- --target /path/to/VideoEditCore --ref v1.0.1
+  | bash -s -- --target /path/to/BTVideoRecorderKit --ref v1.0.1
 ```
 
 ### 2.2 内网 mirror（推荐 GitLab）
@@ -158,7 +158,7 @@ claude plugin update wk-video-dev@yuxilong-agents
 
 ```bash
 wk-video-dev doctor
-wk-video-init.sh   # 在视频编辑组件仓库里跑
+wk-video-init.sh   # 在视频录制组件仓库里跑
 ```
 
 ---
@@ -225,7 +225,7 @@ find ~ -maxdepth 3 -name "*.wk-video-dev-backup-*" -mtime +30 -delete
 放到团队 wiki 顶部：
 
 ```markdown
-## iOS 视频编辑团队成员入职 checklist
+## iOS 视频录制团队成员入职 checklist
 
 1. 安装 Codex CLI 或 Claude Code（任一即可）
 2. 安装 wk-video-dev：
@@ -237,7 +237,7 @@ find ~ -maxdepth 3 -name "*.wk-video-dev-backup-*" -mtime +30 -delete
    wk-video-dev --version    # 应输出 1.0.0
    wk-video-dev doctor       # 检查 runtime / workspace / PATH
    ```
-4. 在 VideoEditCore 或 VideoEditUI 仓库内跑一次：
+4. 在 BTVideoRecorderKit 或 BTVideoRecorderUIKit 仓库内跑一次：
    ```
    wk-video-dev
    > 你好，你是谁？

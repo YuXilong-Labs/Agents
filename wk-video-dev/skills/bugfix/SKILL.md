@@ -1,5 +1,5 @@
 ---
-description: 用于修复 VideoEditCore 或 VideoEditUI 的 bug、crash 或异常行为。引导完成定位→复现→修复→验证工作流。触发词：bug, crash, 崩溃, 修复, fix, 问题, 异常, 导出失败, 黑屏, 花屏, 卡顿掉帧, 不显示.
+description: 用于修复 BTVideoRecorderKit 或 BTVideoRecorderUIKit 的 bug、crash 或异常行为。引导完成定位→复现→修复→验证工作流。触发词：bug, crash, 崩溃, 修复, fix, 问题, 异常, 导出失败, 黑屏, 花屏, 卡顿掉帧, 不显示.
 allowed-tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-detect-env.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-verify.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-guard.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-kb-scan.sh*), Bash(${CLAUDE_PLUGIN_ROOT}/bin/wk-video-kb-check.sh*), Bash(xcodebuild*), Bash(git log*), Bash(git blame*)
 ---
 

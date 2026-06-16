@@ -1,52 +1,52 @@
-# 视频编辑 / 导出流程（Pipeline）
+# 视频录制流程（Pipeline）
 
-## 编辑会话流程 (Edit Session)
-
-```
-VideoEditUI (UI)
-  → VideoEditCore.openProject(asset)
-    → 构建时间线 Timeline（tracks: video / audio / overlay）
-    → 加载素材元数据（时长 / 分辨率 / 帧率 / 方向）
-    → VideoEngineSDK.prepare()
-    → notify VideoEditUI via onProjectReady()
-```
-
-## 预览渲染流程 (Preview)
+## 采集会话流程 (Capture Session)
 
 ```
-VideoEditUI seek / play
-  → VideoEditCore.renderFrame(time)
-    → 合成时间线各 track → 应用滤镜 / 转场 / 贴纸
-    → VideoEngineSDK.decode + compose
-    → 回调 CVPixelBuffer → VideoEditUI 预览层
-      （AVSampleBufferDisplayLayer / Metal；系统 AVFoundation 预览允许在 UI 层）
+BTVideoRecorderUIKit (UI)
+  → BTVideoRecorderKit.startSession(config)
+    → 配置相机（分辨率 / 帧率 / 方向 / 前后置 / 闪光）
+    → VideoEngineSDK.configureCapture()
+    → 启动预览（AVCaptureVideoPreviewLayer / Metal）
+    → notify UI via onSessionReady()
 ```
 
-## 导出流程 (Export)
+## 预览处理流程 (Preview)
 
 ```
-VideoEditUI → VideoEditCore.export(preset)
-  → 校验时间线 & 输出参数（分辨率 / 码率 / 编码格式）
-  → VideoEngineSDK.export()
-    → 逐帧合成 + 编码（H.264 / HEVC）
-    → onProgress: 回调进度 → VideoEditUI 进度条
-    → onSuccess: 产出 exportPath → VideoEditUI
-    → onFailure: 错误码 → VideoEditUI
-  → notify VideoEditUI via onExportStateChanged()
+相机帧（CMSampleBuffer）
+  → BTVideoRecorderKit 采集回调
+    → 应用实时滤镜 / 美颜 / 贴纸
+    → VideoEngineSDK.process(frame)
+    → 回调处理后帧 → UI 预览层（系统 AVFoundation 预览允许在 UI 层）
 ```
 
-## 导出状态机 (Export State Machine)
+## 录制流程 (Record)
 
 ```
-[idle] → exporting → success
-                   → failed → [retry] → exporting
-                   → cancelled
+BTVideoRecorderUIKit → BTVideoRecorderKit.startRecording(outputURL)
+  → 校验磁盘空间 & 输出参数（分辨率 / 码率 / 编码格式）
+  → VideoEngineSDK.startEncode()
+    → 逐帧编码（H.264 / HEVC）+ 音频采集混音
+    → onProgress: 回调时长 / 进度 → UI
+    → onSuccess: 产出 outputURL → UI
+    → onFailure: 错误码（磁盘满 / 被来电打断）→ UI
+  → notify UI via onRecordStateChanged()
+```
+
+## 录制状态机 (Record State Machine)
+
+```
+[idle] → previewing → recording → paused → recording
+                    → recording → finishing → success
+                                            → failed → [retry]
+       interrupted（来电 / 切后台）→ paused
 ```
 
 ## 关键约束
 
-- `sourceURL` / `exportPath` / `licenseKey` 不写日志（privacy，权威清单见 `components.conf`）。
-- 进度 / 状态回调始终在主线程派发（UIKit 安全）。
-- 时间线 Timeline 是事实源；`VideoEngineSDK` 只做解码 / 编码 / 合成（transport/compute）。
-- 导出、转码等耗时操作不阻塞主线程。
-- `VideoEditUI` 只通过 `VideoEditCore` 访问编辑能力，不直接调用 `VideoEngineSDK`。
+- `sourceURL` / `outputURL` / `licenseKey` 不写日志（privacy，权威清单见 `components.conf`）。
+- 进度 / 状态 / 中断（来电、后台）回调始终在主线程派发（UIKit 安全）。
+- 采集与编码跑在专用队列，不阻塞主线程（否则掉帧 / 卡顿）。
+- `BTVideoRecorderKit` 是录制事实源；`VideoEngineSDK` 只做采集 / 编码 / 帧处理（transport/compute）。
+- `BTVideoRecorderUIKit` 只通过 `BTVideoRecorderKit` 访问录制能力，不直接调用 `VideoEngineSDK`。

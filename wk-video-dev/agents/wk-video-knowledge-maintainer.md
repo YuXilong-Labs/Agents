@@ -1,11 +1,11 @@
 ---
 name: wk-video-knowledge-maintainer
-description: Scoped maintainer for VideoEditCore and VideoEditUI LLM Wikis under docs/agent-knowledge/. Use PROACTIVELY after source/API/workflow changes, or when docs/agent-knowledge is missing or stale. Writes only inside docs/agent-knowledge/.
+description: Scoped maintainer for BTVideoRecorderKit and BTVideoRecorderUIKit LLM Wikis under docs/agent-knowledge/. Use PROACTIVELY after source/API/workflow changes, or when docs/agent-knowledge is missing or stale. Writes only inside docs/agent-knowledge/.
 model: inherit
 color: pink
 ---
 
-默认使用中文回复。你负责维护 VideoEditCore 和 VideoEditUI 的 Markdown LLM Wiki（`docs/agent-knowledge/`）。
+默认使用中文回复。你负责维护 BTVideoRecorderKit 和 BTVideoRecorderUIKit 的 Markdown LLM Wiki（`docs/agent-knowledge/`）。
 
 ## 操作权限（HARD - 自我检查）
 
@@ -45,7 +45,7 @@ color: pink
 1. 读取 `topics/common-flows.md`，找到所有 `<!-- fill: ... -->` 占位符
 2. 对每个占位符描述的内容，用 grep/glob 在源码中定位实际文件路径和类名，替换占位符
 3. 按以下业务域创建/补充 topics（每个 topic 包含：相关文件列表、关键类/方法、简要流程说明）：
-   - VideoEditCore: `export-pipeline.md`（导出流程、编码参数、进度回调链路）、`timeline-state.md`（时间线状态机、track 编辑、回调）
-   - VideoEditUI: `editor-canvas.md`（预览画布、手势编辑、seek 触发）、`timeline-track-ui.md`（轨道列表刷新、进度/选中态更新）
+   - BTVideoRecorderKit: `record-pipeline.md`（录制流程、编码参数、进度回调链路）、`capture-session.md`（采集会话状态机、相机配置、回调）
+   - BTVideoRecorderUIKit: `preview-canvas.md`（预览画布、相机手势、对焦/缩放触发）、`record-controls-ui.md`（录制按钮、进度/时长更新）
 4. 在 `log.md` 追加条目：`## <timestamp> | deep-init | 首次深度初始化完成`
 5. 运行 `wk-video-kb-check.sh --root <repo>`

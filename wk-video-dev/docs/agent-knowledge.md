@@ -11,7 +11,7 @@ Each non-log page uses this shape:
 
 ```markdown
 ---
-component: VideoEditCore
+component: BTVideoRecorderKit
 kind: topic
 generated_by: wk-video-kb-scan.sh
 last_verified_commit: abc1234

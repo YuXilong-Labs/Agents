@@ -1,6 +1,6 @@
 #!/bin/bash
 # kb-refresh.sh — PostToolUse hook
-# After a source file is written/edited inside VideoEditCore or VideoEditUI,
+# After a source file is written/edited inside BTVideoRecorderKit or BTVideoRecorderUIKit,
 # appends a deduplicated staleness marker to docs/agent-knowledge/log.md.
 # Dedup window: same file path within 5 minutes -> skip append.
 # Fast: <10ms for non-video repos (early exit), <30ms for video repos (single tail scan).
@@ -18,7 +18,7 @@ case "$TARGET" in
   *) exit 0 ;;
 esac
 
-# 从 target 文件向上查找 VideoEditCore/VideoEditUI 组件根（含 .podspec）。
+# 从 target 文件向上查找 BTVideoRecorderKit/BTVideoRecorderUIKit 组件根（含 .podspec）。
 # 用字符串解析避免依赖中间目录的实际存在（PostToolUse 触发时一般已存在，
 # 但某些工具/路径形态下可能出现父目录被消除/重命名，做防御）。
 find_component_root() {
@@ -26,7 +26,7 @@ find_component_root() {
   # 去掉文件名得到第一级父目录字符串
   dir="${dir%/*}"
   while [ -n "$dir" ] && [ "$dir" != "/" ]; do
-    if [ -f "$dir/VideoEditCore.podspec" ] || [ -f "$dir/VideoEditUI.podspec" ]; then
+    if [ -f "$dir/BTVideoRecorderKit.podspec" ] || [ -f "$dir/BTVideoRecorderUIKit.podspec" ]; then
       echo "$dir"
       return 0
     fi

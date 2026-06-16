@@ -1,6 +1,6 @@
 #!/bin/bash
 # wk-video-kb-bootstrap.sh
-# Initialize a tracked Markdown LLM Wiki for VideoEditCore or VideoEditUI.
+# Initialize a tracked Markdown LLM Wiki for BTVideoRecorderKit or BTVideoRecorderUIKit.
 
 set -euo pipefail
 
@@ -32,10 +32,10 @@ KB_DIR="$ROOT/docs/agent-knowledge"
 TOPICS_DIR="$KB_DIR/topics"
 
 detect_component() {
-  if [ -f "$ROOT/VideoEditCore.podspec" ]; then
-    echo "VideoEditCore"
-  elif [ -f "$ROOT/VideoEditUI.podspec" ]; then
-    echo "VideoEditUI"
+  if [ -f "$ROOT/BTVideoRecorderKit.podspec" ]; then
+    echo "BTVideoRecorderKit"
+  elif [ -f "$ROOT/BTVideoRecorderUIKit.podspec" ]; then
+    echo "BTVideoRecorderUIKit"
   else
     local spec
     spec=$(find "$ROOT" -maxdepth 1 -name "*.podspec" -print -quit)
@@ -87,7 +87,7 @@ write_page_if_missing() {
     echo ""
     echo "## Source Refs"
     echo ""
-    echo "- Add relative source paths that support curated notes, for example \`VideoEditCore/Classes/Base/VideoEditCoreTool.h\`."
+    echo "- Add relative source paths that support curated notes, for example \`BTVideoRecorderKit/Classes/Base/BTVideoRecorderKitTool.h\`."
   } > "$path"
   created=1
 }
@@ -195,29 +195,29 @@ Run \`wk-video-kb-scan.sh --root "$ROOT"\` to populate entrypoints, then update 
 ## Message Send Flow
 
 \`\`\`
-VideoEditUI UI action
-  → VideoEditCore.sendMessage(content:to:)
+BTVideoRecorderUIKit UI action
+  → BTVideoRecorderKit.sendMessage(content:to:)
     → validate content & session state
     → persist to local DB (status: sending)
     → VideoEngineSDK.sendMessage()
       → [network]
       → onSuccess: update DB status → sending_success
       → onFailure: update DB status → sending_failed
-    → notify VideoEditUI via onMessageStatusChanged()
+    → notify BTVideoRecorderUIKit via onMessageStatusChanged()
 \`\`\`
 
-Entry: <!-- fill: path to VideoEditCoreTool.h sendMessage method -->
+Entry: <!-- fill: path to BTVideoRecorderKitTool.h sendMessage method -->
 State machine file: <!-- fill: path to message status model -->
 
 ## Message Receive Flow
 
 \`\`\`
 VideoEngineSDK push/pull callback
-  → VideoEditCore Adapter.onMessageReceived()
+  → BTVideoRecorderKit Adapter.onMessageReceived()
     → parse SDK message → internal BTChatMessageModel
     → persist to local DB
     → update session unread count
-    → notify VideoEditUI via onMessageReceived()
+    → notify BTVideoRecorderUIKit via onMessageReceived()
 \`\`\`
 
 Entry: <!-- fill: path to adapter/callback registration -->
@@ -226,16 +226,16 @@ Entry: <!-- fill: path to adapter/callback registration -->
 
 \`\`\`
 Message received → session update → onUnreadCountChanged(conversationId:count:)
-  → VideoEditUI updates badge / list cell
+  → BTVideoRecorderUIKit updates badge / list cell
 \`\`\`
 
 Entry: <!-- fill: where unread count is calculated/stored -->
-Callback: <!-- fill: onUnreadCountChanged implementation in VideoEditUI -->
+Callback: <!-- fill: onUnreadCountChanged implementation in BTVideoRecorderUIKit -->
 
 ## Message Revoke Flow
 
 \`\`\`
-VideoEditUI → VideoEditCore.revokeMessage(messageId:)
+BTVideoRecorderUIKit → BTVideoRecorderKit.revokeMessage(messageId:)
   → check time limit (default 2 min)
   → VideoEngineSDK.revokeMessage()
   → update local DB: status = revoked
@@ -245,8 +245,8 @@ VideoEditUI → VideoEditCore.revokeMessage(messageId:)
 ## Session List Refresh
 
 \`\`\`
-App foreground / message received → VideoEditCore.getSessions()
-  → return sorted session list → VideoEditUI updates list UI
+App foreground / message received → BTVideoRecorderKit.getSessions()
+  → return sorted session list → BTVideoRecorderUIKit updates list UI
 \`\`\`
 EOF
 

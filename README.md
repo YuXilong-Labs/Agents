@@ -7,10 +7,10 @@
 | 目录 | 状态 | 说明 | 主要入口 |
 | --- | --- | --- | --- |
 | `wk-im-dev/` | ✅ 主线 v1.1.1 | iOS IM 组件 Agent（BTIMService / BTIMModule）。plugin-native 双运行时 + CodeGraph AST 索引。**同时是 per-component agent 生成器的唯一模板。** | [wk-im-dev/README.md](wk-im-dev/README.md) |
-| `wk-video-dev/` | ✅ 主线 v1.0.0 | iOS 视频编辑组件 Agent（VideoEditCore / VideoEditUI）。由生成器从 `manifests/video-edit.json` 产出。 | [wk-video-dev/README.md](wk-video-dev/README.md) |
+| `wk-video-dev/` | ✅ 主线 v1.0.0 | iOS 视频录制组件 Agent（BTVideoRecorderKit / BTVideoRecorderUIKit）。由生成器从 `manifests/video-recorder.json` 产出。 | [wk-video-dev/README.md](wk-video-dev/README.md) |
 | `wk-code-refactor/` | ✅ 主线 | 单组件 / 子模块 / 单功能点重构 Agent，强调旧实现先读、功能点矩阵、TDD 和分阶段确认。 | [wk-code-refactor/README.md](wk-code-refactor/README.md) |
 | `tools/create-wk-agent.sh` | ✅ 生成器 | 从 `manifests/*.json` 生成新的 per-component agent（wk-im-dev 即模板，dogfood 零漂移）。 | [tools/README.md](tools/README.md) |
-| `manifests/` | ✅ 生成器输入 | `im.json`(IM 实例)、`video-edit.json`(视频)、`example-pay.json`(新组件示例)。 | — |
+| `manifests/` | ✅ 生成器输入 | `im.json`(IM 实例)、`video-recorder.json`(视频)、`example-pay.json`(新组件示例)。 | — |
 
 ## 快速开始
 
@@ -56,7 +56,7 @@ scripts/install.sh  # 安装到本机运行目录
 不手写新 agent —— 用生成器从 manifest 产出。`wk-im-dev` 即唯一模板（dogfood 零漂移），新 agent 自动拿到 plugin 清单、launcher、subagents、skills、hooks、安装脚本与知识库工具。
 
 ```bash
-# 1. 写 manifest（参考 manifests/video-edit.json 或 example-pay.json）
+# 1. 写 manifest（参考 manifests/video-recorder.json 或 example-pay.json）
 #    定义 slug / 组件名 / 依赖规则(forbid_import) / 隐私词 / sdk_literal
 
 # 2. 生成进仓库（--out 直接位于仓库根下时，自动注册到 .claude-plugin/marketplace.json）
