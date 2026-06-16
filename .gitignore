@@ -3,3 +3,10 @@
 
 # Local OMX runtime state
 .omx/
+
+# Local install / scratch artifacts at repo root (not part of the repo).
+# Root AGENTS.md is produced by test-installing an agent with --target . here;
+# CLAUDE-FABLE-5.md is an unrelated scratch file. Component AGENTS.md under
+# <agent>/codex/ stay tracked (these patterns are root-anchored).
+/AGENTS.md
+/CLAUDE-FABLE-5.md

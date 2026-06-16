@@ -10,10 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 目录 | 状态 | 说明 |
 |------|------|------|
-| `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag）。**行为契约单一事实源 = `agents/wk-im-dev.md`**（`core/` 已删除）；组件名/规则/隐私词/只读路径数据源 = `components.conf`（detect-env/guard/scope-check/init 读它，非硬编码） |
+| `wk-im-dev/` | ✅ 当前主线（v1.x） | iOS IM 组件 Agent，同时支持 Claude Code 和 Codex。v1.0.0 为首个正式版本（pre-1.0 历史内部版本号 v3.0.0 → v3.5.0 已删除对应 tag）。**行为契约单一事实源 = `agents/wk-im-dev.md`**（`core/` 已删除）；组件名/规则/隐私词/只读路径数据源 = `components.conf`（detect-env/guard/scope-check/init 读它，非硬编码）。**同时是生成器的唯一模板。** 隐私约束散文已泛化（不再硬编码 messageBody 等，以 `components.conf` 为准） |
+| `wk-video-dev/` | ✅ 当前主线（v1.0.0） | iOS 视频编辑组件 Agent（VideoEditCore + VideoEditUI）。由 `tools/create-wk-agent.sh` 从 `manifests/video-edit.json` 生成，结构与 wk-im-dev 同构。领域散文（identity/pipeline/README/topic）已重写为视频域；skill 目录为 `video-knowledge`/`video-review` |
 | `wk-code-refactor/` | ✅ 当前主线 | 单模块/功能点重构 Agent |
-| `tools/create-wk-agent.sh` | ✅ 生成器 | 从 `manifests/*.json` 生成 per-component agent。**wk-im-dev 即模板**：克隆 + slug 改名 + 组件名替换 + 依 manifest 重生成 `components.conf`。dogfood：`im.json` 重生成 ≈ 现 wk-im-dev。用法见 `tools/README.md` |
-| `manifests/` | ✅ | 生成器输入。`im.json`=当前 IM 实例；`example-pay.json`=新组件 agent 示例 |
+| `tools/create-wk-agent.sh` | ✅ 生成器 | 从 `manifests/*.json` 生成 per-component agent。**wk-im-dev 即模板**：克隆 + slug 改名 + 组件名替换 + 依 manifest 重生成 `components.conf` + **自动注册 `.claude-plugin/marketplace.json`**（`--out` 在仓库根下时；`--no-register` 关闭）+ 领域散文残留提示。dogfood：`im.json` 重生成 ≈ 现 wk-im-dev。用法见 `tools/README.md` |
+| `manifests/` | ✅ | 生成器输入。`im.json`=IM 实例；`video-edit.json`=视频编辑实例；`example-pay.json`=新组件 agent 示例 |
 
 ## 安装模型（重要）
 

@@ -18,12 +18,23 @@ dogfood 验证：`--manifest manifests/im.json` 重生成的结果与现有 `wk-
 ## 用法
 
 ```bash
-# 生成一个新组件 agent
+# 生成进仓库（推荐）：--out 直接位于仓库根下 → 自动注册到 .claude-plugin/marketplace.json
+tools/create-wk-agent.sh --manifest manifests/video-edit.json --out wk-video-dev
+
+# 生成到仓库外做预览/试验：--out 不在仓库根下 → 跳过 marketplace 注册
 tools/create-wk-agent.sh --manifest manifests/example-pay.json --out /tmp/wk-pay-dev --force
+
+# 不想自动注册时显式关闭
+tools/create-wk-agent.sh --manifest manifests/video-edit.json --out wk-video-dev --no-register
 
 # dogfood：重生成 wk-im-dev 自身（应与现有目录等价）
 tools/create-wk-agent.sh --manifest manifests/im.json --out /tmp/regen --force
 ```
+
+> **marketplace 自动注册**：当 `--out` 是仓库根的直接子目录时，生成器按新 agent 的 `plugin.json`
+> upsert 一条 `git-subdir` 记录到 `.claude-plugin/marketplace.json`（复用首条记录的 repo URL，
+> 兼容内网 mirror）。生成到仓库外（如 `/tmp`）则自动跳过，不污染 marketplace。`--no-register` 强制关闭。
+> 生成结束会打印 `marketplace: added/updated/skipped ...` 一行说明本次行为。
 
 生成后验证：
 
@@ -49,7 +60,9 @@ WK_IM_DEV_COMPONENTS=/tmp/wk-pay-dev/components.conf \
 
 ## 覆盖范围与限制
 
-**完全自动**：slug 全量改名 + 文件重命名、组件名替换（含 identity/约束散文）、components.conf、plugin 清单、CHANGELOG 重置。
+**完全自动**：slug 全量改名 + 文件重命名、组件名替换（含 identity/约束散文）、components.conf、plugin 清单、CHANGELOG 重置、marketplace 注册（`--out` 在仓库根下时）、领域散文残留扫描（列出仍含 IM 名词的文件供人工重写）。
+
+> 隐私约束散文已泛化为「以 `components.conf` 的 `privacy` 项为准」，生成的 agent 不再携带 IM 隐私名词（messageBody 等）；隐私词的真正数据源始终是 `components.conf`（由 manifest 渲染）。
 
 **需人工 review**（残留扫描会列出）：
 - **组件数与模板不同（非 2 个）**：组件名按位置映射前 N 个；依赖方向图、跨组件顺序等散文需人工调整。
