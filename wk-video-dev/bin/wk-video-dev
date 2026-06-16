@@ -1,0 +1,481 @@
+#!/bin/bash
+# wk-video-dev - Unified launcher for the wk-video-dev IM component agent.
+#
+# Usage:
+#   wk-video-dev                      # auto-detect: Claude Code (if plugin installed) else Codex
+#   wk-video-dev [codex/claude opts] [prompt]
+#   wk-video-dev doctor               # show install status
+#   wk-video-dev doctor --fix         # also print copy-paste fix commands
+#   wk-video-dev --version            # print version + source
+#   wk-video-dev --help               # this help
+#
+# Runtime selection precedence:
+#   1. $WK_VIDEO_DEV_RUNTIME=claude|codex (env override)
+#   2. claude CLI present AND wk-video-dev plugin enabled in ~/.claude/settings.json
+#   3. Otherwise Codex
+#
+# Created by yuxilong on 2026-05-26
+
+set -euo pipefail
+
+# Agent spec injected as developer_instructions on the Codex offline-fallback path.
+# Single source of truth = agents/wk-video-dev.md, installed here by scripts/install.sh.
+# WK_VIDEO_DEV_CORE kept as a back-compat alias for installs predating the rename.
+AGENT_SPEC="${WK_VIDEO_DEV_AGENT:-${WK_VIDEO_DEV_CORE:-$HOME/.wk-video-dev/wk-video-dev-agent.md}}"
+SELF="$0"
+
+# Runtime config dirs — honor relocation env vars so detection works regardless
+# of how claude/codex were installed (npm/brew/native) or where the user moved
+# their config. CLAUDE_CONFIG_DIR / CODEX_HOME are the runtimes' own overrides;
+# reading $HOME/.claude blindly is exactly what silently broke v1.0.0.
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+CODEX_DIR="${CODEX_HOME:-$HOME/.codex}"
+
+show_help() {
+  cat <<'HELP'
+wk-video-dev - Unified launcher for the wk-video-dev IM component agent.
+
+Usage:
+  wk-video-dev                      # auto-detect: Claude Code (if plugin installed) else Codex
+  wk-video-dev [codex/claude opts] [prompt]
+  wk-video-dev doctor               # show install status
+  wk-video-dev doctor --fix         # also print copy-paste fix commands
+  wk-video-dev fix-plugin           # restore plugin disabled by cc-switch (< v3.11)
+  wk-video-dev --version            # print version + source
+  wk-video-dev --help               # this help
+
+Runtime selection precedence:
+  1. $WK_VIDEO_DEV_RUNTIME=claude|codex (env override)
+  2. claude CLI present AND wk-video-dev plugin enabled in ~/.claude/settings.json
+  3. Otherwise Codex
+
+Created by yuxilong on 2026-05-26
+HELP
+}
+
+# ----- version lookup ------------------------------------------------------
+# 从 plugin.json 读 version。优先级：
+#   1. $WK_VIDEO_DEV_PLUGIN_JSON 环境变量
+#   2. Codex 安装路径 (~/.wk-video-dev/.claude-plugin/plugin.json) — installer 顺手 copy
+#   3. Claude plugin 安装位置 (~/.claude/plugins/installed/wk-video-dev*/.claude-plugin/plugin.json)
+#   4. 当前仓库源码位置（开发场景）
+#   5. 退而求其次：返回 unknown
+# Resolve the active Claude-plugin install from installed_plugins.json — the file Claude
+# itself maintains, with one live record (installPath + version) per plugin key. This is
+# immune to the stale multi-version cache dirs (e.g. leftover 3.x from the version reset)
+# that a raw cache glob would wrongly pick up. Prints "version<TAB>installPath"; empty when
+# the plugin is not installed.
+claude_plugin_install() {
+  local ij="$CLAUDE_DIR/plugins/installed_plugins.json"
+  [ -f "$ij" ] || return 0
+  awk '
+    /"wk-video-dev@[^"]*"[[:space:]]*:[[:space:]]*\[/ { inblk=1 }
+    inblk && /"installPath"/ { ip=$0; sub(/.*"installPath"[^"]*"/,"",ip); sub(/".*/,"",ip) }
+    inblk && /"version"/ { v=$0; sub(/.*"version"[^"]*"/,"",v); sub(/".*/,"",v); print v "\t" ip; exit }
+  ' "$ij" 2>/dev/null
+}
+
+read_version() {
+  local file v
+
+  try_read() {
+    local f="$1"
+    [ -f "$f" ] || return 1
+    v="$(grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$f" 2>/dev/null \
+         | head -1 | sed -E 's/.*"([^"]+)"$/\1/')"
+    [ -n "$v" ] || return 1
+    printf '%s\t%s\n' "$v" "$f"
+    return 0
+  }
+
+  # 1. 环境变量
+  if [ -n "${WK_VIDEO_DEV_PLUGIN_JSON:-}" ]; then
+    try_read "$WK_VIDEO_DEV_PLUGIN_JSON" && return 0
+  fi
+
+  # 2. Codex 安装路径
+  try_read "$HOME/.wk-video-dev/.claude-plugin/plugin.json" && return 0
+
+  # 3. Claude plugin：先用 installed_plugins.json 事实源解析活跃版本
+  local cp_line cp_path
+  cp_line="$(claude_plugin_install)"
+  if [ -n "$cp_line" ]; then
+    v="${cp_line%%	*}"
+    cp_path="${cp_line#*	}"
+    if [ -n "$v" ]; then
+      printf '%s\t%s\n' "$v" "$cp_path/.claude-plugin/plugin.json"
+      return 0
+    fi
+  fi
+  # 3b. 兜底：直接 glob（cache 布局含 marketplace + 版本目录两层；用 ls -1 避免空 glob 在 set -u 下报错）
+  for f in $(ls -1 "$CLAUDE_DIR"/plugins/installed/wk-video-dev*/.claude-plugin/plugin.json 2>/dev/null) \
+           $(ls -1 "$CLAUDE_DIR"/plugins/cache/*/wk-video-dev*/*/.claude-plugin/plugin.json 2>/dev/null); do
+    try_read "$f" && return 0
+  done
+
+  # 4. 开发场景：launcher 自身相对位置
+  local self_dir
+  self_dir="$(cd "$(dirname "$SELF")" 2>/dev/null && pwd)" || true
+  if [ -n "$self_dir" ]; then
+    try_read "$self_dir/../.claude-plugin/plugin.json" && return 0
+  fi
+
+  printf 'unknown\t<not found>\n'
+}
+
+show_version() {
+  local out version source
+  out="$(read_version)"
+  version="${out%%	*}"
+  source="${out#*	}"
+  echo "wk-video-dev $version"
+  echo "  source: $source"
+}
+
+# Read just the version string from a single plugin.json (empty if absent).
+version_in_file() {
+  local f="$1"
+  [ -f "$f" ] || return 0
+  grep -oE '"version"[[:space:]]*:[[:space:]]*"[^"]+"' "$f" 2>/dev/null \
+    | head -1 | sed -E 's/.*"([^"]+)"$/\1/'
+}
+
+# ----- runtime detection --------------------------------------------------
+
+# Returns: enabled | installed-but-disabled | not-installed
+# "installed-but-disabled" = plugin registered in installed_plugins.json but key absent from
+# enabledPlugins in settings.json — typical symptom when cc-switch < v3.11 overwrites the
+# entire settings.json and clears all plugin entries.
+plugin_status() {
+  command -v claude >/dev/null 2>&1 || { printf 'not-installed\n'; return; }
+  local settings="$CLAUDE_DIR/settings.json"
+  # Enabled: key present in settings.json enabledPlugins
+  if [ -f "$settings" ] && grep -qE '"wk-video-dev(@[A-Za-z0-9._-]+)?"' "$settings" 2>/dev/null; then
+    printf 'enabled\n'; return
+  fi
+  # Enabled: local --plugin-dir style (dev/test scenario)
+  if [ -d "./.claude-plugin" ] && [ -f "./.claude-plugin/plugin.json" ] \
+     && grep -q '"wk-video-dev"' "./.claude-plugin/plugin.json" 2>/dev/null; then
+    printf 'enabled\n'; return
+  fi
+  # Installed-but-disabled: registered in installed_plugins.json with a valid cache directory.
+  # cc-switch < v3.11 clears the entire enabledPlugins object on every provider switch.
+  local installed_json="$CLAUDE_DIR/plugins/installed_plugins.json"
+  if [ -f "$installed_json" ] && grep -q '"wk-video-dev@yuxilong-agents"' "$installed_json" 2>/dev/null; then
+    if ls -d "$CLAUDE_DIR/plugins/cache/yuxilong-agents/wk-video-dev/"* 2>/dev/null \
+       | head -1 | grep -q .; then
+      printf 'installed-but-disabled\n'; return
+    fi
+  fi
+  printf 'not-installed\n'
+}
+
+claude_plugin_installed() {
+  [ "$(plugin_status)" = "enabled" ]
+}
+
+codex_available() {
+  command -v codex >/dev/null 2>&1
+}
+
+detect_runtime() {
+  case "${WK_VIDEO_DEV_RUNTIME:-}" in
+    claude|codex) printf '%s\n' "$WK_VIDEO_DEV_RUNTIME"; return ;;
+    "") ;;
+    *) echo "warn: ignoring unknown WK_VIDEO_DEV_RUNTIME=$WK_VIDEO_DEV_RUNTIME" >&2 ;;
+  esac
+  if claude_plugin_installed; then
+    printf 'claude\n'
+  elif codex_available; then
+    printf 'codex\n'
+  else
+    printf 'none\n'
+  fi
+}
+
+# ----- fix-plugin (restore enabledPlugins after cc-switch overwrite) ----------
+
+fix_plugin() {
+  command -v claude >/dev/null 2>&1 || {
+    printf 'wk-video-dev fix-plugin: claude CLI not found. Install Claude Code first.\n' >&2
+    exit 1
+  }
+
+  local settings="$CLAUDE_DIR/settings.json"
+  local key="wk-video-dev@yuxilong-agents"
+  local pstatus
+  pstatus="$(plugin_status)"
+
+  if [ "$pstatus" = "enabled" ]; then
+    echo "Plugin already enabled in $settings — nothing to do."
+    return 0
+  fi
+
+  if [ "$pstatus" = "not-installed" ]; then
+    printf 'wk-video-dev fix-plugin: plugin not installed. Run:\n  claude plugin install %s\n' "$key" >&2
+    exit 1
+  fi
+
+  # pstatus = installed-but-disabled
+  if [ ! -f "$settings" ]; then
+    printf 'wk-video-dev fix-plugin: %s not found.\n  Run: claude plugin install %s\n' "$settings" "$key" >&2
+    exit 1
+  fi
+
+  local backup
+  backup="${settings}.wk-video-dev-backup-$(date '+%Y%m%d%H%M%S')"
+  cp "$settings" "$backup"
+  echo "  backup: $backup"
+
+  if command -v jq >/dev/null 2>&1; then
+    local tmp
+    tmp="$(mktemp)"
+    jq --arg k "$key" '.enabledPlugins[$k] = true' "$settings" > "$tmp" && mv "$tmp" "$settings"
+    echo "  [ok]   Plugin re-enabled (jq): $settings"
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c '
+import json, sys
+path, key = sys.argv[1], sys.argv[2]
+with open(path) as f: d = json.load(f)
+d.setdefault("enabledPlugins", {})[key] = True
+with open(path, "w") as f: json.dump(d, f, indent=2)
+print("  [ok]   Plugin re-enabled (python3): " + path)
+' "$settings" "$key"
+  else
+    printf '  [err]  Neither jq nor python3 found. Edit manually:\n' >&2
+    printf '         Add "%s": true to enabledPlugins in %s\n' "$key" "$settings" >&2
+    rm -f "$backup"
+    exit 1
+  fi
+
+  echo ""
+  echo "Done. Run: wk-video-dev doctor && claude --agent wk-video-dev"
+}
+
+# ----- doctor -------------------------------------------------------------
+
+ok()   { printf '  [ok]   %s\n' "$1"; }
+miss() { printf '  [miss] %s\n' "$1"; }
+warn() { printf '  [warn] %s\n' "$1"; }
+
+doctor_line_file() {
+  local label="$1"; local path="$2"
+  if [ -f "$path" ]; then ok "$label: $path"; else miss "$label: $path"; fi
+}
+
+doctor_line_dir() {
+  local label="$1"; local path="$2"
+  if [ -d "$path" ]; then ok "$label: $path"; else miss "$label: $path"; fi
+}
+
+run_doctor() {
+  local vout vversion vsource
+  local fix_mode=0
+  if [ "${1:-}" = "--fix" ]; then fix_mode=1; fi
+
+  FIXES=()
+  add_fix() { FIXES+=("$1"); }
+
+  vout="$(read_version)"
+  vversion="${vout%%	*}"
+  vsource="${vout#*	}"
+  echo "wk-video-dev doctor"
+  echo "  version: $vversion ($vsource)"
+
+  # Drift check: codex-side copy (~/.wk-video-dev) vs the active Claude plugin. read_version
+  # reports the codex copy first by priority, so a stale codex install can mask a newer
+  # plugin. Resolve the plugin version from installed_plugins.json (not the cache glob) so
+  # leftover 3.x cache dirs can't trigger a false positive.
+  local codex_copy claude_copy cp_line
+  codex_copy="$(version_in_file "$HOME/.wk-video-dev/.claude-plugin/plugin.json")"
+  cp_line="$(claude_plugin_install)"
+  claude_copy="${cp_line%%	*}"
+  if [ -n "$codex_copy" ] && [ -n "$claude_copy" ] && [ "$codex_copy" != "$claude_copy" ]; then
+    warn "version drift: codex-side $codex_copy vs Claude plugin $claude_copy"
+    add_fix "# codex 侧脚本与 Claude plugin 版本不一致，重跑 bootstrap 同步 ~/.wk-video-dev/bin："
+    add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-video-dev/scripts/bootstrap.sh | bash -s -- --target . --ref v$claude_copy"
+  fi
+
+  echo ""
+  echo "Runtime detection:"
+  echo "  WK_VIDEO_DEV_RUNTIME=${WK_VIDEO_DEV_RUNTIME:-<unset>}"
+  if command -v claude >/dev/null 2>&1; then
+    ok "claude CLI: $(command -v claude)"
+  else
+    miss "claude CLI not on PATH"
+    add_fix "# 安装 Claude Code: https://claude.com/claude-code"
+  fi
+  if command -v codex  >/dev/null 2>&1; then
+    ok "codex CLI:  $(command -v codex)"
+  else
+    miss "codex CLI not on PATH"
+    add_fix "# 安装 Codex CLI: https://github.com/openai/codex"
+  fi
+  local pstatus
+  pstatus="$(plugin_status)"
+  case "$pstatus" in
+    enabled)
+      ok "Claude plugin wk-video-dev enabled"
+      ;;
+    installed-but-disabled)
+      warn "Claude plugin wk-video-dev installed but disabled"
+      warn "  (cc-switch < v3.11 likely overwrote enabledPlugins in settings.json)"
+      add_fix "# Plugin disabled — one-command fix:"
+      add_fix "wk-video-dev fix-plugin"
+      ;;
+    not-installed)
+      miss "Claude plugin wk-video-dev not installed"
+      if command -v claude >/dev/null 2>&1; then
+        add_fix "claude plugin marketplace add YuXilong-Labs/Agents"
+        add_fix "claude plugin install wk-video-dev@yuxilong-agents"
+      fi
+      ;;
+  esac
+  echo "  effective runtime: $(detect_runtime)"
+  echo ""
+
+  echo "Install artifacts:"
+  doctor_line_file "launcher"   "$HOME/.wk-video-dev/bin/wk-video-dev"
+  doctor_line_file "agent spec" "$AGENT_SPEC"
+  doctor_line_dir  "bin dir"    "$HOME/.wk-video-dev/bin"
+  doctor_line_file "init.sh"    "$HOME/.wk-video-dev/bin/wk-video-init.sh"
+  if [ ! -f "$HOME/.wk-video-dev/bin/wk-video-dev" ]; then
+    add_fix "# 重装 launcher（命中本机源码时）："
+    add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-video-dev/scripts/bootstrap.sh | bash -s -- --target ."
+  fi
+  if [ ! -f "$AGENT_SPEC" ]; then
+    add_fix "# agent spec 未安装，重跑 bootstrap："
+    add_fix "curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-video-dev/scripts/bootstrap.sh | bash -s -- --target . --runtime codex"
+  fi
+  # Legacy artifacts (plugin-native 后不再需要)：检测到就提示清理。
+  local legacy_toml="$CODEX_DIR/agents/wk-video-dev.toml"
+  local legacy_profile="$CODEX_DIR/wk-video-dev.config.toml"
+  if [ -f "$legacy_toml" ] || [ -f "$legacy_profile" ]; then
+    warn "检测到旧版 Codex 产物（plugin-native 后已弃用，可清理）"
+    [ -f "$legacy_toml" ]    && warn "  legacy: $legacy_toml"
+    [ -f "$legacy_profile" ] && warn "  legacy: $legacy_profile"
+    add_fix "# 清理旧版 Codex 产物（可选）："
+    add_fix "rm -f \"$legacy_toml\" \"$legacy_profile\""
+  fi
+  echo ""
+
+  echo "Workspace:"
+  local ws="$HOME/.wk-video-dev/workspace.json"
+  if [ -f "$ws" ]; then
+    ok "workspace.json: $ws"
+    sed 's/^/      /' "$ws"
+  else
+    miss "workspace.json (run: wk-video-init.sh)"
+    add_fix "# 在 VideoEditCore/VideoEditUI/HostApp 任一仓库内运行："
+    add_fix "$HOME/.wk-video-dev/bin/wk-video-init.sh"
+  fi
+  echo ""
+
+  echo "PATH:"
+  case ":$PATH:" in
+    *":$HOME/.wk-video-dev/bin:"*) ok "~/.wk-video-dev/bin on PATH" ;;
+    *)
+      warn "~/.wk-video-dev/bin NOT on PATH"
+      add_fix "export PATH=\"\$HOME/.wk-video-dev/bin:\$PATH\""
+      add_fix "# 永久生效：把上面这一行追加到 ~/.zshrc 或 ~/.bashrc"
+      ;;
+  esac
+  echo ""
+
+  echo "CodeGraph (optional):"
+  local cg="$HOME/.wk-video-dev/bin/wk-video-codegraph.sh"
+  if [ -x "$cg" ] && "$cg" detect --quiet >/dev/null 2>&1; then
+    ok "codegraph installed"
+  else
+    warn "codegraph not installed (optional)"
+    if [ -x "$cg" ]; then
+      add_fix "# 启用 CodeGraph（可选，提升符号检索效率）："
+      add_fix "$cg install && $cg init --root <VideoEditCore_or_VideoEditUI>"
+    fi
+  fi
+
+  # 总结：列出建议的修复命令；--fix 仅打印，不主动执行（安全优先）
+  if [ "${#FIXES[@]}" -gt 0 ]; then
+    echo ""
+    echo "Suggested fixes:"
+    for line in "${FIXES[@]}"; do
+      case "$line" in
+        \#*) echo "  $line" ;;
+        *)   echo "    $line" ;;
+      esac
+    done
+    if [ "$fix_mode" -eq 1 ]; then
+      echo ""
+      echo "（--fix 仅打印命令，不自动执行；复制需要的一行粘贴运行即可。）"
+    fi
+  else
+    echo ""
+    echo "✓ 所有检查通过，无需修复。"
+  fi
+}
+
+# ----- claude dispatch ----------------------------------------------------
+
+launch_claude() {
+  exec claude --agent wk-video-dev "$@"
+}
+
+# ----- codex dispatch (preserves original behavior) -----------------------
+
+launch_codex() {
+  local spec="$AGENT_SPEC"
+  # Back-compat: fall back to the legacy core spec if the new agent spec isn't installed yet.
+  [ -f "$spec" ] || spec="$HOME/.wk-video-dev/wk-video-dev-core.md"
+  if [ ! -f "$spec" ]; then
+    cat >&2 <<ERR
+wk-video-dev: agent spec not found at $AGENT_SPEC
+Re-run the installer to fix this:
+  curl -fsSL https://raw.githubusercontent.com/YuXilong-Labs/Agents/main/wk-video-dev/scripts/bootstrap.sh \\
+    | bash -s -- --target .
+ERR
+    exit 1
+  fi
+
+  # Strip YAML frontmatter (--- ... ---) before injecting as developer_instructions.
+  # model 故意不钉死：只覆盖 reasoning_effort，model 走 Codex 默认，避免账号无特定模型权限时挂掉。
+  local instructions
+  instructions="$(awk 'NR==1 && $0=="---"{f=1; next} f && $0=="---"{f=0; next} !f' "$spec")"
+  exec codex -c "developer_instructions=$instructions" -c model_reasoning_effort='"high"' "$@"
+}
+
+# ----- main ---------------------------------------------------------------
+
+# Recognize the doctor subcommand or --doctor flag before we forward args.
+if [ $# -ge 1 ]; then
+  case "$1" in
+    doctor|--doctor)         shift; run_doctor "$@"; exit 0 ;;
+    fix-plugin|--fix-plugin) fix_plugin; exit 0 ;;
+    version|--version|-V)    show_version; exit 0 ;;
+    -h|--help)               show_help; exit 0 ;;
+  esac
+fi
+
+RUNTIME="$(detect_runtime)"
+case "$RUNTIME" in
+  claude) launch_claude "$@" ;;
+  codex)  launch_codex  "$@" ;;
+  none)
+    if [ "$(plugin_status)" = "installed-but-disabled" ]; then
+      cat >&2 <<ERR
+wk-video-dev: Claude plugin installed but disabled.
+  Likely cause: cc-switch < v3.11 overwrote settings.json and cleared enabledPlugins.
+  Fix with:     wk-video-dev fix-plugin
+  Upgrade tip:  update cc-switch to >= v3.11 to prevent recurrence.
+ERR
+    else
+      cat >&2 <<ERR
+wk-video-dev: no supported runtime found.
+Install one of:
+  - Claude Code: claude plugin install wk-video-dev@yuxilong-agents
+  - Codex CLI:   https://github.com/openai/codex
+Then run: wk-video-dev doctor
+ERR
+    fi
+    exit 1
+    ;;
+esac

@@ -13,12 +13,40 @@
         "name": "YuXilong-Labs"
       },
       "category": "development",
-      "keywords": ["ios", "im", "btimservice", "btimmodule", "swift"],
+      "keywords": [
+        "ios",
+        "im",
+        "btimservice",
+        "btimmodule",
+        "swift"
+      ],
       "homepage": "https://github.com/YuXilong-Labs/Agents",
       "source": {
         "source": "git-subdir",
         "url": "https://github.com/YuXilong-Labs/Agents.git",
         "path": "wk-im-dev",
+        "ref": "main"
+      }
+    },
+    {
+      "name": "wk-video-dev",
+      "description": "iOS 视频编辑组件开发 Agent（VideoEditCore + VideoEditUI）。功能开发、Bug 修复、代码审查、架构查询。",
+      "author": {
+        "name": "YuXilong-Labs"
+      },
+      "category": "development",
+      "keywords": [
+        "ios",
+        "video",
+        "editing",
+        "avfoundation",
+        "swift"
+      ],
+      "homepage": "https://github.com/YuXilong-Labs/Agents",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/YuXilong-Labs/Agents.git",
+        "path": "wk-video-dev",
         "ref": "main"
       }
     }

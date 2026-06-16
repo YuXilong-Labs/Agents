@@ -1,0 +1,30 @@
+{
+  "name": "wk-video-dev",
+  "description": "iOS 视频编辑组件开发 Agent（VideoEditCore + VideoEditUI）。功能开发、Bug 修复、代码审查、架构查询。",
+  "version": "1.0.0",
+  "author": {
+    "name": "YuXilong-Labs"
+  },
+  "homepage": "https://github.com/YuXilong-Labs/Agents",
+  "license": "MIT",
+  "keywords": [
+    "ios",
+    "video",
+    "editing",
+    "avfoundation",
+    "swift"
+  ],
+  "commands": "./commands/",
+  "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
+  "interface": {
+    "displayName": "wk-video-dev",
+    "shortDescription": "VideoEditCore/VideoEditUI iOS 视频编辑开发助手",
+    "category": "Development",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ]
+  }
+}
