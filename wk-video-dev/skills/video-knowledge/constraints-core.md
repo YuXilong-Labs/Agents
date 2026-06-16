@@ -4,8 +4,8 @@
 
 ## Dependency (HARD)
 - BTVideoRecorderKit MUST NOT import BTVideoRecorderUIKit
-- BTVideoRecorderUIKit MUST NOT import VideoEngineSDK
-- VideoEngineSDK access only via BTVideoRecorderKit adapter
+- BTVideoRecorderUIKit MUST NOT import NvStreamingSdkCore
+- NvStreamingSdkCore access only via BTVideoRecorderKit adapter
 
 ## Scope (HARD)
 - Only modify files under detected `BTVideoRecorderKit/` and `BTVideoRecorderUIKit/` roots
@@ -16,5 +16,5 @@
 
 ## Public API (HARD)
 - Public cross-pod API changes MUST update `docs/agent-knowledge/contracts.md`
-- API parameters use internal model types, never VideoEngineSDK types
+- API parameters use internal model types, never NvStreamingSdkCore types
 - Cross-pod callbacks MUST be dispatched on main thread

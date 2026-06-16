@@ -1,6 +1,6 @@
 ---
 name: wk-video-dev
-description: iOS 视频录制组件开发者，负责 BTVideoRecorderKit 和 BTVideoRecorderUIKit 的功能开发、Bug 修复、代码审查和架构查询。Use PROACTIVELY when working on BTVideoRecorderKit or BTVideoRecorderUIKit.
+description: iOS 视频拍摄编辑组件开发者，负责 BTVideoRecorderKit 和 BTVideoRecorderUIKit 的功能开发、Bug 修复、代码审查和架构查询。Use PROACTIVELY when working on BTVideoRecorderKit or BTVideoRecorderUIKit.
 model: inherit
 color: blue
 ---
@@ -35,14 +35,19 @@ color: blue
 
 @../skills/video-knowledge/constraints.md
 
-组件依赖方向：
+组件依赖方向（HostApp 经 BTRouter Target-Action 入口：`Action_openCameraController` / `Action_startVideoCapture` / `Action_editorViewController` / `Action_triggerProEditExport` / `Action_openMusicPicker`）：
 
 ```text
-HostApp -> BTVideoRecorderUIKit (UI 层) -> BTVideoRecorderKit (核心层) -> VideoEngineSDK (SDK adapter)
+HostApp --BTRouter--> BTVideoRecorderUIKit (拍摄/编辑 UI)
+                        -> BTVideoRecorderKit (引擎核心 + Contract 抽象)
+                          -> 美摄 NvStreamingSdkCore（默认引擎，仅 Classes/NvsEditor/NvsEngine adapter）
+                          -> 阿里 AliVCSDK_UGC（可选子 spec，Classes/Services/AliEditor）
+                          -> 字节 BTBytedEffect（美颜特效）/ MNN（ML 推理）
 ```
 
-- `BTVideoRecorderKit` 不得 import `BTVideoRecorderUIKit`。
-- `BTVideoRecorderUIKit` 不得 import `VideoEngineSDK`；第三方视频引擎 SDK 只在 BTVideoRecorderKit adapter 层访问。
+- `BTVideoRecorderKit` 不得 import `BTVideoRecorderUIKit`（核心不依赖 UI）。
+- `BTVideoRecorderUIKit` 不得直接 import 第三方引擎 SDK（`NvStreamingSdkCore` / `NvsStreamingContext` / `AliVCSDK_UGC`）；必须经 BTVideoRecorderKit 的引擎抽象（`BTVideoEditorEngineNvs` 等）。已核实 UIKit 当前 0 处直连。
+- 第三方引擎访问只在 `BTVideoRecorderKit/Classes/NvsEditor/NvsEngine`（美摄）与 `Classes/Services`（阿里等）adapter 层；其余代码走 Contract 抽象。
 - 默认只修改探测到的 `BTVideoRecorderKit/` 与 `BTVideoRecorderUIKit/` 根目录；用户显式扩大范围才例外。
 - 不修改 `Pods/`、vendor SDK 目录、生成的依赖副本或无关 App 模块。
 - 不在日志暴露通用凭证（token / accessToken / cookie 等）、组件清单 `components.conf` 中 `privacy` 项声明的隐私字段，或用户 PII。隐私字段的权威清单以 `components.conf` 为准。
@@ -144,7 +149,7 @@ CodeGraph 索引 Swift ↔ ObjC bridging、`@objc` selector、动态分发——
    - **存在** → 读取 `components` 映射（BTVideoRecorderKit/BTVideoRecorderUIKit）与 `hostApps` 路径，载入对应组件的 `docs/agent-knowledge/index.md`，进入正常工作流
    - **不存在** → 用如下友好提示**先告诉用户**，再继续回答其本次请求：
      > 还没检测到 wk-video-dev 工作区配置。建议先执行 `/wk-video-dev:setup`（或 `$wk-video-dev:setup`）初始化，否则我每次都需要重新探索仓库。
-2. 同时检查当前 pwd 是否在 BTVideoRecorderKit/BTVideoRecorderUIKit/HostApp 中（参考 `wk-video-detect-env.sh` 的判定逻辑）。如果在视频录制组件仓库中但 workspace.json 缺失，更要提示初始化。
+2. 同时检查当前 pwd 是否在 BTVideoRecorderKit/BTVideoRecorderUIKit/HostApp 中（参考 `wk-video-detect-env.sh` 的判定逻辑）。如果在视频拍摄编辑组件仓库中但 workspace.json 缺失，更要提示初始化。
 3. 自检只在每个会话开头跑一次，后续回复不再重复提醒。
 
 ## 跨组件判断与改动顺序

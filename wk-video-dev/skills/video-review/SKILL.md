@@ -18,7 +18,7 @@ allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(${CLAUDE_
 
 ### 架构合规
 - BTVideoRecorderKit 未 import BTVideoRecorderUIKit
-- BTVideoRecorderUIKit 未 import VideoEngineSDK
+- BTVideoRecorderUIKit 未 import NvStreamingSdkCore
 - 变更仅在 BTVideoRecorderKit/ 或 BTVideoRecorderUIKit/ 范围内
 - Public API 变更已同步更新 contracts.md
 

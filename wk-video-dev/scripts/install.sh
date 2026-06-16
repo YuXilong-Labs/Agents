@@ -524,6 +524,6 @@ if runtime_includes claude; then
 fi
 if runtime_includes codex; then
   echo "    wk-video-dev                # 统一 launcher（离线 Codex fallback）"
-  echo "    # 或装 Codex plugin 后在视频录制组件仓库直接 codex（SessionStart 自动激活）"
+  echo "    # 或装 Codex plugin 后在视频拍摄编辑组件仓库直接 codex（SessionStart 自动激活）"
 fi
 echo "================================================================"

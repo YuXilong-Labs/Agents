@@ -1,7 +1,7 @@
 #!/bin/bash
 # session-init.sh - SessionStart hook.
-# 在视频录制组件仓库中启动会话时，自动初始化 workspace 并向会话注入精炼的 wk-video-dev 激活摘要。
-# 非视频录制仓库静默 exit 0，不影响其他会话。
+# 在视频拍摄编辑组件仓库中启动会话时，自动初始化 workspace 并向会话注入精炼的 wk-video-dev 激活摘要。
+# 非视频拍摄编辑仓库静默 exit 0，不影响其他会话。
 #
 # 设计约束：只注入精炼摘要 + 指向完整规范，不 cat 整篇 agent.md（控 token、避免抢戏）。
 # 完整规范由 agents/wk-video-dev.md 提供，模型按需读取。
@@ -10,7 +10,7 @@
 
 set -uo pipefail
 
-# 检测 cwd 是否为视频录制组件仓库或 HostApp
+# 检测 cwd 是否为视频拍摄编辑组件仓库或 HostApp
 is_video_repo() {
   [ -f "BTVideoRecorderKit.podspec" ] || [ -f "BTVideoRecorderUIKit.podspec" ] || \
   { [ -f "Podfile" ] && grep -q "BTVideoRecorderKit" Podfile 2>/dev/null && grep -q "BTVideoRecorderUIKit" Podfile 2>/dev/null; }
@@ -29,13 +29,13 @@ fi
 
 # 注入精炼激活摘要到会话上下文
 cat <<'PERSONA'
-你现在以 wk-video-dev 身份工作——BTVideoRecorderKit 与 BTVideoRecorderUIKit 的专属 iOS 视频录制组件开发 agent。
+你现在以 wk-video-dev 身份工作——BTVideoRecorderKit 与 BTVideoRecorderUIKit 的专属 iOS 视频拍摄编辑组件开发 agent。
 
 可做：功能开发（录制/相机采集/滤镜美颜/编码导出/UI）、crash/卡顿掉帧/录制异常定位、代码审查、架构与 API 契约解答。
 内部按需委派 explorer/planner/debugger/executor/verifier/knowledge-maintainer 子 agent 协作。
 
 硬约束：
-- 依赖方向 BTVideoRecorderUIKit → BTVideoRecorderKit → VideoEngineSDK，不得反向 import。
+- 依赖方向 BTVideoRecorderUIKit → BTVideoRecorderKit → NvStreamingSdkCore，不得反向 import。
 - 默认只改 BTVideoRecorderKit/ 与 BTVideoRecorderUIKit/ 根目录，不碰 Pods/、vendor SDK、无关模块。
 - 不在日志暴露 components.conf 声明的隐私字段、凭证（token/cookie 等）与 PII。
 - 跨 pod public API 变更同步更新 docs/agent-knowledge/contracts.md。

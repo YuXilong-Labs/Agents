@@ -13,7 +13,7 @@
 
 ## 0. 一句话定位
 
-`wk-video-dev` = **一个跨 Codex / Claude Code 双运行时的 iOS 视频录制组件开发 Agent**。它把"开发者人格 + 项目知识库 + 跨 Pod 边界约束 + 多 subagent 分工 + 工程化校验"打包成一个可一键安装、可在任意 BTVideoRecorderKit / BTVideoRecorderUIKit / HostApp 仓库激活的实体。
+`wk-video-dev` = **一个跨 Codex / Claude Code 双运行时的 iOS 视频拍摄编辑组件开发 Agent**。它把"开发者人格 + 项目知识库 + 跨 Pod 边界约束 + 多 subagent 分工 + 工程化校验"打包成一个可一键安装、可在任意 BTVideoRecorderKit / BTVideoRecorderUIKit / HostApp 仓库激活的实体。
 
 ---
 
@@ -131,7 +131,7 @@ graph TB
 **关键含义**：
 
 - 用户只看到一个命令 `wk-video-dev`，launcher 在背后选 runtime。
-- 主 agent + subagent + skill 三层路由共同实现"一个视频录制任务怎么拆解"。
+- 主 agent + subagent + skill 三层路由共同实现"一个视频拍摄编辑任务怎么拆解"。
 - 知识库 (`docs/agent-knowledge/`)、组件路径配置 (`~/.wk-video-dev/workspace.json`)、AST 索引 (`.codegraph/`) 是三类长期持久化的「外部记忆」。
 - Hooks 在每次文件写入和会话结束时静默执行检查，是非 LLM 路径的强约束。
 
@@ -324,13 +324,13 @@ graph LR
   E["Edit/Write 工具"] --> H1
   H1 -->|路径含 Pods/ThirdPartySDK| BLOCK[阻断 + 报错]
   H1 -->|通过| H2
-  H2 -->|向上查 *.podspec| FOUND{视频录制组件仓库?}
+  H2 -->|向上查 *.podspec| FOUND{视频拍摄编辑组件仓库?}
   FOUND -- 否 --> NOP1[5ms 内退出 0]
   FOUND -- 是 --> RUN[触发 kb-scan 更新 generated block]
 
   SESS[会话结束] --> H3
   H3 -->|detect-env 返回 unknown| NOP2[快速退出 0]
-  H3 -->|视频录制组件仓库| CHECK[检查隐私关键词/契约一致性]
+  H3 -->|视频拍摄编辑组件仓库| CHECK[检查隐私关键词/契约一致性]
 
   style BLOCK fill:#ef9a9a,stroke:#b71c1c
   style NOP1 fill:#c8e6c9
@@ -398,7 +398,7 @@ graph TB
 graph LR
   APP[HostApp] --> MOD[BTVideoRecorderUIKit]
   MOD --> SVC[BTVideoRecorderKit]
-  SVC --> SDK[VideoEngineSDK]
+  SVC --> SDK[NvStreamingSdkCore]
 
   MOD -. ❌ 禁止 .-> SDK
   SVC -. ❌ 禁止反向 .-> MOD

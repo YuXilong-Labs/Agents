@@ -54,7 +54,7 @@ curl -fsSL https://gitlab.intra/team/Agents/-/raw/main/wk-video-dev/scripts/boot
 ```text
 ~/.wk-video-dev/bin/wk-video-init.sh [options]
 
-  --root <repo>           手动指定视频录制组件仓库或 HostApp（默认自动定位）
+  --root <repo>           手动指定视频拍摄编辑组件仓库或 HostApp（默认自动定位）
   --component <Name>=<path>  手动指定某组件路径（可重复，组件名取自 components.conf）
   --service <path>        BTVideoRecorderKit 路径（模板实例的 --component BTVideoRecorderKit= 别名）
   --module <path>         BTVideoRecorderUIKit 路径（模板实例的 --component BTVideoRecorderUIKit= 别名）

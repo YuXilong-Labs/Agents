@@ -1,52 +1,45 @@
-# 视频录制流程（Pipeline）
+# 视频拍摄编辑流程（Pipeline）
 
-## 采集会话流程 (Capture Session)
+公开入口走 `BTVideoRecorderUIKit` 的 BTRouter Target-Action；底层默认走美摄 `BTVideoEditorEngineNvs`。
 
-```
-BTVideoRecorderUIKit (UI)
-  → BTVideoRecorderKit.startSession(config)
-    → 配置相机（分辨率 / 帧率 / 方向 / 前后置 / 闪光）
-    → VideoEngineSDK.configureCapture()
-    → 启动预览（AVCaptureVideoPreviewLayer / Metal）
-    → notify UI via onSessionReady()
-```
-
-## 预览处理流程 (Preview)
+## 拍摄流程 (Capture)
 
 ```
-相机帧（CMSampleBuffer）
-  → BTVideoRecorderKit 采集回调
-    → 应用实时滤镜 / 美颜 / 贴纸
-    → VideoEngineSDK.process(frame)
-    → 回调处理后帧 → UI 预览层（系统 AVFoundation 预览允许在 UI 层）
+HostApp --BTRouter: Action_openCameraController / Action_startVideoCapture--> Camera UI
+  → BTBeautyRecorderManager（拍摄 + 美颜：字节 BTBytedEffect / MNN）
+    → 美摄采集（NvsStreamingContext，仅 NvsEditor/NvsEngine adapter）
+    → 分段录制 / 录制时长(BTRecordDurationSelector) / 控制栏(BTRecordingControlBar)
+    → 产物 videoPath/outputURL
+  → Action_saveCameraEditVideoCallback 回传 HostApp
 ```
 
-## 录制流程 (Record)
+## 编辑流程 (Edit)
 
 ```
-BTVideoRecorderUIKit → BTVideoRecorderKit.startRecording(outputURL)
-  → 校验磁盘空间 & 输出参数（分辨率 / 码率 / 编码格式）
-  → VideoEngineSDK.startEncode()
-    → 逐帧编码（H.264 / HEVC）+ 音频采集混音
-    → onProgress: 回调时长 / 进度 → UI
-    → onSuccess: 产出 outputURL → UI
-    → onFailure: 错误码（磁盘满 / 被来电打断）→ UI
-  → notify UI via onRecordStateChanged()
+HostApp --BTRouter: Action_editorViewController / Action_showEditorViewController--> Editor UI
+  → BTVideoEditorEngineNvs（美摄时间线引擎）
+    +Effect  特效（Fx/FxUI）
+    +Filter  滤镜
+    +Sticker 图片/文字贴纸（ImageSticker/TextSticker）
+    +Text    字幕（BTVideoEditorCaptionMenuView）
+  → 配乐 Action_openMusicPicker（MusicPicker：列表/搜索/本地/裁剪/卡点/音量）
+  → 预览（系统 AVFoundation 预览层允许在 UI）
 ```
 
-## 录制状态机 (Record State Machine)
+## 导出流程 (Export)
 
 ```
-[idle] → previewing → recording → paused → recording
-                    → recording → finishing → success
-                                            → failed → [retry]
-       interrupted（来电 / 切后台）→ paused
+HostApp/Editor --Action_triggerProEditExport--> BTVideoEditorEngineNvs.export
+  → 美摄编码（时间线合成 → H.264/HEVC）
+  → onProgress: 进度回调（主线程）→ UI
+  → 产物 outputPath；失败回错误码（磁盘满/授权失效/被打断）
 ```
 
 ## 关键约束
 
-- `sourceURL` / `outputURL` / `licenseKey` 不写日志（privacy，权威清单见 `components.conf`）。
-- 进度 / 状态 / 中断（来电、后台）回调始终在主线程派发（UIKit 安全）。
-- 采集与编码跑在专用队列，不阻塞主线程（否则掉帧 / 卡顿）。
-- `BTVideoRecorderKit` 是录制事实源；`VideoEngineSDK` 只做采集 / 编码 / 帧处理（transport/compute）。
-- `BTVideoRecorderUIKit` 只通过 `BTVideoRecorderKit` 访问录制能力，不直接调用 `VideoEngineSDK`。
+- 美摄授权：`NvsStreamingContext.verifySdkLicenseFile(licPath)` 校验 license 文件；失败则引擎不可用。
+- `videoPath` / `outputPath` / `outputURL` / `deviceId` / `userId` 不写日志（privacy，权威清单见 `components.conf`）。
+- 拍摄/编辑/导出进度与保存回调**必须主线程**派发（UIKit 安全）。
+- 采集与编码在专用队列，不阻塞主线程（否则掉帧/卡顿）。
+- `BTVideoRecorderUIKit` 只经 `BTVideoEditorEngineNvs` 等抽象访问引擎，**不直连**美摄/阿里 SDK；厂商访问只在 `NvsEditor/NvsEngine`、`Services` adapter。
+- 多引擎：默认美摄 `NvStreamingSdkCore`；阿里 `AliVCSDK_UGC` 为可选 `Ali` 子 spec（`Classes/Services/AliEditor`）。

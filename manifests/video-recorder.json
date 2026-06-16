@@ -1,16 +1,16 @@
 {
   "slug": "wk-video-dev",
-  "description": "iOS 视频录制组件开发 Agent（BTVideoRecorderKit + BTVideoRecorderUIKit）。功能开发、Bug 修复、代码审查、架构查询。",
-  "keywords": ["ios", "video", "recorder", "camera", "avfoundation", "swift"],
+  "description": "iOS 短视频拍摄与编辑组件开发 Agent（BTVideoRecorderKit 引擎核心 + BTVideoRecorderUIKit 拍摄/编辑 UI）。封装美摄(NvStreamingSdkCore)/阿里/字节多引擎。功能开发、Bug 修复、代码审查、架构查询。",
+  "keywords": ["ios", "video", "capture", "editor", "recorder", "meishe", "swift"],
   "components": [
     { "name": "BTVideoRecorderKit",   "role": "service", "scope_root": "BTVideoRecorderKit" },
     { "name": "BTVideoRecorderUIKit", "role": "module",  "scope_root": "BTVideoRecorderUIKit" }
   ],
   "forbid_import": [
     { "component": "BTVideoRecorderKit",   "targets": ["BTVideoRecorderUIKit"] },
-    { "component": "BTVideoRecorderUIKit", "targets": ["VideoEngineSDK"] }
+    { "component": "BTVideoRecorderUIKit", "targets": ["NvStreamingSdkCore", "NvsStreamingContext", "AliVCSDK_UGC"] }
   ],
-  "privacy_keywords": ["sourceURL", "outputURL", "licenseKey", "token", "accessToken"],
+  "privacy_keywords": ["videoPath", "outputPath", "outputURL", "deviceId", "userId", "token", "accessToken"],
   "readonly_paths": ["Pods/", "ThirdPartySDK/"],
-  "sdk_literal": "VideoEngineSDK"
+  "sdk_literal": "NvStreamingSdkCore"
 }

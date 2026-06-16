@@ -8,14 +8,14 @@
 HostApp
   └── BTVideoRecorderUIKit (UI layer)
         └── BTVideoRecorderKit (Core layer)
-              └── VideoEngineSDK (SDK adapter)
+              └── NvStreamingSdkCore (SDK adapter)
 ```
 
 - BTVideoRecorderKit MUST NOT import BTVideoRecorderUIKit
-- BTVideoRecorderUIKit MUST NOT import VideoEngineSDK
-- All VideoEngineSDK access MUST go through BTVideoRecorderKit adapter layer only
+- BTVideoRecorderUIKit MUST NOT import NvStreamingSdkCore
+- All NvStreamingSdkCore access MUST go through BTVideoRecorderKit adapter layer only
 
-Rationale: BTVideoRecorderKit is reused across products; reverse dependency would couple the core video recording engine to specific UI shells. VideoEngineSDK swap requires adapter-layer isolation.
+Rationale: BTVideoRecorderKit is reused across products; reverse dependency would couple the core video recording engine to specific UI shells. NvStreamingSdkCore swap requires adapter-layer isolation.
 
 ## Scope (HARD)
 
@@ -43,7 +43,7 @@ Rationale: component payloads may contain user-generated content. App Store priv
 
 - Cross-pod APIs are exposed through Objective-C public headers exported by BTVideoRecorderKit
 - Any new or changed public API MUST update `contracts.md`
-- API parameters MUST use internal model types, never VideoEngineSDK types
+- API parameters MUST use internal model types, never NvStreamingSdkCore types
 - Callbacks MUST be dispatched on main thread
 
 Rationale: callers in BTVideoRecorderUIKit and HostApp depend on stable surface and main-thread dispatch for UIKit safety.

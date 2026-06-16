@@ -1,8 +1,8 @@
 # wk-video-dev
 
-iOS 视频录制组件开发 Agent，用于 `BTVideoRecorderKit` 和 `BTVideoRecorderUIKit` 的功能开发、Bug 修复、代码审查、架构查询和组件知识库维护。
+iOS 视频拍摄编辑组件开发 Agent，用于 `BTVideoRecorderKit` 和 `BTVideoRecorderUIKit` 的功能开发、Bug 修复、代码审查、架构查询和组件知识库维护。
 
-让 Codex / Claude Code 在改视频录制代码前先快速定位入口、遵守跨 Pod 边界，并在源码变化后同步维护 `docs/agent-knowledge/`。
+让 Codex / Claude Code 在改视频拍摄编辑代码前先快速定位入口、遵守跨 Pod 边界，并在源码变化后同步维护 `docs/agent-knowledge/`。
 
 > 想理解整体设计/重画架构图？看 [docs/architecture.md](docs/architecture.md)。
 > 团队推广/内网分发？看 [docs/team-distribution.md](docs/team-distribution.md)。
@@ -52,12 +52,12 @@ claude --agent wk-video-dev
 
 ```text
 你好，你是谁？
-帮我定位录制启动流程入口
+帮我定位拍摄入口（Action_startVideoCapture）
 帮我修复录制预览黑屏的问题
-帮我加一个实时滤镜美颜
+帮我给编辑器加一个文字贴纸样式
+帮我接入一个新的美摄滤镜
 review 一下我的改动
-重构一下这段相机采集代码
-补一下录制中断场景的单元测试
+补一下导出失败场景的单元测试
 ```
 
 > 本地 pod 改源文件直接 build，无需 `pod install`；跨仓库提交顺序：先 commit BTVideoRecorderKit（含 public header + contracts），再 commit BTVideoRecorderUIKit。
@@ -69,7 +69,7 @@ review 一下我的改动
 | 操作 | 命令 |
 |---|---|
 | 安装（Codex / curl） | `curl ... bootstrap.sh \| bash -s -- --target <repo>` |
-| 安装指定版本（推荐） | `curl ... bootstrap.sh \| bash -s -- --target <repo> --ref v1.0.0` |
+| 安装指定版本（推荐） | `curl ... bootstrap.sh \| bash -s -- --target <repo> --ref wk-video-dev-v1.0.1` |
 | 安装（Claude Code） | `claude plugin install wk-video-dev@yuxilong-agents` |
 | 启动 | `wk-video-dev` |
 | 查看版本 | `wk-video-dev --version` |
@@ -124,9 +124,9 @@ review 一下我的改动
 | 规则 | 说明 |
 |---|---|
 | `BTVideoRecorderKit` 不得 import `BTVideoRecorderUIKit` | 依赖方向单向（UI → Core → SDK） |
-| `BTVideoRecorderUIKit` 不得 import `VideoEngineSDK` | 第三方视频引擎只在 Core adapter 层访问 |
+| `BTVideoRecorderUIKit` 不得直连 `NvStreamingSdkCore`/`AliVCSDK_UGC` | 美摄/阿里引擎只在 Core 的 `NvsEditor/NvsEngine`、`Services` adapter 层访问（已核实 UIKit 0 处直连） |
 | 默认只修改 `BTVideoRecorderKit/` 与 `BTVideoRecorderUIKit/` | 防止误伤宿主 App 或依赖副本 |
-| 不在日志暴露 `components.conf` 的 privacy 字段（sourceURL/outputURL/licenseKey 等）与 PII | 隐私保护 |
+| 不在日志暴露 `components.conf` 的 privacy 字段（videoPath/outputPath/outputURL/deviceId/userId 等）与 PII | 隐私保护 |
 | Public API 变更必须更新 knowledge contracts | 契约治理 |
 
 > `BTVideoRecorderUIKit` 可正常使用系统 `AVFoundation`（如 `AVPlayerLayer` 预览）；受约束的是**第三方视频引擎 SDK**，必须经 `BTVideoRecorderKit` adapter。

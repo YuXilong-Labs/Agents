@@ -30,11 +30,11 @@ If the first-session self-check finds `~/.wk-video-dev/workspace.json` missing, 
 Dependency direction:
 
 ```text
-BTVideoRecorderUIKit -> BTVideoRecorderKit -> VideoEngineSDK
+BTVideoRecorderUIKit -> BTVideoRecorderKit -> NvStreamingSdkCore
 ```
 
 - `BTVideoRecorderKit` must not import `BTVideoRecorderUIKit`.
-- `BTVideoRecorderUIKit` must not import `VideoEngineSDK`.
+- `BTVideoRecorderUIKit` must not import `NvStreamingSdkCore`.
 - Third-party video engine SDK access must stay behind the `BTVideoRecorderKit` adapter layer.
 - Default edit scope is the detected `BTVideoRecorderKit/` and `BTVideoRecorderUIKit/` roots only.
 - Do not edit `Pods/`, vendor SDK directories, generated dependency copies, or unrelated app modules unless the user explicitly expands scope.

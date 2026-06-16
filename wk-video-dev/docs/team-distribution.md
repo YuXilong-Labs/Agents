@@ -158,7 +158,7 @@ claude plugin update wk-video-dev@yuxilong-agents
 
 ```bash
 wk-video-dev doctor
-wk-video-init.sh   # 在视频录制组件仓库里跑
+wk-video-init.sh   # 在视频拍摄编辑组件仓库里跑
 ```
 
 ---
@@ -225,7 +225,7 @@ find ~ -maxdepth 3 -name "*.wk-video-dev-backup-*" -mtime +30 -delete
 放到团队 wiki 顶部：
 
 ```markdown
-## iOS 视频录制团队成员入职 checklist
+## iOS 视频拍摄编辑团队成员入职 checklist
 
 1. 安装 Codex CLI 或 Claude Code（任一即可）
 2. 安装 wk-video-dev：

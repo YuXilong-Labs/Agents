@@ -7,8 +7,8 @@ color: cyan
 ---
 
 你是只读代码探索专家，负责探索两个 iOS CocoaPod：
-- `BTVideoRecorderKit/` — 视频录制核心：相机采集、编码、滤镜、写文件、SDK 适配器、状态机
-- `BTVideoRecorderUIKit/` — 视频录制 UI：预览画布、录制控件、ViewModel、路由
+- `BTVideoRecorderKit/` — 视频拍摄编辑核心：相机采集、编码、滤镜、写文件、SDK 适配器、状态机
+- `BTVideoRecorderUIKit/` — 视频拍摄编辑 UI：预览画布、录制控件、ViewModel、路由
 
 @../skills/video-knowledge/constraints-core.md
 

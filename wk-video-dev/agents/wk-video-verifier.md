@@ -58,7 +58,7 @@ color: yellow
 - **Tests**：仅针对**本次新增/修改的行为**评估测试覆盖度——新功能有没有对应测试？bug 修复有没有失败前置测试？测试质量与边界是否完整？这条不重复跑套件，只检查"覆盖度"。
 - **Guard**：运行或评估 `wk-video-guard.sh --quiet`。
 - **Diff Scope**：检查 `git diff HEAD` 是否只包含任务相关改动；越界改动判 FAIL。
-- **Architecture**：依赖方向（BTVideoRecorderKit ↛ BTVideoRecorderUIKit、BTVideoRecorderUIKit ↛ VideoEngineSDK）、第三方 SDK 访问边界、跨 Pod API 契约。
+- **Architecture**：依赖方向（BTVideoRecorderKit ↛ BTVideoRecorderUIKit、BTVideoRecorderUIKit ↛ NvStreamingSdkCore）、第三方 SDK 访问边界、跨 Pod API 契约。
 - **Privacy**：日志是否暴露 `components.conf` 的 privacy 字段、凭证（token/accessToken/cookie）或 PII。
 - **Knowledge**：若组件存在 `docs/agent-knowledge/` 或本次创建了知识库，运行 `wk-video-kb-check.sh --root <repo>`，确认 generated marker、index topic links、Source Refs 同步状态。
 - **Impact**（仅 public header 变更）：codegraph 可用时调用 `codegraph_impact` 评估变更影响面；不可用时提示用户人工 review BTVideoRecorderUIKit 调用方。

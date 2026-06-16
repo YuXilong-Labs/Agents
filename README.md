@@ -7,7 +7,7 @@
 | 目录 | 状态 | 说明 | 主要入口 |
 | --- | --- | --- | --- |
 | `wk-im-dev/` | ✅ 主线 v1.1.1 | iOS IM 组件 Agent（BTIMService / BTIMModule）。plugin-native 双运行时 + CodeGraph AST 索引。**同时是 per-component agent 生成器的唯一模板。** | [wk-im-dev/README.md](wk-im-dev/README.md) |
-| `wk-video-dev/` | ✅ 主线 v1.0.0 | iOS 视频录制组件 Agent（BTVideoRecorderKit / BTVideoRecorderUIKit）。由生成器从 `manifests/video-recorder.json` 产出。 | [wk-video-dev/README.md](wk-video-dev/README.md) |
+| `wk-video-dev/` | ✅ 主线 v1.0.1 | iOS 短视频拍摄与编辑组件 Agent（BTVideoRecorderKit 引擎核心 / BTVideoRecorderUIKit 拍摄编辑 UI，封装美摄/阿里/字节）。由生成器从 `manifests/video-recorder.json` 产出。 | [wk-video-dev/README.md](wk-video-dev/README.md) |
 | `wk-code-refactor/` | ✅ 主线 | 单组件 / 子模块 / 单功能点重构 Agent，强调旧实现先读、功能点矩阵、TDD 和分阶段确认。 | [wk-code-refactor/README.md](wk-code-refactor/README.md) |
 | `tools/create-wk-agent.sh` | ✅ 生成器 | 从 `manifests/*.json` 生成新的 per-component agent（wk-im-dev 即模板，dogfood 零漂移）。 | [tools/README.md](tools/README.md) |
 | `manifests/` | ✅ 生成器输入 | `im.json`(IM 实例)、`video-recorder.json`(视频)、`example-pay.json`(新组件示例)。 | — |

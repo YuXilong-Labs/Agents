@@ -152,7 +152,7 @@ require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "wk-video-kb-scan.sh --root"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTVideoRecorderKit"
 require_contains "$PLUGIN_ROOT/codex/AGENTS.md" "BTVideoRecorderUIKit"
 # 单一事实源：agents/wk-video-dev.md
-require_contains "$PLUGIN_ROOT/agents/wk-video-dev.md" "VideoEngineSDK"
+require_contains "$PLUGIN_ROOT/agents/wk-video-dev.md" "NvStreamingSdkCore"
 require_contains "$PLUGIN_ROOT/agents/wk-video-dev.md" "single source of truth"
 require_contains "$PLUGIN_ROOT/.claude-plugin/plugin.json" '"name": "wk-video-dev"'
 require_contains "$PLUGIN_ROOT/skills/setup/SKILL.md" "wk-video-init.sh"

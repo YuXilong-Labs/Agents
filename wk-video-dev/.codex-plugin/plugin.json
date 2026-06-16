@@ -1,7 +1,7 @@
 {
   "name": "wk-video-dev",
-  "description": "iOS 视频录制组件开发 Agent（BTVideoRecorderKit + BTVideoRecorderUIKit）。功能开发、Bug 修复、代码审查、架构查询。",
-  "version": "1.0.0",
+  "description": "iOS 短视频拍摄与编辑组件开发 Agent（BTVideoRecorderKit 引擎核心 + BTVideoRecorderUIKit 拍摄/编辑 UI，封装美摄/阿里/字节多引擎）。功能开发、Bug 修复、代码审查、架构查询。",
+  "version": "1.0.1",
   "author": {
     "name": "YuXilong-Labs"
   },
@@ -10,8 +10,10 @@
   "keywords": [
     "ios",
     "video",
-    "editing",
-    "avfoundation",
+    "capture",
+    "editor",
+    "recorder",
+    "meishe",
     "swift"
   ],
   "commands": "./commands/",
@@ -19,7 +21,7 @@
   "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "wk-video-dev",
-    "shortDescription": "BTVideoRecorderKit/BTVideoRecorderUIKit iOS 视频录制开发助手",
+    "shortDescription": "BTVideoRecorderKit/UIKit iOS 短视频拍摄编辑（美摄引擎）开发助手",
     "category": "Development",
     "capabilities": [
       "Interactive",

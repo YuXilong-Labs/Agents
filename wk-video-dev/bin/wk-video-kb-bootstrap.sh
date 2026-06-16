@@ -199,7 +199,7 @@ BTVideoRecorderUIKit UI action
   → BTVideoRecorderKit.sendMessage(content:to:)
     → validate content & session state
     → persist to local DB (status: sending)
-    → VideoEngineSDK.sendMessage()
+    → NvStreamingSdkCore.sendMessage()
       → [network]
       → onSuccess: update DB status → sending_success
       → onFailure: update DB status → sending_failed
@@ -212,7 +212,7 @@ State machine file: <!-- fill: path to message status model -->
 ## Message Receive Flow
 
 \`\`\`
-VideoEngineSDK push/pull callback
+NvStreamingSdkCore push/pull callback
   → BTVideoRecorderKit Adapter.onMessageReceived()
     → parse SDK message → internal BTChatMessageModel
     → persist to local DB
@@ -237,7 +237,7 @@ Callback: <!-- fill: onUnreadCountChanged implementation in BTVideoRecorderUIKit
 \`\`\`
 BTVideoRecorderUIKit → BTVideoRecorderKit.revokeMessage(messageId:)
   → check time limit (default 2 min)
-  → VideoEngineSDK.revokeMessage()
+  → NvStreamingSdkCore.revokeMessage()
   → update local DB: status = revoked
   → notify all sessions via onMessageStatusChanged()
 \`\`\`
