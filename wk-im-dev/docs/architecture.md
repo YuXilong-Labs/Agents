@@ -404,10 +404,10 @@ graph LR
   SVC -. ❌ 禁止反向 .-> MOD
 
   subgraph 隐私["隐私保护"]
-    P1[禁止日志: messageBody]
+    P1[禁止日志: privacy 声明字段]
     P2[禁止日志: token/accessToken]
     P3[禁止日志: cookie]
-    P4[禁止日志: attachmentURL]
+    P4[禁止日志: 用户内容/媒体]
     P5[禁止日志: 用户 PII]
   end
 

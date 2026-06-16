@@ -38,7 +38,7 @@ BTIMModule -> BTIMService -> ThirdPartyIMSDK
 - Third-party IM SDK access must stay behind the `BTIMService` adapter layer.
 - Default edit scope is the detected `BTIMService/` and `BTIMModule/` roots only.
 - Do not edit `Pods/`, vendor SDK directories, generated dependency copies, or unrelated app modules unless the user explicitly expands scope.
-- Never log or expose `messageBody`, `msgContent`, `token`, `accessToken`, `cookie`, `attachmentURL`, or user PII.
+- Never log or expose generic credentials (`token`, `accessToken`, `cookie`, ...), any field declared under `privacy` in the component manifest `components.conf`, or user PII. The authoritative no-log list is `components.conf`.
 - Cross-pod public API changes must update `docs/agent-knowledge/contracts.md` when that knowledge base exists or is created.
 - Cross-pod callbacks must return on the main thread unless the existing API explicitly documents otherwise.
 

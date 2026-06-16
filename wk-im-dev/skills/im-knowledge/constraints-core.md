@@ -12,7 +12,7 @@
 - Never touch `Pods/`, `ThirdPartySDK/`, vendor copies, or unrelated app modules
 
 ## Privacy (HARD)
-- Never log: `messageBody`, `msgContent`, `token`, `accessToken`, `cookie`, `attachmentURL`, user PII
+- Never log: generic credentials (`token`, `accessToken`, `cookie`), any `privacy` field declared in `components.conf`, or user PII
 
 ## Public API (HARD)
 - Public cross-pod API changes MUST update `docs/agent-knowledge/contracts.md`

@@ -33,13 +33,11 @@ Rationale: scope creep breaks change isolation and PR review.
 ## Privacy (HARD)
 
 Never log or expose in any log statement:
-- `messageBody` / `msgContent`
-- `token` / `accessToken`
-- `cookie`
-- `attachmentURL`
+- Generic credentials: `token`, `accessToken`, `cookie`
+- Any field listed under `privacy` in the component manifest `components.conf`
 - Any user PII
 
-Rationale: IM payloads contain user-generated content. App Store privacy and security audits explicitly check logs.
+Rationale: component payloads may contain user-generated content. App Store privacy and security audits explicitly check logs. The authoritative no-log list is `components.conf` (`privacy` entries), so guard/scope tooling and the agent stay in sync as the manifest evolves.
 
 ## Public API Contract (HARD)
 

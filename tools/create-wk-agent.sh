@@ -18,15 +18,18 @@ TEMPLATE="$REPO_ROOT/wk-im-dev"
 MANIFEST=""
 OUT=""
 FORCE=0
+REGISTER=1
 
 usage() {
   cat <<'USAGE'
-Usage: create-wk-agent.sh --manifest <file> --out <dir> [--template <dir>] [--force]
+Usage: create-wk-agent.sh --manifest <file> --out <dir> [--template <dir>] [--force] [--no-register]
 
   --manifest <file>   组件 agent manifest（JSON）。
   --out <dir>         输出目录（生成的 agent 根目录）。
   --template <dir>    模板源（默认 <repo>/wk-im-dev）。
   --force             输出目录已存在时先清空。
+  --no-register       不把生成的 agent 写入仓库 .claude-plugin/marketplace.json。
+                      默认：当 --out 直接位于仓库根下时自动 upsert 注册。
 USAGE
 }
 
@@ -36,6 +39,7 @@ while [ "$#" -gt 0 ]; do
     --out)      OUT="${2:-}"; shift 2 ;;
     --template) TEMPLATE="${2:-}"; shift 2 ;;
     --force)    FORCE=1; shift ;;
+    --no-register) REGISTER=0; shift ;;
     -h|--help)  usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -53,10 +57,11 @@ if [ -e "$OUT" ]; then
   fi
 fi
 
-python3 - "$MANIFEST" "$TEMPLATE" "$OUT" <<'PY'
+python3 - "$MANIFEST" "$TEMPLATE" "$OUT" "$REPO_ROOT" "$REGISTER" <<'PY'
 import json, os, re, shutil, sys
 
 manifest_path, template, out = sys.argv[1], sys.argv[2], sys.argv[3]
+repo_root, register = sys.argv[4], sys.argv[5] == "1"
 m = json.load(open(manifest_path))
 
 # --- source (template) identity, fixed ---
@@ -166,6 +171,52 @@ if os.path.exists(cl):
         f.write("# %s Changelog\n\n## v%s\n\n- 由 create-wk-agent 从 %s 生成。\n"
                 % (slug, version, os.path.basename(manifest_path)))
 
+# --- register into repo marketplace.json -----------------------------------
+# Auto-register only when the output is a top-level dir directly under the repo
+# root (so source.path = basename is a valid git-subdir). Generating into /tmp
+# (example/dogfood) leaves the real marketplace untouched. Reuse the first
+# existing entry's repo URL so team mirrors are preserved.
+def register_marketplace():
+    if not register:
+        return "marketplace: skipped (--no-register)"
+    mp = os.path.join(repo_root, ".claude-plugin", "marketplace.json")
+    if not os.path.exists(mp):
+        return "marketplace: %s not found, skipped" % mp
+    out_abs = os.path.realpath(out)
+    if os.path.dirname(out_abs) != os.path.realpath(repo_root):
+        return ("marketplace: out not directly under repo root (%s) — "
+                "register manually" % repo_root)
+    data = json.load(open(mp))
+    plugins = data.setdefault("plugins", [])
+    default_url = "https://github.com/YuXilong-Labs/Agents.git"
+    repo_url = default_url
+    if plugins and isinstance(plugins[0].get("source"), dict):
+        repo_url = plugins[0]["source"].get("url", default_url)
+    entry = {
+        "name": slug,
+        "description": m.get("description", ""),
+        "author": {"name": data.get("owner", {}).get("name", "YuXilong-Labs")},
+        "category": "development",
+        "keywords": m.get("keywords", []),
+        "homepage": "https://github.com/YuXilong-Labs/Agents",
+        "source": {"source": "git-subdir", "url": repo_url,
+                   "path": os.path.basename(out_abs), "ref": "main"},
+    }
+    for i, p in enumerate(plugins):
+        if p.get("name") == slug:
+            plugins[i] = entry
+            action = "updated"
+            break
+    else:
+        plugins.append(entry)
+        action = "added"
+    with open(mp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    return "marketplace: %s entry '%s' in %s" % (action, slug, mp)
+
+register_msg = register_marketplace()
+
 # --- residual scan ---
 # Only flag a source token if its target differs (else it's a dogfood self-regen
 # where the "source" literal is legitimately the intended output).
@@ -197,10 +248,39 @@ for root, dirs, files in os.walk(out):
 
 print("✅ generated agent: %s" % out)
 print("   slug=%s  components=%s  version=%s" % (slug, ",".join(tgt_components), version))
+print("   " + register_msg)
 if hits:
     print("\n⚠️  residual source references (review — usually domain prose in docs):")
     for f in sorted(hits):
         print("   %s: %s" % (f, ", ".join(sorted(hits[f]))))
 else:
     print("   no residual source references.")
+
+# --- domain-prose hints (informational; skip on dogfood self-regen) ---------
+# IM-specific domain nouns aren't tokens in `subs`, so they survive generation
+# inside hand-written essays (knowledge topics, README examples). List the files
+# so the human knows exactly what to rewrite for the new domain.
+if slug != SRC_SLUG:
+    domain_nouns = ["messageBody", "msgContent", "attachmentURL", "消息", "会话", "未读"]
+    dhits = {}
+    for root, dirs, files in os.walk(out):
+        dirs[:] = [d for d in dirs if d not in SKIP_NAMES]
+        for fn in files:
+            p = os.path.join(root, fn)
+            if os.path.splitext(fn)[1] not in TEXT_EXT and fn != slug:
+                continue
+            if os.path.islink(p):
+                continue
+            try:
+                data = open(p, encoding="utf-8").read()
+            except (UnicodeDecodeError, OSError):
+                continue
+            found = [n for n in domain_nouns if n in data]
+            if found:
+                dhits[os.path.relpath(p, out)] = found
+    if dhits:
+        print("\nℹ️  domain prose to rewrite for the new domain (IM nouns remain):")
+        for f in sorted(dhits):
+            print("   %s: %s" % (f, ", ".join(dhits[f])))
+        print("   tip: also rename skills/im-knowledge & skills/im-review dirs + their refs.")
 PY

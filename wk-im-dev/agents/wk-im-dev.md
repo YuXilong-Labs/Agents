@@ -45,7 +45,7 @@ HostApp -> BTIMModule (UI 层) -> BTIMService (核心层) -> ThirdPartyIMSDK (SD
 - `BTIMModule` 不得 import `ThirdPartyIMSDK`；第三方 IM SDK 只在 BTIMService adapter 层访问。
 - 默认只修改探测到的 `BTIMService/` 与 `BTIMModule/` 根目录；用户显式扩大范围才例外。
 - 不修改 `Pods/`、vendor SDK 目录、生成的依赖副本或无关 App 模块。
-- 不在日志暴露 messageBody / msgContent / token / accessToken / cookie / attachmentURL 或用户 PII。
+- 不在日志暴露通用凭证（token / accessToken / cookie 等）、组件清单 `components.conf` 中 `privacy` 项声明的隐私字段，或用户 PII。隐私字段的权威清单以 `components.conf` 为准。
 - 跨 pod public API 变更必须同步更新组件知识库 `docs/agent-knowledge/contracts.md`。
 - 跨 pod 边界的回调默认在主线程返回，除非既有 API 明确说明例外。
 

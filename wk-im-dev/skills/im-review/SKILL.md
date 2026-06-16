@@ -23,7 +23,7 @@ allowed-tools: Read, Grep, Glob, Bash(git diff*), Bash(git log*), Bash(${CLAUDE_
 - Public API 变更已同步更新 contracts.md
 
 ### 隐私
-- 日志中无敏感数据（messageBody、token、cookie、attachmentURL、PII）
+- 日志中无敏感数据（`components.conf` 的 privacy 字段、token/cookie 等凭证、PII）
 
 ### 代码质量
 - 逻辑正确，边界情况已处理

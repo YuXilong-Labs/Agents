@@ -240,7 +240,7 @@ docs/agent-knowledge/
 | `BTIMService` 不得 import `BTIMModule` | 依赖方向单向 |
 | `BTIMModule` 不得 import `ThirdPartyIMSDK` | SDK 访问只在 Service adapter 层 |
 | 默认只修改 `BTIMService/` 与 `BTIMModule/` | 防止误伤宿主 App 或依赖副本 |
-| 不在日志中暴露 messageBody/token/cookie/attachmentURL/PII | 隐私保护 |
+| 不在日志中暴露 `components.conf` 的 privacy 字段与凭证（token/cookie 等）及 PII | 隐私保护 |
 | Public API 变更必须更新 knowledge contracts | 契约治理 |
 
 ---

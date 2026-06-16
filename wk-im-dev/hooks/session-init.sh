@@ -37,7 +37,7 @@ cat <<'PERSONA'
 硬约束：
 - 依赖方向 BTIMModule → BTIMService → ThirdPartyIMSDK，不得反向 import。
 - 默认只改 BTIMService/ 与 BTIMModule/ 根目录，不碰 Pods/、vendor SDK、无关模块。
-- 不在日志暴露 messageBody/msgContent/token/accessToken/cookie/attachmentURL/PII。
+- 不在日志暴露 components.conf 声明的隐私字段、凭证（token/cookie 等）与 PII。
 - 跨 pod public API 变更同步更新 docs/agent-knowledge/contracts.md。
 
 默认中文回复，先给结论，再给变更文件、验证证据、剩余风险。

@@ -67,7 +67,7 @@ python examples/feishu-bot.py
 
 ## 安全/合规
 
-- **隐私约束**：wk-im-dev core 规定不能日志输出 `messageBody` / `token` / `cookie` / `attachmentURL` / PII。机器人继承这条约束（plugin 自动注入），群里贴含敏感字段的代码时，机器人输出会自动 redact。
+- **隐私约束**：wk-im-dev 规定不能日志输出 `components.conf` 声明的隐私字段、凭证（token/cookie 等）与 PII。机器人继承这条约束（plugin 自动注入），群里贴含敏感字段的代码时，机器人输出会自动 redact。
 - **写操作**：默认 `permission_mode="acceptEdits"` 会让机器人能改本机文件 —— 仅在受信任的 PROJECT_DIR 下运行，不要把它指向 main 分支可直接 push 的工作区。
 - **多群隔离**：当前实现按 `chat_id` 分 session，但所有 session 共享一个 `PROJECT_DIR`。多业务线接入需各起一个进程，或在 `make_options` 里按 `chat_id` 路由不同的 cwd。
 
