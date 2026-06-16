@@ -27,6 +27,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 按改动性质分三层：日常修改跑前两步即可；**打 tag 发版前必须额外跑第三步端到端验证**。
 
 > **发版 checklist（打 tag 前必做）**：① 更新 `CHANGELOG.md`（把 Unreleased 内容移到新版本节，补日期） ② 更新 `plugin.json` 版本号 ③ 提交 release commit ④ 打 tag ⑤ push tag ⑥ 跑步骤 3 端到端验证。
+>
+> **Tag 命名（多 agent monorepo）**：plain `vX.Y.Z` 历史属于 wk-im-dev。**其它 agent 用 agent 作用域、无斜杠 tag**：`<slug>-vX.Y.Z`（如 `wk-video-dev-v1.0.0`）。无斜杠是为了 `raw.githubusercontent.com/<owner>/<repo>/<tag>/<path>` bootstrap URL 不与路径歧义。端到端时把步骤 3 的 `TAG=v<X.Y.Z>` 换成对应 scoped tag。
 
 ### 步骤 1 — 静态验证（结构、语法、约束）
 
